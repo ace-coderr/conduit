@@ -1,6 +1,5 @@
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
-import { PayPage } from "@/components/PayPage";
 
 interface Props { params: { username: string } }
 
