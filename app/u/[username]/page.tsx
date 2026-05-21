@@ -5,7 +5,6 @@ interface Props { params: { username: string } }
 
 export default async function UsernamePage({ params }: Props) {
     const username = params.username.toLowerCase().replace(/^@/, "");
-
     const profile = await db.userProfile.findUnique({ where: { username } });
     if (!profile) notFound();
 
@@ -28,26 +27,20 @@ export default async function UsernamePage({ params }: Props) {
 
             <div style={{ background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: 16, padding: "24px", maxWidth: 420, margin: "0 auto", position: "relative", overflow: "hidden" }}>
                 <div style={{ height: 2, background: "var(--c)", position: "absolute", top: 0, left: 0, right: 0 }} />
-                <UsernamePayForm address={profile.address} username={username} />
+                <div>
+                    <p style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace", textAlign: "center", marginBottom: 16 }}>
+                        {profile.address.slice(0, 6)}...{profile.address.slice(-4)}
+                    </p>
+                    <a href={`/pay?address=${profile.address}&username=${username}`} style={{ display: "block", width: "100%", padding: "13px", background: "var(--c)", border: "none", borderRadius: 10, color: "#000", fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "Sora, sans-serif", textDecoration: "none", textAlign: "center" as const, boxShadow: "0 4px 16px rgba(0,229,160,.35)" }}>
+                        Send USDC to @{username}
+                    </a>
+                    <p style={{ fontSize: 11, color: "var(--ink-3)", textAlign: "center", marginTop: 12 }}>
+                        Connect any wallet and pay from any chain
+                    </p>
+                </div>
             </div>
 
             <p className="pay-powered">Powered by Arc Network & Circle</p>
-        </div>
-    );
-}
-
-function UsernamePayForm({ address, username }: { address: string; username: string }) {
-    return (
-        <div>
-            <p style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace", textAlign: "center", marginBottom: 16 }}>
-                {address.slice(0, 6)}...{address.slice(-4)}
-            </p>
-            <a href={`/?pay=${address}&username=${username}`} style={{ display: "block", width: "100%", padding: "13px", background: "var(--c)", border: "none", borderRadius: 10, color: "#000", fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "Sora, sans-serif", textDecoration: "none", textAlign: "center", boxShadow: "0 4px 16px rgba(0,229,160,.35)" }}>
-                Send USDC to @{username}
-            </a>
-            <p style={{ fontSize: 11, color: "var(--ink-3)", textAlign: "center", marginTop: 12 }}>
-                Opens Conduit Pay — connect any wallet and pay from any chain
-            </p>
         </div>
     );
 }

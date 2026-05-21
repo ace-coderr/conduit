@@ -52,7 +52,9 @@ export default function ProfilePage() {
         finally { setSaving(false); }
     };
 
-    const payUrl = profile ? `${typeof window !== "undefined" ? window.location.origin : "https://conduit-pay.vercel.app"}/@${profile.username}` : null;
+    const payUrl = profile
+        ? `${typeof window !== "undefined" ? window.location.origin : "https://conduit-pay.vercel.app"}/u/${profile.username}`
+        : null;
 
     return (
         <div className="app">
@@ -71,16 +73,15 @@ export default function ProfilePage() {
                     </div>
                 ) : (
                     <div style={{ maxWidth: 520 }}>
-                        {/* Username pay link preview */}
                         {payUrl && (
                             <div style={{ background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 12, padding: "16px 20px", marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                                 <div>
                                     <p style={{ fontSize: 10, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, letterSpacing: ".08em", marginBottom: 4 }}>YOUR PAYMENT PAGE</p>
-                                    <p style={{ fontSize: 13, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700 }}>conduit-pay.vercel.app/@{profile.username}</p>
+                                    <p style={{ fontSize: 13, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700 }}>conduit-pay.vercel.app/u/{profile.username}</p>
                                 </div>
                                 <div style={{ display: "flex", gap: 8 }}>
                                     <button onClick={() => navigator.clipboard.writeText(payUrl)} style={{ padding: "7px 14px", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Copy</button>
-                                    <a href={`/@${profile.username}`} target="_blank" rel="noopener noreferrer" style={{ padding: "7px 14px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-2)", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>View ↗</a>
+                                    <a href={`/u/${profile.username}`} target="_blank" rel="noopener noreferrer" style={{ padding: "7px 14px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-2)", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>View ↗</a>
                                 </div>
                             </div>
                         )}
@@ -134,7 +135,6 @@ export default function ProfilePage() {
                             </button>
                         </div>
 
-                        {/* Wallet address */}
                         <div style={{ marginTop: 16, padding: "12px 16px", background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <span style={{ fontSize: 11, color: "var(--ink-3)" }}>Connected wallet</span>
                             <span style={{ fontSize: 11, color: "var(--ink-2)", fontFamily: "IBM Plex Mono, monospace" }}>{address?.slice(0, 6)}...{address?.slice(-4)}</span>

@@ -73,14 +73,12 @@ export default function ContactsPage() {
 
     const copyPayLink = (c: Contact) => {
         const url = c.profile?.username
-            ? `${window.location.origin}/@${c.profile.username}`
+            ? `${window.location.origin}/u/${c.profile.username}`
             : `${window.location.origin}/pay/${c.contactAddress}`;
         navigator.clipboard.writeText(url);
         setCopiedId(c.id);
         setTimeout(() => setCopiedId(null), 2000);
     };
-
-    const displayName = (c: Contact) => c.nickname || c.profile?.displayName || c.profile?.username ? `@${c.profile?.username}` : `${c.contactAddress.slice(0, 6)}...${c.contactAddress.slice(-4)}`;
 
     return (
         <div className="app">
@@ -99,22 +97,13 @@ export default function ContactsPage() {
                     </div>
                 ) : (
                     <div style={{ maxWidth: 600 }}>
-                        {/* Add contact */}
                         <div className="card" style={{ padding: 20, marginBottom: 20 }}>
                             <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-1)", marginBottom: 14 }}>Add Contact</p>
                             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                                <input
-                                    value={newAddress}
-                                    onChange={e => setNewAddress(e.target.value)}
-                                    placeholder="Wallet address or @username"
-                                    style={{ padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none" }}
-                                />
-                                <input
-                                    value={newNickname}
-                                    onChange={e => setNewNickname(e.target.value)}
-                                    placeholder="Nickname (optional)"
-                                    style={{ padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none" }}
-                                />
+                                <input value={newAddress} onChange={e => setNewAddress(e.target.value)} placeholder="Wallet address or @username"
+                                    style={{ padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none" }} />
+                                <input value={newNickname} onChange={e => setNewNickname(e.target.value)} placeholder="Nickname (optional)"
+                                    style={{ padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none" }} />
                                 {error && <p style={{ fontSize: 12, color: "var(--danger)" }}>{error}</p>}
                                 <button onClick={addContact} disabled={adding || !newAddress.trim()} style={{ padding: "10px", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontSize: 13, fontWeight: 700, cursor: adding || !newAddress.trim() ? "not-allowed" : "pointer", fontFamily: "Sora, sans-serif", opacity: adding || !newAddress.trim() ? .5 : 1 }}>
                                     {adding ? "Adding..." : "Add Contact"}
@@ -122,13 +111,11 @@ export default function ContactsPage() {
                             </div>
                         </div>
 
-                        {/* Contacts list */}
                         <div className="card" style={{ display: "flex", flexDirection: "column" }}>
                             <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--stroke)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                                 <span style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-1)" }}>Saved Contacts</span>
                                 <span style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>{contacts.length}</span>
                             </div>
-
                             {isLoading ? (
                                 <div style={{ padding: 32, textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>Loading...</div>
                             ) : contacts.length === 0 ? (
@@ -138,20 +125,13 @@ export default function ContactsPage() {
                                 </div>
                             ) : contacts.map((c, i) => (
                                 <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 20px", borderBottom: i < contacts.length - 1 ? "1px solid var(--stroke)" : "none" }}>
-                                    {/* Avatar */}
                                     <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--c-dim)", border: "1px solid var(--c-border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                                         <span style={{ fontSize: 13, fontWeight: 800, color: "var(--c)" }}>{(c.nickname || c.profile?.username || c.contactAddress)[0].toUpperCase()}</span>
                                     </div>
-
-                                    {/* Info */}
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                         <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-1)" }}>{c.nickname || c.profile?.displayName || (c.profile?.username ? `@${c.profile.username}` : `${c.contactAddress.slice(0, 6)}...${c.contactAddress.slice(-4)}`)}</p>
-                                        <p style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>
-                                            {c.profile?.username && !c.nickname ? c.contactAddress.slice(0, 6) + "..." + c.contactAddress.slice(-4) : c.profile?.username ? `@${c.profile.username}` : ""}
-                                        </p>
+                                        <p style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>{c.profile?.username ? `conduit-pay.vercel.app/u/${c.profile.username}` : `${c.contactAddress.slice(0, 6)}...${c.contactAddress.slice(-4)}`}</p>
                                     </div>
-
-                                    {/* Actions */}
                                     <div style={{ display: "flex", gap: 6 }}>
                                         <button onClick={() => copyPayLink(c)} style={{ padding: "6px 12px", background: "var(--c)", border: "none", borderRadius: 6, color: "#000", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>
                                             {copiedId === c.id ? "Copied!" : "Copy Link"}
