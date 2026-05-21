@@ -1,12 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useSignMessage } from "wagmi";
 import { usePrivy } from "@privy-io/react-auth";
 import { NavBar } from "@/components/NavBar";
 
 export default function ProfilePage() {
     const { address } = useAccount();
     const { authenticated, login } = usePrivy();
+    const { signMessageAsync } = useSignMessage();
     const [mounted, setMounted] = useState(false);
     const [username, setUsername] = useState("");
     const [displayName, setDisplayName] = useState("");
@@ -38,10 +39,20 @@ export default function ProfilePage() {
         setError("");
         setSaved(false);
         try {
+            // Sign message to prove wallet ownership
+            const message = `Conduit: Set username @${username} for ${address} at ${Date.now()}`;
+            let signature: string;
+            try {
+                signature = await signMessageAsync({ message });
+            } catch {
+                setError("Signature rejected. Please sign to save your profile.");
+                return;
+            }
+
             const res = await fetch("/api/profile", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ address, username, displayName, bio }),
+                body: JSON.stringify({ address, username, displayName, bio, signature, message }),
             });
             const data = await res.json();
             if (!res.ok) { setError(data.error ?? "Failed to save"); return; }

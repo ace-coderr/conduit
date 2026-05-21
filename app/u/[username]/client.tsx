@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
-import { useAccount, useConnect, useDisconnect, useSendTransaction, useWaitForTransactionReceipt, useBalance } from "wagmi";
-import { injected } from "wagmi/connectors";
+import { useAccount, useDisconnect, useSendTransaction, useWaitForTransactionReceipt, useBalance } from "wagmi";
+import { usePrivy } from "@privy-io/react-auth";
 import { parseUnits, formatUnits } from "viem";
 import { arcTestnet } from "@/lib/arcChain";
 
@@ -22,7 +22,7 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
     const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
 
     const { address, isConnected, chainId } = useAccount();
-    const { connect } = useConnect();
+    const { login, authenticated } = usePrivy();
     const { disconnect } = useDisconnect();
     const { data: balance } = useBalance({ address, chainId: arcTestnet.id });
     const bal = balance ? parseFloat(formatUnits(balance.value, 6)) : 0;
@@ -37,12 +37,12 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
     const hasEnough = bal >= total;
     const isOnArc = chainId === arcTestnet.id;
     const isBusy = isPending || isWaiting || step === "sending";
+    const isLoggedIn = authenticated && isConnected;
 
     const handlePay = () => {
         if (!isValidAmount || !address) return;
         setStep("sending");
 
-        // Send payment to recipient
         sendTransaction(
             {
                 to: profile.address as `0x${string}`,
@@ -52,7 +52,6 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
             {
                 onSuccess: (hash) => {
                     setTxHash(hash);
-                    // Send fee
                     sendTransaction(
                         {
                             to: FEE_COLLECTOR as `0x${string}`,
@@ -61,7 +60,7 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
                         },
                         {
                             onSuccess: () => setStep("done"),
-                            onError: () => setStep("done"), // fee failed but payment went through
+                            onError: () => setStep("done"),
                         }
                     );
                 },
@@ -98,7 +97,6 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
 
     return (
         <div className="pay-page">
-            {/* Profile header */}
             <div style={{ textAlign: "center", marginBottom: 20 }}>
                 <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--c-dim)", border: "2px solid var(--c-border)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
                     <span style={{ fontSize: 26, fontWeight: 900, color: "var(--c)" }}>{username[0].toUpperCase()}</span>
@@ -111,7 +109,6 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
             <div className="pay-card" style={{ maxWidth: 420 }}>
                 <div className="pay-card-bar" />
 
-                {/* Amount input */}
                 <div className="pay-amount-zone">
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 8 }}>
                         <input
@@ -122,12 +119,10 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
                             min="0"
                             step="any"
                             disabled={isBusy}
-                            style={{ background: "none", border: "none", outline: "none", fontSize: 40, fontWeight: 900, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", width: 160, textAlign: "center" }}
+                            style={{ background: "none", border: "none", outline: "none", fontSize: 40, fontWeight: 900, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", width: 160, textAlign: "center" as const }}
                         />
                         <span style={{ fontSize: 18, color: "var(--c)", fontWeight: 700, fontFamily: "IBM Plex Mono, monospace" }}>USDC</span>
                     </div>
-
-                    {/* Quick amounts */}
                     <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 8 }}>
                         {["1", "5", "10", "50"].map(n => (
                             <button key={n} onClick={() => setAmount(n)} disabled={isBusy} style={{ padding: "4px 12px", background: amount === n ? "var(--c)" : "var(--raised)", border: `1px solid ${amount === n ? "var(--c)" : "var(--stroke)"}`, borderRadius: 20, color: amount === n ? "#000" : "var(--ink-3)", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "IBM Plex Mono, monospace" }}>
@@ -137,7 +132,6 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
                     </div>
                 </div>
 
-                {/* Note */}
                 <div style={{ padding: "0 24px 16px" }}>
                     <input
                         value={note}
@@ -149,7 +143,6 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
                     />
                 </div>
 
-                {/* Fee breakdown */}
                 {isValidAmount && (
                     <div style={{ margin: "0 24px 16px", padding: "12px 14px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
@@ -167,10 +160,9 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
                     </div>
                 )}
 
-                {/* Actions */}
                 <div className="pay-actions">
-                    {!isConnected ? (
-                        <button className="pay-connect-btn" onClick={() => connect({ connector: injected() })}>
+                    {!isLoggedIn ? (
+                        <button className="pay-connect-btn" onClick={login}>
                             Connect Wallet to Pay
                         </button>
                     ) : !isOnArc ? (
@@ -178,7 +170,7 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
                     ) : isBusy ? (
                         <div className="pay-spin-zone">
                             <div className="pay-spinner" />
-                            <p className="pay-spin-text">{isPending ? "Confirm in MetaMask..." : "Confirming..."}</p>
+                            <p className="pay-spin-text">{isPending ? "Confirm in wallet..." : "Confirming..."}</p>
                         </div>
                     ) : (
                         <>
@@ -200,14 +192,13 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
                     )}
                 </div>
 
-                {isConnected && (
+                {isLoggedIn && (
                     <div className="pay-wallet-row">
                         <span className="pay-wallet-addr">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
                         <button className="pay-disc-btn" onClick={() => disconnect()}>Disconnect</button>
                     </div>
                 )}
             </div>
-
             <p className="pay-powered">Powered by Arc Network & Circle</p>
         </div>
     );
