@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useAccount, useDisconnect, useSendTransaction, useWaitForTransactionReceipt, useBalance } from "wagmi";
 import { usePrivy } from "@privy-io/react-auth";
-import { parseUnits, formatUnits } from "viem";
+import { parseEther } from "viem";
 import { arcTestnet } from "@/lib/arcChain";
 
 const FEE_COLLECTOR = "0x2d2eba8c0da5879ab25b5bd37e211d230aabbb5c";
@@ -25,7 +25,7 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
     const { login, authenticated } = usePrivy();
     const { disconnect } = useDisconnect();
     const { data: balance } = useBalance({ address, chainId: arcTestnet.id });
-    const bal = balance ? parseFloat(formatUnits(balance.value, 6)) : 0;
+    const bal = balance ? parseFloat(balance.formatted) : 0;
 
     const { sendTransaction, isPending } = useSendTransaction();
     const { isLoading: isWaiting, isSuccess } = useWaitForTransactionReceipt({ hash: txHash, chainId: arcTestnet.id });
@@ -46,16 +46,28 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
         sendTransaction(
             {
                 to: profile.address as `0x${string}`,
-                value: parseUnits(parsed.toString(), 6),
+                value: parseEther(parsed.toString()),
                 chainId: arcTestnet.id,
             },
             {
                 onSuccess: (hash) => {
                     setTxHash(hash);
+                    // Record transaction in DB
+                    fetch("/api/transactions/direct", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            title: `Payment to @${username}`,
+                            amount: parsed.toString(),
+                            recipientAddress: profile.address,
+                            paidBy: address,
+                            txHash: hash,
+                        }),
+                    }).catch(() => { });
                     sendTransaction(
                         {
                             to: FEE_COLLECTOR as `0x${string}`,
-                            value: parseUnits(fee.toFixed(6), 6),
+                            value: parseEther(fee.toFixed(6)),
                             chainId: arcTestnet.id,
                         },
                         {
