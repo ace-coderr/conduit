@@ -1,4 +1,3 @@
-// FILE: conduit/app/u/[username]/client.tsx
 "use client";
 import { useState } from "react";
 import { useAccount, useConnect, useDisconnect, useSendTransaction, useWaitForTransactionReceipt, useBalance } from "wagmi";
