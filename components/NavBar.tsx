@@ -33,6 +33,14 @@ const LINKS = [
     label: "Developers", href: "/developers",
     icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><path d="M5 4l-3 4 3 4M11 4l3 4-3 4M9 2l-2 12" strokeLinecap="round" strokeLinejoin="round" /></svg>,
   },
+  {
+    label: "Profile", href: "/profile",
+    icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><circle cx="8" cy="5" r="3" /><path d="M2 14c0-3.31 2.69-6 6-6s6 2.69 6 6" strokeLinecap="round" /></svg>
+  },
+  {
+    label: "Contacts", href: "/contacts",
+    icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><circle cx="6" cy="5" r="2.5" /><path d="M1 13c0-2.76 2.24-5 5-5" /><circle cx="12" cy="7" r="2" /><path d="M10 13c0-1.66 1.34-3 3-3" strokeLinecap="round" /></svg>
+  },
 ];
 
 export function NavBar() {

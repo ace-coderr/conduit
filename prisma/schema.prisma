@@ -77,3 +77,24 @@ model X402Payment {
   settledAt DateTime @default(now())
   createdAt DateTime @default(now())
 }
+
+model UserProfile {
+  id          String   @id @default(cuid())
+  address     String   @unique
+  username    String   @unique
+  displayName String?
+  bio         String?
+  avatar      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Contact {
+  id             String   @id @default(cuid())
+  ownerAddress   String
+  contactAddress String
+  nickname       String?
+  createdAt      DateTime @default(now())
+
+  @@unique([ownerAddress, contactAddress])
+}
