@@ -1,26 +1,58 @@
 import { NextRequest, NextResponse } from "next/server";
-import { BatchFacilitatorClient } from "@circle-fin/x402-batching/server";
+import { createPublicClient, createWalletClient, http } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
+import { arcTestnet } from "@/lib/arcChain";
 import { db } from "@/lib/db";
 
-const PAYMENT_ADDRESS = "0x2d2eba8c0da5879ab25b5bd37e211d230aabbb5c";
-const USDC = "0x3600000000000000000000000000000000000000";
-const NETWORK = "eip155:5042002";
+const USDC_ADDRESS = "0x3600000000000000000000000000000000000000";
+const FACILITATOR_PRIVATE_KEY = process.env.FORWARDER_PRIVATE_KEY as `0x${string}`;
 
-const facilitator = new BatchFacilitatorClient({
-    url: "https://gateway-api-testnet.circle.com",
+const safeStringify = (obj: any) =>
+    JSON.stringify(obj, (_, v) => (typeof v === "bigint" ? v.toString() : v), 2);
+
+const arcPublicClient = createPublicClient({
+    chain: arcTestnet,
+    transport: http("https://rpc.testnet.arc.network"),
 });
 
-const baseRequirements = {
-    scheme: "exact",
-    network: NETWORK,
-    asset: USDC,
-    maxTimeoutSeconds: 604900,
-    payTo: PAYMENT_ADDRESS,
-    extra: {
-        name: "GatewayWalletBatched",
-        version: "1",
+const EIP3009_ABI = [
+    {
+        name: "transferWithAuthorization",
+        type: "function",
+        inputs: [
+            { name: "from", type: "address" },
+            { name: "to", type: "address" },
+            { name: "value", type: "uint256" },
+            { name: "validAfter", type: "uint256" },
+            { name: "validBefore", type: "uint256" },
+            { name: "nonce", type: "bytes32" },
+            { name: "v", type: "uint8" },
+            { name: "r", type: "bytes32" },
+            { name: "s", type: "bytes32" },
+        ],
+        outputs: [],
+        stateMutability: "nonpayable",
     },
-};
+    {
+        name: "authorizationState",
+        type: "function",
+        inputs: [
+            { name: "authorizer", type: "address" },
+            { name: "nonce", type: "bytes32" },
+        ],
+        outputs: [{ name: "", type: "bool" }],
+        stateMutability: "view",
+    },
+] as const;
+
+// In-memory settlement cache
+const settlementCache = new Map<string, { settled: boolean; txHash?: string; timestamp: number }>();
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, val] of settlementCache.entries()) {
+        if (now - val.timestamp > 120_000) settlementCache.delete(key);
+    }
+}, 300_000);
 
 export async function POST(req: NextRequest) {
     try {
@@ -38,28 +70,77 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: "Invalid payment payload encoding" }, { status: 400 });
         }
 
-        const settlement = await facilitator.settle(paymentData, {
-            ...baseRequirements,
-            amount: paymentDetails.maxAmountRequired ?? "1000",
-            resource: paymentDetails.resource ?? "unknown",
-        } as any);
+        const { from, to, value, validAfter, validBefore, nonce, v, r, s } = paymentData;
 
-        if (!settlement.success) {
-            console.error("[x402/settle] Settlement failed:", settlement);
-            return NextResponse.json({ success: false, error: "Settlement failed" }, { status: 400 });
+        // Duplicate settlement protection
+        const cacheKey = `${from}-${nonce}`;
+        const cached = settlementCache.get(cacheKey);
+        if (cached?.settled) {
+            return NextResponse.json({ success: true, txHash: cached.txHash, duplicate: true });
         }
 
-        // Save to DB for admin dashboard
+        // Check nonce not already used on-chain
+        const nonceUsed = await arcPublicClient.readContract({
+            address: USDC_ADDRESS as `0x${string}`,
+            abi: EIP3009_ABI,
+            functionName: "authorizationState",
+            args: [from as `0x${string}`, nonce as `0x${string}`],
+        });
+
+        if (nonceUsed) {
+            settlementCache.set(cacheKey, { settled: true, timestamp: Date.now() });
+            return NextResponse.json({ success: false, error: "Nonce already used on-chain" }, { status: 400 });
+        }
+
+        settlementCache.set(cacheKey, { settled: false, timestamp: Date.now() });
+
+        const account = privateKeyToAccount(FACILITATOR_PRIVATE_KEY);
+        const walletClient = createWalletClient({
+            account,
+            chain: arcTestnet,
+            transport: http("https://rpc.testnet.arc.network"),
+        });
+
+        const txHash = await walletClient.writeContract({
+            address: USDC_ADDRESS as `0x${string}`,
+            abi: EIP3009_ABI,
+            functionName: "transferWithAuthorization",
+            args: [
+                from as `0x${string}`,
+                to as `0x${string}`,
+                BigInt(value),
+                BigInt(validAfter),
+                BigInt(validBefore),
+                nonce as `0x${string}`,
+                Number(v),
+                r as `0x${string}`,
+                s as `0x${string}`,
+            ],
+        });
+
+        const receipt = await arcPublicClient.waitForTransactionReceipt({
+            hash: txHash,
+            confirmations: 1,
+        });
+
+        if (receipt.status === "reverted") {
+            settlementCache.delete(cacheKey);
+            return NextResponse.json({ success: false, error: "Transaction reverted on-chain" }, { status: 500 });
+        }
+
+        settlementCache.set(cacheKey, { settled: true, txHash, timestamp: Date.now() });
+
+        // Save to DB
         try {
             await db.x402Payment.create({
                 data: {
-                    txHash: (settlement as any).transaction ?? `batch-${Date.now()}`,
-                    payer: (paymentData.from ?? "unknown").toLowerCase(),
-                    payTo: PAYMENT_ADDRESS.toLowerCase(),
-                    amount: (parseInt(paymentDetails.maxAmountRequired ?? "1000") / 1_000_000).toFixed(6),
-                    network: NETWORK,
+                    txHash,
+                    payer: from.toLowerCase(),
+                    payTo: to.toLowerCase(),
+                    amount: (parseInt(value) / 1_000_000).toFixed(6),
+                    network: `eip155:${arcTestnet.id}`,
                     resource: paymentDetails.resource ?? "unknown",
-                    nonce: paymentData.nonce ?? `${Date.now()}`,
+                    nonce: nonce as string,
                     settledAt: new Date(),
                 },
             });
@@ -67,16 +148,19 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            transaction: (settlement as any).transaction,
-            network: NETWORK,
-            payer: paymentData.from,
+            txHash,
+            networkId: `eip155:${arcTestnet.id}`,
+            payer: from,
+            amount: value.toString(),
+            token: USDC_ADDRESS,
         });
 
     } catch (err: any) {
-        console.error("[x402/settle] Error:", err.message);
+        console.error("[x402/settle] Error:", safeStringify(err));
         return NextResponse.json({
             success: false,
             error: err.message ?? "Settlement failed",
+            details: typeof err.cause === "bigint" ? err.cause.toString() : String(err.cause ?? ""),
         }, { status: 500 });
     }
 }
