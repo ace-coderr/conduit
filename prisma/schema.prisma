@@ -34,15 +34,16 @@ model EscrowLink {
   sellerAddress       String
   sellerContact       String?
   buyerAddress        String?
-  stealthAddress      String
-  stealthPrivateKey   String
+  stealthAddress      String          // kept for display — now holds Circle wallet address
+  stealthPrivateKey   String?         // nullable — not used for Circle wallets
+  circleWalletId      String?         // Circle Developer-Controlled Wallet ID
   status              String          @default("ACTIVE")
   txHash              String?
   releaseTxHash       String?
   feeTxHash           String?
   paidAt              DateTime?
-  deliveryDays        Int?            // seller-set expected delivery window in days
-  deliveryDeadline    DateTime?       // paidAt + deliveryDays
+  deliveryDays        Int?
+  deliveryDeadline    DateTime?
   releaseDeadline     DateTime?       // deliveryDeadline + 7 days (auto-release)
   confirmedAt         DateTime?
   disputedAt          DateTime?

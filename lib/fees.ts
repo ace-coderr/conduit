@@ -1,10 +1,7 @@
-// lib/fees.ts
-// Conduit fee configuration
-
 export const FEE_CONFIG = {
   percentage: 0.5, // 0.5%
   collectorAddress: "0x2d2eba8c0da5879ab25b5bd37e211d230aabbb5c",
-  minFee: 0.001, // minimum fee in USDC
+  minFee: 0.001,
 };
 
 export function calculateFee(amount: string): {

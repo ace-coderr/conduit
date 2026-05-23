@@ -1,7 +1,3 @@
-// lib/verifyTransaction.ts
-// Server-side utility to verify a payment transaction on Arc Testnet.
-// Called from the PATCH /api/links/[linkId] route.
-
 import { arcPublicClient } from "./arcClient";
 import { parseEther, formatEther, type Hex } from "viem";
 

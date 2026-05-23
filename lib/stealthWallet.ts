@@ -1,4 +1,3 @@
-// lib/stealthWallet.ts
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { createWalletClient, createPublicClient, http, formatEther, parseEther } from "viem";
 import { arcTestnet } from "./arcChain";

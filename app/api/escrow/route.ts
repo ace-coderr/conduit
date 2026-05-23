@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { generateStealthWallet } from "@/lib/stealthWallet";
+import { createEscrowWallet } from "@/lib/circle";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -21,7 +21,9 @@ export async function GET(req: NextRequest) {
 
   // Auto-release past deadline
   const now = new Date();
-  const toRelease = escrows.filter(e => e.status === "HOLDING" && e.releaseDeadline && new Date(e.releaseDeadline) <= now);
+  const toRelease = escrows.filter(
+    e => e.status === "HOLDING" && e.releaseDeadline && new Date(e.releaseDeadline) <= now
+  );
   if (toRelease.length > 0) {
     await db.escrowLink.updateMany({
       where: { id: { in: toRelease.map(e => e.id) } },
@@ -50,13 +52,19 @@ export async function POST(req: NextRequest) {
   if (!title?.trim()) return NextResponse.json({ error: "Title is required." }, { status: 400 });
   if (!sellerAddress) return NextResponse.json({ error: "Seller address is required." }, { status: 400 });
   if (!sellerContact?.trim()) return NextResponse.json({ error: "Contact is required." }, { status: 400 });
-  const parsed = parseFloat(amount);
-  if (isNaN(parsed) || parsed <= 0) return NextResponse.json({ error: "Enter a valid amount greater than 0." }, { status: 400 });
-  const parsedDays = deliveryDays ? parseInt(deliveryDays) : 7;
-if (isNaN(parsedDays) || parsedDays < 1) return NextResponse.json({ error: "Enter a valid delivery window." }, { status: 400 });
 
-  const wallet = generateStealthWallet();
-  const escrow = await db.escrowLink.create({
+  const parsed = parseFloat(amount);
+  if (isNaN(parsed) || parsed <= 0) {
+    return NextResponse.json({ error: "Enter a valid amount greater than 0." }, { status: 400 });
+  }
+
+  const parsedDays = deliveryDays ? parseInt(deliveryDays) : 7;
+  if (isNaN(parsedDays) || parsedDays < 1) {
+    return NextResponse.json({ error: "Enter a valid delivery window." }, { status: 400 });
+  }
+
+  // Create a placeholder record first to get the escrow ID
+  const placeholder = await db.escrowLink.create({
     data: {
       title: title.trim(),
       description: description?.trim() || null,
@@ -64,9 +72,32 @@ if (isNaN(parsedDays) || parsedDays < 1) return NextResponse.json({ error: "Ente
       sellerAddress: sellerAddress.toLowerCase(),
       sellerContact: sellerContact.trim(),
       deliveryDays: parsedDays,
-      stealthAddress: wallet.address,
-      stealthPrivateKey: wallet.encryptedPrivateKey,
+      stealthAddress: "pending",
+      stealthPrivateKey: null,
       status: "ACTIVE",
+    },
+  });
+
+  // Create Circle wallet using the escrow ID as reference
+  let wallet: { walletId: string; address: string };
+  try {
+    wallet = await createEscrowWallet(placeholder.id);
+  } catch (err: any) {
+    // Clean up placeholder if wallet creation fails
+    await db.escrowLink.delete({ where: { id: placeholder.id } });
+    console.error("[escrow create] Circle wallet creation failed:", err.message);
+    return NextResponse.json(
+      { error: "Failed to create escrow wallet. Please try again." },
+      { status: 500 }
+    );
+  }
+
+  // Update with real wallet details
+  const escrow = await db.escrowLink.update({
+    where: { id: placeholder.id },
+    data: {
+      stealthAddress: wallet.address,
+      circleWalletId: wallet.walletId,
     },
   });
 

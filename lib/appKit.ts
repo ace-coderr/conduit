@@ -1,6 +1,3 @@
-// lib/appKit.ts
-// Circle App Kit setup for Unified Balance cross-chain payments
-
 import { AppKit } from "@circle-fin/app-kit";
 
 // Supported source chains for Unified Balance (testnet)
