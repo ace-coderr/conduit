@@ -74,7 +74,7 @@ export default function ContactsPage() {
     const copyPayLink = (c: Contact) => {
         const url = c.profile?.username
             ? `${window.location.origin}/u/${c.profile.username}`
-            : `${window.location.origin}/pay/${c.contactAddress}`;
+            : `${window.location.origin}/@${c.contactAddress}`;
         navigator.clipboard.writeText(url);
         setCopiedId(c.id);
         setTimeout(() => setCopiedId(null), 2000);
