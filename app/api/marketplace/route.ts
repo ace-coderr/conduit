@@ -44,6 +44,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid endpoint URL" }, { status: 400 });
   }
 
+  // Auto-lookup username from profile
+  const profile = await db.userProfile.findUnique({
+    where: { address: creatorAddress.toLowerCase() },
+  });
+
   const listing = await db.marketplaceListing.create({
     data: {
       name: name.trim(),
@@ -52,7 +57,7 @@ export async function POST(req: NextRequest) {
       endpoint: endpoint.trim(),
       category: category.trim(),
       creatorAddress: creatorAddress.toLowerCase(),
-      creatorUsername: creatorUsername?.trim() || null,
+      creatorUsername: profile?.username ?? creatorUsername?.trim() ?? null,
       docsUrl: docsUrl?.trim() || null,
       status: "PENDING",
     },

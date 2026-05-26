@@ -58,13 +58,16 @@ export default function MarketplacePage() {
                 <div style={{ maxWidth: 1100, margin: "0 auto" }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
                         <div>
-                            <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 20, padding: "3px 12px", marginBottom: 12 }}>
-                                <div style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--c)" }} />
-                                <span style={{ fontSize: 10, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, letterSpacing: ".08em" }}>x402 MARKETPLACE</span>
+                            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                                <Link href="/" style={{ fontSize: 12, color: "var(--ink-3)", textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                    ← Back to Conduit
+                                </Link>
+                                <div style={{ width: 1, height: 14, background: "var(--stroke)" }} />
+                                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 20, padding: "3px 12px" }}>
+                                    <div style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--c)" }} />
+                                    <span style={{ fontSize: 10, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, letterSpacing: ".08em" }}>x402 MARKETPLACE</span>
+                                </div>
                             </div>
-                            <Link href="/" style={{ fontSize: 12, color: "var(--ink-3)", textDecoration: "none", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4, marginBottom: 16 }}>
-                                ← Back to Conduit
-                            </Link>
                             <h1 style={{ fontSize: 32, fontWeight: 900, color: "var(--ink-1)", letterSpacing: "-.05em", marginBottom: 6 }}>API Marketplace</h1>
                             <p style={{ fontSize: 14, color: "var(--ink-3)", lineHeight: 1.6 }}>Discover and pay for APIs in USDC on Arc Network. AI agents pay automatically.</p>
                         </div>
