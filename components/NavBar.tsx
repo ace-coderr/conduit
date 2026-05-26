@@ -109,7 +109,7 @@ function NavDropdown({ group, pathname }: { group: typeof GROUPS[0]; pathname: s
         <div style={{
           position: "absolute", top: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)",
           background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: "var(--r-lg)",
-          boxShadow: "var(--elev-2)", minWidth: 220, zIndex: 200, overflow: "hidden",
+          boxShadow: "var(--elev-2)", minWidth: 220, zIndex: 9999, overflow: "visible",
           animation: "fadeInDown .12s ease",
         }}>
           <div style={{ padding: "10px 14px 8px", borderBottom: "1px solid var(--stroke)" }}>
