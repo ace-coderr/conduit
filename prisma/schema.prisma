@@ -34,9 +34,9 @@ model EscrowLink {
   sellerAddress       String
   sellerContact       String?
   buyerAddress        String?
-  stealthAddress      String          // kept for display — now holds Circle wallet address
-  stealthPrivateKey   String?         // nullable — not used for Circle wallets
-  circleWalletId      String?         // Circle Developer-Controlled Wallet ID
+  stealthAddress      String
+  stealthPrivateKey   String?
+  circleWalletId      String?
   status              String          @default("ACTIVE")
   txHash              String?
   releaseTxHash       String?
@@ -44,7 +44,7 @@ model EscrowLink {
   paidAt              DateTime?
   deliveryDays        Int?
   deliveryDeadline    DateTime?
-  releaseDeadline     DateTime?       // deliveryDeadline + 7 days (auto-release)
+  releaseDeadline     DateTime?
   confirmedAt         DateTime?
   disputedAt          DateTime?
   disputeReason       String?
@@ -98,4 +98,25 @@ model Contact {
   createdAt      DateTime @default(now())
 
   @@unique([ownerAddress, contactAddress])
+}
+
+model MarketplaceListing {
+  id              String   @id @default(cuid())
+  name            String
+  description     String
+  price           String
+  endpoint        String
+  category        String
+  creatorAddress  String
+  creatorUsername String?
+  status          String   @default("PENDING")
+  featured        Boolean  @default(false)
+  tryItUrl        String?
+  docsUrl         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@index([creatorAddress])
 }

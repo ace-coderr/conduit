@@ -41,6 +41,10 @@ const LINKS = [
     label: "Contacts", href: "/contacts",
     icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><circle cx="6" cy="5" r="2.5" /><path d="M1 13c0-2.76 2.24-5 5-5" /><circle cx="12" cy="7" r="2" /><path d="M10 13c0-1.66 1.34-3 3-3" strokeLinecap="round" /></svg>
   },
+  {
+    label: "Marketplace", href: "/marketplace",
+    icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><path d="M2 3h12l-1 8H3L2 3z" strokeLinecap="round" /><path d="M6 3V2a2 2 0 014 0v1" strokeLinecap="round" /></svg>
+  },
 ];
 
 export function NavBar() {
