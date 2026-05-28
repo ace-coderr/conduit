@@ -44,6 +44,10 @@ model EscrowLink {
   paidAt              DateTime?
   deliveryDays        Int?
   deliveryDeadline    DateTime?
+  aiVerdict         String?
+  aiConfidence      Int?
+  aiReasoning       String?
+  aiVerdictAt       DateTime?
   releaseDeadline     DateTime?
   confirmedAt         DateTime?
   disputedAt          DateTime?

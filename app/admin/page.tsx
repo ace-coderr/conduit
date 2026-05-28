@@ -54,6 +54,7 @@ export default function AdminPage() {
   const [escrowTab, setEscrowTab] = useState<"all" | "disputed" | "holding">("disputed");
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [resolveMsg, setResolveMsg] = useState<Record<string, string>>({});
+  const [aiLoading, setAiLoading] = useState<string | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -146,10 +147,7 @@ export default function AdminPage() {
       const endpoint = action === "release" ? "/api/escrow/release" : "/api/escrow/refund";
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-wallet-address": address?.toLowerCase() ?? "",
-        },
+        headers: { "Content-Type": "application/json", "x-wallet-address": address?.toLowerCase() ?? "" },
         body: JSON.stringify({ escrowId }),
       });
       const data = await res.json();
@@ -163,6 +161,33 @@ export default function AdminPage() {
       setResolveMsg(prev => ({ ...prev, [escrowId]: "Network error" }));
     } finally {
       setResolvingId(null);
+    }
+  };
+
+  const requestAiVerdict = async (escrowId: string) => {
+    setAiLoading(escrowId);
+    try {
+      const res = await fetch(`/api/escrow/${escrowId}/ai-verdict`, {
+        method: "POST",
+        headers: { "x-wallet-address": address?.toLowerCase() ?? "" },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        const { verdict, executed } = data;
+        const emoji = verdict.decision === "RELEASE" ? "✅" : verdict.decision === "REFUND" ? "🔄" : "⚠️";
+        const action = executed ? "— Auto-executed ✓" : "— Manual review needed";
+        setResolveMsg(prev => ({
+          ...prev,
+          [escrowId]: `${emoji} AI: ${verdict.summary} (${verdict.confidence}% confidence) ${action}`,
+        }));
+        fetchAll();
+      } else {
+        setResolveMsg(prev => ({ ...prev, [escrowId]: `AI Error: ${data.error}` }));
+      }
+    } catch {
+      setResolveMsg(prev => ({ ...prev, [escrowId]: "AI request failed" }));
+    } finally {
+      setAiLoading(null);
     }
   };
 
@@ -181,9 +206,7 @@ export default function AdminPage() {
           </div>
           <p style={{ fontSize: 18, fontWeight: 800, color: "var(--ink-1)", marginBottom: 8 }}>Admin Access</p>
           <p style={{ fontSize: 13, color: "var(--ink-3)", marginBottom: 24, lineHeight: 1.6 }}>Connect your admin wallet to access the platform dashboard.</p>
-          <button onClick={() => connect({ connector: injected() })} style={{ width: "100%", padding: "13px", background: "var(--c)", border: "none", borderRadius: "var(--r-md)", color: "#000", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif", boxShadow: "0 4px 16px rgba(0,229,160,.35)" }}>
-            Connect Wallet
-          </button>
+          <button onClick={() => connect({ connector: injected() })} style={{ width: "100%", padding: "13px", background: "var(--c)", border: "none", borderRadius: "var(--r-md)", color: "#000", fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif", boxShadow: "0 4px 16px rgba(0,229,160,.35)" }}>Connect Wallet</button>
         </div>
       </div>
     );
@@ -322,6 +345,7 @@ export default function AdminPage() {
                     <span style={{ fontSize: 11, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink-2)" }}>{e.sellerAddress.slice(0, 6)}...{e.sellerAddress.slice(-4)}</span>
                     <span style={{ fontSize: 11, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink-3)" }}>{e.buyerAddress ? `${e.buyerAddress.slice(0, 6)}...${e.buyerAddress.slice(-4)}` : "—"}</span>
                     <span style={{ fontSize: 10, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink-3)" }}>{fmtDate(e.createdAt)}</span>
+
                     {e.status === "DISPUTED" && (
                       <div style={{ gridColumn: "1 / -1", paddingTop: 10, borderTop: "1px solid rgba(240,62,95,.15)", marginTop: 6 }}>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 10, fontSize: 11, fontFamily: "IBM Plex Mono, monospace", background: "rgba(240,62,95,.05)", border: "1px solid rgba(240,62,95,.15)", borderRadius: "var(--r-sm)", padding: "8px 12px" }}>
@@ -330,13 +354,23 @@ export default function AdminPage() {
                           <span><span style={{ color: "var(--ink-3)" }}>Amount at stake: </span><span style={{ color: "#5b8ff9", fontWeight: 700 }}>{fmt(parseFloat(e.amount))} USDC</span></span>
                           {e.sellerContact && <span><span style={{ color: "var(--ink-3)" }}>Contact: </span><span style={{ color: "var(--ink-1)", fontWeight: 700 }}>{e.sellerContact}</span></span>}
                         </div>
-                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                        <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
                           {resolveMsg[e.id] ? (
                             <span style={{ fontSize: 12, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700 }}>{resolveMsg[e.id]}</span>
                           ) : (
                             <>
-                              <button onClick={() => resolveEscrow(e.id, "release")} disabled={resolvingId === e.id} style={{ padding: "7px 16px", background: "var(--c)", border: "none", borderRadius: "var(--r-sm)", color: "#000", fontSize: 12, fontWeight: 700, cursor: resolvingId === e.id ? "not-allowed" : "pointer", fontFamily: "Sora, sans-serif", opacity: resolvingId === e.id ? .5 : 1 }}>{resolvingId === e.id ? "Processing..." : "✓ Release to Seller"}</button>
-                              <button onClick={() => resolveEscrow(e.id, "refund")} disabled={resolvingId === e.id} style={{ padding: "7px 16px", background: "transparent", border: "1px solid var(--danger)", borderRadius: "var(--r-sm)", color: "var(--danger)", fontSize: 12, fontWeight: 700, cursor: resolvingId === e.id ? "not-allowed" : "pointer", fontFamily: "Sora, sans-serif", opacity: resolvingId === e.id ? .5 : 1 }}>{resolvingId === e.id ? "Processing..." : "↩ Refund Buyer"}</button>
+                              <button onClick={() => resolveEscrow(e.id, "release")} disabled={resolvingId === e.id || aiLoading === e.id}
+                                style={{ padding: "7px 16px", background: "var(--c)", border: "none", borderRadius: "var(--r-sm)", color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif", opacity: resolvingId === e.id ? .5 : 1 }}>
+                                {resolvingId === e.id ? "Processing..." : "✓ Release to Seller"}
+                              </button>
+                              <button onClick={() => resolveEscrow(e.id, "refund")} disabled={resolvingId === e.id || aiLoading === e.id}
+                                style={{ padding: "7px 16px", background: "transparent", border: "1px solid var(--danger)", borderRadius: "var(--r-sm)", color: "var(--danger)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif", opacity: resolvingId === e.id ? .5 : 1 }}>
+                                {resolvingId === e.id ? "Processing..." : "↩ Refund Buyer"}
+                              </button>
+                              <button onClick={() => requestAiVerdict(e.id)} disabled={resolvingId === e.id || aiLoading === e.id}
+                                style={{ padding: "7px 16px", background: "rgba(167,139,250,.15)", border: "1px solid rgba(167,139,250,.4)", borderRadius: "var(--r-sm)", color: "#a78bfa", fontSize: 12, fontWeight: 700, cursor: aiLoading === e.id ? "not-allowed" : "pointer", fontFamily: "Sora, sans-serif", opacity: aiLoading === e.id ? .6 : 1 }}>
+                                {aiLoading === e.id ? "🤖 Analyzing..." : "🤖 AI Verdict"}
+                              </button>
                               <span style={{ fontSize: 10, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>Review dispute reason above before resolving</span>
                             </>
                           )}
