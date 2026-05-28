@@ -10,43 +10,20 @@ const FEE_COLLECTOR = "0x2d2eba8c0da5879ab25b5bd37e211d230aabbb5c";
 const FEE_PERCENT = 0.5;
 
 interface PlatformLink {
-  id: string;
-  title: string;
-  amount: string;
-  status: string;
-  recipientAddress: string;
-  stealthAddress?: string;
-  txHash?: string;
-  paidBy?: string;
-  paidAt?: string;
-  createdAt: string;
+  id: string; title: string; amount: string; status: string;
+  recipientAddress: string; stealthAddress?: string;
+  txHash?: string; paidBy?: string; paidAt?: string; createdAt: string;
 }
 
 interface EscrowLink {
-  id: string;
-  title: string;
-  amount: string;
-  status: string;
-  sellerAddress: string;
-  buyerAddress?: string;
-  stealthAddress: string;
-  txHash?: string;
-  releaseTxHash?: string;
-  paidAt?: string;
-  releaseDeadline?: string;
-  confirmedAt?: string;
-  disputedAt?: string;
-  disputeReason?: string;
-  sellerContact?: string;
-  createdAt: string;
+  id: string; title: string; amount: string; status: string;
+  sellerAddress: string; buyerAddress?: string; stealthAddress: string;
+  txHash?: string; releaseTxHash?: string; paidAt?: string;
+  releaseDeadline?: string; confirmedAt?: string; disputedAt?: string;
+  disputeReason?: string; sellerContact?: string; createdAt: string;
 }
 
-interface DayData {
-  date: string;
-  label: string;
-  amount: number;
-  count: number;
-}
+interface DayData { date: string; label: string; amount: number; count: number; }
 
 function StatCard({ label, value, unit, sub, color, icon }: {
   label: string; value: string; unit?: string; sub?: string; color: string; icon: JSX.Element;
@@ -86,7 +63,9 @@ export default function AdminPage() {
     if (!address) return;
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/admin/links?wallet=${address}`);
+      const res = await fetch(`/api/admin/links`, {
+        headers: { "x-wallet-address": address.toLowerCase() },
+      });
       if (!res.ok) return;
       const data = await res.json();
       setLinks(data.links ?? []);
@@ -112,7 +91,6 @@ export default function AdminPage() {
     if (mounted && isConnected && isAdmin) { fetchAll(); fetchFeeBalance(); }
   }, [mounted, isConnected, isAdmin, fetchAll, fetchFeeBalance]);
 
-  // Payment link stats
   const completed = links.filter(l => l.status === "COMPLETED");
   const active = links.filter(l => l.status === "ACTIVE");
   const expired = links.filter(l => l.status === "EXPIRED");
@@ -124,21 +102,16 @@ export default function AdminPage() {
   const completionRate = links.length > 0 ? Math.round((completed.length / links.length) * 100) : 0;
   const avgPayment = completed.length > 0 ? totalVolume / completed.length : 0;
 
-  // Escrow stats
   const disputedEscrows = escrows.filter(e => e.status === "DISPUTED");
   const holdingEscrows = escrows.filter(e => e.status === "HOLDING");
   const releasedEscrows = escrows.filter(e => ["RELEASED", "CONFIRMED"].includes(e.status));
   const totalEscrowVolume = escrows.reduce((s, e) => s + parseFloat(e.amount), 0);
   const totalHeld = holdingEscrows.reduce((s, e) => s + parseFloat(e.amount), 0);
-
-  const filteredEscrows = escrowTab === "disputed" ? disputedEscrows
-    : escrowTab === "holding" ? holdingEscrows
-      : escrows;
+  const filteredEscrows = escrowTab === "disputed" ? disputedEscrows : escrowTab === "holding" ? holdingEscrows : escrows;
 
   const fmt = (n: number) => n % 1 === 0 ? n.toString() : n.toFixed(2);
   const fmtDate = (d: string) => new Date(d).toLocaleDateString("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
-  // Chart data
   const chartDays = range === "7d" ? 7 : range === "30d" ? 30 : 90;
   const chartData: DayData[] = (() => {
     const days = [];
@@ -148,49 +121,21 @@ export default function AdminPage() {
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split("T")[0];
       const dayLinks = completed.filter(l => (l.paidAt ?? l.createdAt)?.startsWith(dateStr));
-      days.push({
-        date: dateStr,
-        label: d.toLocaleDateString("en", { month: "short", day: "numeric" }),
-        amount: dayLinks.reduce((s, l) => s + parseFloat(l.amount), 0),
-        count: dayLinks.length,
-      });
+      days.push({ date: dateStr, label: d.toLocaleDateString("en", { month: "short", day: "numeric" }), amount: dayLinks.reduce((s, l) => s + parseFloat(l.amount), 0), count: dayLinks.length });
     }
     return days;
   })();
   const maxAmount = Math.max(...chartData.map(d => d.amount), 1);
 
   const earnerMap: Record<string, number> = {};
-  completed.forEach(l => {
-    const addr = l.recipientAddress.toLowerCase();
-    earnerMap[addr] = (earnerMap[addr] ?? 0) + parseFloat(l.amount);
-  });
+  completed.forEach(l => { const addr = l.recipientAddress.toLowerCase(); earnerMap[addr] = (earnerMap[addr] ?? 0) + parseFloat(l.amount); });
   const topEarners = Object.entries(earnerMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const cancelledEscrows = escrows.filter(e => e.status === "CANCELLED" && e.txHash);
 
   const allTxForAdmin = [
-    ...completed.map(l => ({
-      id: l.id, title: l.title, amount: l.amount,
-      recipientAddress: l.recipientAddress,
-      paidBy: l.paidBy ?? null, paidAt: l.paidAt ?? l.createdAt,
-      txHash: l.txHash ?? null, createdAt: l.createdAt,
-      isEscrow: false, isRefunded: false,
-    })),
-    ...releasedEscrows.map(e => ({
-      id: e.id, title: e.title, amount: e.amount,
-      recipientAddress: e.sellerAddress,
-      paidBy: e.buyerAddress ?? null,
-      paidAt: e.confirmedAt ?? e.paidAt ?? e.createdAt,
-      txHash: e.releaseTxHash ?? e.txHash ?? null, createdAt: e.createdAt,
-      isEscrow: true, isRefunded: false,
-    })),
-    ...cancelledEscrows.map(e => ({
-      id: e.id, title: e.title, amount: e.amount,
-      recipientAddress: e.sellerAddress,
-      paidBy: e.buyerAddress ?? null,
-      paidAt: e.disputedAt ?? e.paidAt ?? e.createdAt,
-      txHash: e.txHash ?? null, createdAt: e.createdAt,
-      isEscrow: true, isRefunded: true,
-    })),
+    ...completed.map(l => ({ id: l.id, title: l.title, amount: l.amount, recipientAddress: l.recipientAddress, paidBy: l.paidBy ?? null, paidAt: l.paidAt ?? l.createdAt, txHash: l.txHash ?? null, createdAt: l.createdAt, isEscrow: false, isRefunded: false })),
+    ...releasedEscrows.map(e => ({ id: e.id, title: e.title, amount: e.amount, recipientAddress: e.sellerAddress, paidBy: e.buyerAddress ?? null, paidAt: e.confirmedAt ?? e.paidAt ?? e.createdAt, txHash: e.releaseTxHash ?? e.txHash ?? null, createdAt: e.createdAt, isEscrow: true, isRefunded: false })),
+    ...cancelledEscrows.map(e => ({ id: e.id, title: e.title, amount: e.amount, recipientAddress: e.sellerAddress, paidBy: e.buyerAddress ?? null, paidAt: e.disputedAt ?? e.paidAt ?? e.createdAt, txHash: e.txHash ?? null, createdAt: e.createdAt, isEscrow: true, isRefunded: true })),
   ].sort((a, b) => new Date(b.paidAt).getTime() - new Date(a.paidAt).getTime());
 
   const recentTx = allTxForAdmin.slice(0, 20);
@@ -198,12 +143,13 @@ export default function AdminPage() {
   const resolveEscrow = async (escrowId: string, action: "release" | "refund") => {
     setResolvingId(escrowId);
     try {
-      const endpoint = action === "release"
-        ? "/api/escrow/release"
-        : `/api/escrow/refund?wallet=${address}`;
+      const endpoint = action === "release" ? "/api/escrow/release" : "/api/escrow/refund";
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-wallet-address": address?.toLowerCase() ?? "",
+        },
         body: JSON.stringify({ escrowId }),
       });
       const data = await res.json();
@@ -255,9 +201,7 @@ export default function AdminPage() {
           <p style={{ fontSize: 18, fontWeight: 800, color: "var(--danger)", marginBottom: 8 }}>Access Denied</p>
           <p style={{ fontSize: 13, color: "var(--ink-3)", marginBottom: 8, lineHeight: 1.6 }}>This wallet is not authorized.</p>
           <p style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace", marginBottom: 24 }}>{address?.slice(0, 10)}...{address?.slice(-4)}</p>
-          <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 20px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: 700, color: "var(--ink-2)", textDecoration: "none" }}>
-            ← Back to Conduit
-          </Link>
+          <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 20px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: 700, color: "var(--ink-2)", textDecoration: "none" }}>← Back to Conduit</Link>
         </div>
       </div>
     );
@@ -265,8 +209,6 @@ export default function AdminPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", fontFamily: "Sora, sans-serif" }}>
-
-      {/* Top bar */}
       <div style={{ height: 56, background: "var(--surface)", borderBottom: "1px solid var(--stroke)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px", position: "sticky", top: 0, zIndex: 100 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <img src="/conduit-logo-white.png" alt="Conduit" style={{ height: 58, width: "auto" }} />
@@ -298,35 +240,18 @@ export default function AdminPage() {
         </div>
 
         {isLoading ? (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}>
-            <div className="page-spinner" />
-          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}><div className="page-spinner" /></div>
         ) : (
           <>
-            {/* Main stats */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 20 }}>
-              <StatCard label="Total Volume" value={fmt(totalVolume)} unit="USDC" sub={`${completed.length} transactions`} color="var(--c)"
-                icon={<svg viewBox="0 0 20 20" fill="none" width="16" height="16"><circle cx="10" cy="10" r="8" stroke="var(--c)" strokeWidth="1.3" /><path d="M10 6v8M7.5 8C7.5 6.9 8.6 6 10 6s2.5.9 2.5 2-1.1 2-2.5 2-2.5.9-2.5 2S8.6 14 10 14s2.5-.9 2.5-2" stroke="var(--c)" strokeWidth="1.2" strokeLinecap="round" /></svg>}
-              />
-              <StatCard label="Fees Collected" value={feeBalance ?? fmt(totalFees)} unit="USDC" sub={feeBalance ? "live balance" : `calc. ${FEE_PERCENT}%`} color="var(--warning)"
-                icon={<svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M2 5h16v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5z" stroke="var(--warning)" strokeWidth="1.3" /><path d="M2 5l8 6 8-6" stroke="var(--warning)" strokeWidth="1.3" strokeLinecap="round" /></svg>}
-              />
-              <StatCard label="Total Users" value={uniqueUsers.toString()} sub={`${uniquePayers} unique payers`} color="var(--info)"
-                icon={<svg viewBox="0 0 20 20" fill="none" width="16" height="16"><circle cx="8" cy="7" r="3" stroke="var(--info)" strokeWidth="1.3" /><path d="M2 17c0-3.31 2.69-6 6-6s6 2.69 6 6" stroke="var(--info)" strokeWidth="1.3" strokeLinecap="round" /><path d="M13 11c2.21 0 4 1.79 4 4" stroke="var(--info)" strokeWidth="1.3" strokeLinecap="round" /><circle cx="14" cy="6" r="2" stroke="var(--info)" strokeWidth="1.3" /></svg>}
-              />
-              <StatCard label="Total Links" value={links.length.toString()} sub={`${completionRate}% completion`} color="var(--c)"
-                icon={<svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M11 7a3 3 0 010 4.24l-1.5 1.5a3 3 0 01-4.24-4.24l.75-.75" stroke="var(--c)" strokeWidth="1.3" strokeLinecap="round" /><path d="M9 13a3 3 0 010-4.24l1.5-1.5a3 3 0 014.24 4.24l-.75.75" stroke="var(--c)" strokeWidth="1.3" strokeLinecap="round" /></svg>}
-              />
+              <StatCard label="Total Volume" value={fmt(totalVolume)} unit="USDC" sub={`${completed.length} transactions`} color="var(--c)" icon={<svg viewBox="0 0 20 20" fill="none" width="16" height="16"><circle cx="10" cy="10" r="8" stroke="var(--c)" strokeWidth="1.3" /><path d="M10 6v8M7.5 8C7.5 6.9 8.6 6 10 6s2.5.9 2.5 2-1.1 2-2.5 2-2.5.9-2.5 2S8.6 14 10 14s2.5-.9 2.5-2" stroke="var(--c)" strokeWidth="1.2" strokeLinecap="round" /></svg>} />
+              <StatCard label="Fees Collected" value={feeBalance ?? fmt(totalFees)} unit="USDC" sub={feeBalance ? "live balance" : `calc. ${FEE_PERCENT}%`} color="var(--warning)" icon={<svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M2 5h16v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5z" stroke="var(--warning)" strokeWidth="1.3" /><path d="M2 5l8 6 8-6" stroke="var(--warning)" strokeWidth="1.3" strokeLinecap="round" /></svg>} />
+              <StatCard label="Total Users" value={uniqueUsers.toString()} sub={`${uniquePayers} unique payers`} color="var(--info)" icon={<svg viewBox="0 0 20 20" fill="none" width="16" height="16"><circle cx="8" cy="7" r="3" stroke="var(--info)" strokeWidth="1.3" /><path d="M2 17c0-3.31 2.69-6 6-6s6 2.69 6 6" stroke="var(--info)" strokeWidth="1.3" strokeLinecap="round" /><path d="M13 11c2.21 0 4 1.79 4 4" stroke="var(--info)" strokeWidth="1.3" strokeLinecap="round" /><circle cx="14" cy="6" r="2" stroke="var(--info)" strokeWidth="1.3" /></svg>} />
+              <StatCard label="Total Links" value={links.length.toString()} sub={`${completionRate}% completion`} color="var(--c)" icon={<svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M11 7a3 3 0 010 4.24l-1.5 1.5a3 3 0 01-4.24-4.24l.75-.75" stroke="var(--c)" strokeWidth="1.3" strokeLinecap="round" /><path d="M9 13a3 3 0 010-4.24l1.5-1.5a3 3 0 014.24 4.24l-.75.75" stroke="var(--c)" strokeWidth="1.3" strokeLinecap="round" /></svg>} />
             </div>
 
-            {/* Secondary stats */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 24 }}>
-              {[
-                { label: "Completed", value: completed.length, color: "var(--c)" },
-                { label: "Active", value: active.length, color: "var(--warning)" },
-                { label: "Expired", value: expired.length, color: "var(--danger)" },
-                { label: "Stealth Links", value: stealthCount, color: "#a78bfa" },
-              ].map(s => (
+              {[{ label: "Completed", value: completed.length, color: "var(--c)" }, { label: "Active", value: active.length, color: "var(--warning)" }, { label: "Expired", value: expired.length, color: "var(--danger)" }, { label: "Stealth Links", value: stealthCount, color: "#a78bfa" }].map(s => (
                 <div key={s.label} style={{ background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: "var(--r-lg)", padding: "16px 20px", boxShadow: "var(--elev-1)" }}>
                   <p style={{ fontSize: 24, fontWeight: 800, color: s.color, fontFamily: "IBM Plex Mono, monospace", marginBottom: 4 }}>{s.value}</p>
                   <p style={{ fontSize: 12, color: "var(--ink-3)", fontWeight: 600 }}>{s.label}</p>
@@ -334,13 +259,8 @@ export default function AdminPage() {
               ))}
             </div>
 
-            {/* Avg stats */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 24 }}>
-              {[
-                { label: "Avg Payment", value: `${fmt(avgPayment)} USDC` },
-                { label: "Avg Links per User", value: uniqueUsers > 0 ? (links.length / uniqueUsers).toFixed(1) : "0" },
-                { label: "Total Fees (calc.)", value: `${fmt(totalFees)} USDC` },
-              ].map(s => (
+              {[{ label: "Avg Payment", value: `${fmt(avgPayment)} USDC` }, { label: "Avg Links per User", value: uniqueUsers > 0 ? (links.length / uniqueUsers).toFixed(1) : "0" }, { label: "Total Fees (calc.)", value: `${fmt(totalFees)} USDC` }].map(s => (
                 <div key={s.label} style={{ background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: "var(--r-lg)", padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "var(--elev-1)" }}>
                   <span style={{ fontSize: 12, color: "var(--ink-3)", fontWeight: 600 }}>{s.label}</span>
                   <span style={{ fontSize: 14, fontWeight: 800, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace" }}>{s.value}</span>
@@ -348,24 +268,13 @@ export default function AdminPage() {
               ))}
             </div>
 
-            {/* ── ESCROW SECTION ── */}
             <div style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 10 }}>
               <h2 style={{ fontSize: 16, fontWeight: 800, color: "var(--ink-1)", letterSpacing: "-.02em" }}>Escrow Overview</h2>
-              {disputedEscrows.length > 0 && (
-                <span style={{ fontSize: 10, background: "var(--danger)", color: "#fff", borderRadius: 20, padding: "2px 8px", fontWeight: 700, fontFamily: "IBM Plex Mono, monospace" }}>
-                  {disputedEscrows.length} DISPUTED
-                </span>
-              )}
+              {disputedEscrows.length > 0 && <span style={{ fontSize: 10, background: "var(--danger)", color: "#fff", borderRadius: 20, padding: "2px 8px", fontWeight: 700, fontFamily: "IBM Plex Mono, monospace" }}>{disputedEscrows.length} DISPUTED</span>}
             </div>
 
-            {/* Escrow stats */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 20 }}>
-              {[
-                { label: "Total Escrow Volume", value: `${fmt(totalEscrowVolume)} USDC`, color: "#5b8ff9" },
-                { label: "Currently Held", value: `${fmt(totalHeld)} USDC`, color: "var(--warning)" },
-                { label: "Released", value: releasedEscrows.length.toString(), color: "var(--c)" },
-                { label: "Disputed", value: disputedEscrows.length.toString(), color: disputedEscrows.length > 0 ? "var(--danger)" : "var(--ink-3)" },
-              ].map(s => (
+              {[{ label: "Total Escrow Volume", value: `${fmt(totalEscrowVolume)} USDC`, color: "#5b8ff9" }, { label: "Currently Held", value: `${fmt(totalHeld)} USDC`, color: "var(--warning)" }, { label: "Released", value: releasedEscrows.length.toString(), color: "var(--c)" }, { label: "Disputed", value: disputedEscrows.length.toString(), color: disputedEscrows.length > 0 ? "var(--danger)" : "var(--ink-3)" }].map(s => (
                 <div key={s.label} style={{ background: "var(--surface)", border: `1px solid ${s.label === "Disputed" && disputedEscrows.length > 0 ? "rgba(240,62,95,.3)" : "var(--stroke)"}`, borderRadius: "var(--r-lg)", padding: "16px 20px", boxShadow: "var(--elev-1)" }}>
                   <p style={{ fontSize: 20, fontWeight: 800, color: s.color, fontFamily: "IBM Plex Mono, monospace", marginBottom: 4 }}>{s.value}</p>
                   <p style={{ fontSize: 12, color: "var(--ink-3)", fontWeight: 600 }}>{s.label}</p>
@@ -373,101 +282,61 @@ export default function AdminPage() {
               ))}
             </div>
 
-            {/* Escrow table */}
             <div className="card" style={{ marginBottom: 24 }}>
               <div className="card-head" style={{ justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                  <div className="card-head-icon">
-                    <svg viewBox="0 0 20 20" fill="none" width="16" height="16"><rect x="3" y="8" width="14" height="10" rx="1.5" stroke="var(--c)" strokeWidth="1.3" /><path d="M6 8V6a4 4 0 018 0v2" stroke="var(--c)" strokeWidth="1.3" strokeLinecap="round" /></svg>
-                  </div>
-                  <div>
-                    <div className="card-title">Escrow Links</div>
-                    <div className="card-subtitle">{escrows.length} total · {disputedEscrows.length} disputed · {holdingEscrows.length} holding</div>
-                  </div>
+                  <div className="card-head-icon"><svg viewBox="0 0 20 20" fill="none" width="16" height="16"><rect x="3" y="8" width="14" height="10" rx="1.5" stroke="var(--c)" strokeWidth="1.3" /><path d="M6 8V6a4 4 0 018 0v2" stroke="var(--c)" strokeWidth="1.3" strokeLinecap="round" /></svg></div>
+                  <div><div className="card-title">Escrow Links</div><div className="card-subtitle">{escrows.length} total · {disputedEscrows.length} disputed · {holdingEscrows.length} holding</div></div>
                 </div>
                 <div style={{ display: "flex", gap: 4, background: "var(--bg)", borderRadius: "var(--r-sm)", padding: 3 }}>
                   {(["disputed", "holding", "all"] as const).map(t => (
                     <button key={t} onClick={() => setEscrowTab(t)} style={{ padding: "5px 12px", borderRadius: 6, border: "none", background: escrowTab === t ? "var(--surface)" : "transparent", color: escrowTab === t ? (t === "disputed" ? "var(--danger)" : "var(--ink-1)") : "var(--ink-3)", fontSize: 11, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, cursor: "pointer", transition: "all .15s", position: "relative" }}>
                       {t.toUpperCase()}
-                      {t === "disputed" && disputedEscrows.length > 0 && (
-                        <span style={{ marginLeft: 4, background: "var(--danger)", color: "#fff", borderRadius: "50%", width: 14, height: 14, fontSize: 8, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{disputedEscrows.length}</span>
-                      )}
+                      {t === "disputed" && disputedEscrows.length > 0 && <span style={{ marginLeft: 4, background: "var(--danger)", color: "#fff", borderRadius: "50%", width: 14, height: 14, fontSize: 8, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{disputedEscrows.length}</span>}
                     </button>
                   ))}
                 </div>
               </div>
-
-              {/* Col headers */}
               <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr", gap: 12, padding: "10px 24px", background: "var(--raised)", borderBottom: "1px solid var(--stroke)" }}>
-                {["TITLE", "STATUS", "AMOUNT", "SELLER", "BUYER", "DATE"].map(c => (
-                  <span key={c} style={{ fontSize: 9, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink-3)", letterSpacing: ".12em", fontWeight: 600 }}>{c}</span>
-                ))}
+                {["TITLE", "STATUS", "AMOUNT", "SELLER", "BUYER", "DATE"].map(c => <span key={c} style={{ fontSize: 9, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink-3)", letterSpacing: ".12em", fontWeight: 600 }}>{c}</span>)}
               </div>
-
               <div style={{ maxHeight: 400, overflowY: "auto" }}>
                 {filteredEscrows.length === 0 ? (
-                  <div style={{ padding: 32, textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>
-                    {escrowTab === "disputed" ? "No disputes 🎉" : escrowTab === "holding" ? "No funds currently held" : "No escrow links yet"}
-                  </div>
+                  <div style={{ padding: 32, textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>{escrowTab === "disputed" ? "No disputes 🎉" : escrowTab === "holding" ? "No funds currently held" : "No escrow links yet"}</div>
                 ) : filteredEscrows.map((e, i) => (
-                  <div key={e.id}
-                    style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr", gap: 12, padding: "13px 24px", alignItems: "center", borderBottom: i < filteredEscrows.length - 1 ? "1px solid var(--stroke)" : "none", transition: "background .12s", background: e.status === "DISPUTED" ? "rgba(240,62,95,.03)" : "transparent" }}
+                  <div key={e.id} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr", gap: 12, padding: "13px 24px", alignItems: "center", borderBottom: i < filteredEscrows.length - 1 ? "1px solid var(--stroke)" : "none", transition: "background .12s", background: e.status === "DISPUTED" ? "rgba(240,62,95,.03)" : "transparent" }}
                     onMouseEnter={ev => (ev.currentTarget.style.background = e.status === "DISPUTED" ? "rgba(240,62,95,.06)" : "var(--raised)")}
                     onMouseLeave={ev => (ev.currentTarget.style.background = e.status === "DISPUTED" ? "rgba(240,62,95,.03)" : "transparent")}
                   >
                     <div style={{ minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.title}</p>
-                        {e.status === "DISPUTED" && (
-                          <span style={{ fontSize: 8, background: "var(--danger)", color: "#fff", borderRadius: 4, padding: "1px 5px", fontWeight: 700, fontFamily: "IBM Plex Mono, monospace", flexShrink: 0 }}>DISPUTE</span>
-                        )}
+                        {e.status === "DISPUTED" && <span style={{ fontSize: 8, background: "var(--danger)", color: "#fff", borderRadius: 4, padding: "1px 5px", fontWeight: 700, fontFamily: "IBM Plex Mono, monospace", flexShrink: 0 }}>DISPUTE</span>}
                       </div>
-                      {e.status === "DISPUTED" && e.disputeReason && (
-                        <p style={{ fontSize: 11, color: "var(--danger)", marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>"{e.disputeReason}"</p>
-                      )}
-                      {e.sellerContact && (
-                        <p style={{ fontSize: 10, color: "var(--ink-3)", marginTop: 2, fontFamily: "IBM Plex Mono, monospace" }}>📞 {e.sellerContact}</p>
-                      )}
-                      {e.txHash && (
-                        <a href={`https://testnet.arcscan.app/tx/${e.txHash}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", textDecoration: "none" }}>
-                          {e.txHash.slice(0, 8)}...↗
-                        </a>
-                      )}
+                      {e.status === "DISPUTED" && e.disputeReason && <p style={{ fontSize: 11, color: "var(--danger)", marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>"{e.disputeReason}"</p>}
+                      {e.sellerContact && <p style={{ fontSize: 10, color: "var(--ink-3)", marginTop: 2, fontFamily: "IBM Plex Mono, monospace" }}>📞 {e.sellerContact}</p>}
+                      {e.txHash && <a href={`https://testnet.arcscan.app/tx/${e.txHash}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", textDecoration: "none" }}>{e.txHash.slice(0, 8)}...↗</a>}
                     </div>
-                    <div>
-                      <span style={{ fontSize: 11, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: escrowStatusColor(e.status), background: `${escrowStatusColor(e.status)}15`, border: `1px solid ${escrowStatusColor(e.status)}30`, borderRadius: 20, padding: "2px 8px" }}>
-                        {e.status}
-                      </span>
-                    </div>
+                    <div><span style={{ fontSize: 11, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: escrowStatusColor(e.status), background: `${escrowStatusColor(e.status)}15`, border: `1px solid ${escrowStatusColor(e.status)}30`, borderRadius: 20, padding: "2px 8px" }}>{e.status}</span></div>
                     <span style={{ fontSize: 13, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: "#5b8ff9" }}>{fmt(parseFloat(e.amount))}</span>
                     <span style={{ fontSize: 11, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink-2)" }}>{e.sellerAddress.slice(0, 6)}...{e.sellerAddress.slice(-4)}</span>
                     <span style={{ fontSize: 11, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink-3)" }}>{e.buyerAddress ? `${e.buyerAddress.slice(0, 6)}...${e.buyerAddress.slice(-4)}` : "—"}</span>
                     <span style={{ fontSize: 10, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink-3)" }}>{fmtDate(e.createdAt)}</span>
-
-                    {/* Dispute resolution */}
                     {e.status === "DISPUTED" && (
                       <div style={{ gridColumn: "1 / -1", paddingTop: 10, borderTop: "1px solid rgba(240,62,95,.15)", marginTop: 6 }}>
-                        {/* Who disputed info */}
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 10, fontSize: 11, fontFamily: "IBM Plex Mono, monospace", background: "rgba(240,62,95,.05)", border: "1px solid rgba(240,62,95,.15)", borderRadius: "var(--r-sm)", padding: "8px 12px" }}>
                           <span><span style={{ color: "var(--ink-3)" }}>Dispute raised by: </span><span style={{ color: "var(--danger)", fontWeight: 700 }}>{e.buyerAddress ? `${e.buyerAddress.slice(0, 10)}...${e.buyerAddress.slice(-6)}` : "Unknown"}</span></span>
                           <span><span style={{ color: "var(--ink-3)" }}>Seller: </span><span style={{ color: "var(--ink-2)", fontWeight: 700 }}>{e.sellerAddress.slice(0, 10)}...{e.sellerAddress.slice(-6)}</span></span>
                           <span><span style={{ color: "var(--ink-3)" }}>Amount at stake: </span><span style={{ color: "#5b8ff9", fontWeight: 700 }}>{fmt(parseFloat(e.amount))} USDC</span></span>
                           {e.sellerContact && <span><span style={{ color: "var(--ink-3)" }}>Contact: </span><span style={{ color: "var(--ink-1)", fontWeight: 700 }}>{e.sellerContact}</span></span>}
                         </div>
-                        {/* Resolve buttons */}
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                           {resolveMsg[e.id] ? (
                             <span style={{ fontSize: 12, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700 }}>{resolveMsg[e.id]}</span>
                           ) : (
                             <>
-                              <button onClick={() => resolveEscrow(e.id, "release")} disabled={resolvingId === e.id}
-                                style={{ padding: "7px 16px", background: "var(--c)", border: "none", borderRadius: "var(--r-sm)", color: "#000", fontSize: 12, fontWeight: 700, cursor: resolvingId === e.id ? "not-allowed" : "pointer", fontFamily: "Sora, sans-serif", opacity: resolvingId === e.id ? .5 : 1 }}>
-                                {resolvingId === e.id ? "Processing..." : "✓ Release to Seller"}
-                              </button>
-                              <button onClick={() => resolveEscrow(e.id, "refund")} disabled={resolvingId === e.id}
-                                style={{ padding: "7px 16px", background: "transparent", border: "1px solid var(--danger)", borderRadius: "var(--r-sm)", color: "var(--danger)", fontSize: 12, fontWeight: 700, cursor: resolvingId === e.id ? "not-allowed" : "pointer", fontFamily: "Sora, sans-serif", opacity: resolvingId === e.id ? .5 : 1 }}>
-                                {resolvingId === e.id ? "Processing..." : "↩ Refund Buyer"}
-                              </button>
+                              <button onClick={() => resolveEscrow(e.id, "release")} disabled={resolvingId === e.id} style={{ padding: "7px 16px", background: "var(--c)", border: "none", borderRadius: "var(--r-sm)", color: "#000", fontSize: 12, fontWeight: 700, cursor: resolvingId === e.id ? "not-allowed" : "pointer", fontFamily: "Sora, sans-serif", opacity: resolvingId === e.id ? .5 : 1 }}>{resolvingId === e.id ? "Processing..." : "✓ Release to Seller"}</button>
+                              <button onClick={() => resolveEscrow(e.id, "refund")} disabled={resolvingId === e.id} style={{ padding: "7px 16px", background: "transparent", border: "1px solid var(--danger)", borderRadius: "var(--r-sm)", color: "var(--danger)", fontSize: 12, fontWeight: 700, cursor: resolvingId === e.id ? "not-allowed" : "pointer", fontFamily: "Sora, sans-serif", opacity: resolvingId === e.id ? .5 : 1 }}>{resolvingId === e.id ? "Processing..." : "↩ Refund Buyer"}</button>
                               <span style={{ fontSize: 10, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>Review dispute reason above before resolving</span>
                             </>
                           )}
@@ -479,55 +348,35 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* Volume chart */}
             <div className="card" style={{ marginBottom: 18 }}>
               <div className="card-head" style={{ justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
-                  <div className="card-head-icon">
-                    <svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M2 14l4-4 4 2 4-6 4 2" stroke="var(--c)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                  </div>
-                  <div>
-                    <div className="card-title">Platform Volume</div>
-                    <div className="card-subtitle">Payment links across all users</div>
-                  </div>
+                  <div className="card-head-icon"><svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M2 14l4-4 4 2 4-6 4 2" stroke="var(--c)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
+                  <div><div className="card-title">Platform Volume</div><div className="card-subtitle">Payment links across all users</div></div>
                 </div>
                 <div style={{ display: "flex", gap: 4, background: "var(--bg)", borderRadius: "var(--r-sm)", padding: 3 }}>
-                  {(["7d", "30d", "all"] as const).map(r => (
-                    <button key={r} onClick={() => setRange(r)} style={{ padding: "5px 12px", borderRadius: 6, border: "none", background: range === r ? "var(--surface)" : "transparent", color: range === r ? "var(--ink-1)" : "var(--ink-3)", fontSize: 11, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, cursor: "pointer", transition: "all .15s" }}>{r}</button>
-                  ))}
+                  {(["7d", "30d", "all"] as const).map(r => <button key={r} onClick={() => setRange(r)} style={{ padding: "5px 12px", borderRadius: 6, border: "none", background: range === r ? "var(--surface)" : "transparent", color: range === r ? "var(--ink-1)" : "var(--ink-3)", fontSize: 11, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, cursor: "pointer", transition: "all .15s" }}>{r}</button>)}
                 </div>
               </div>
               <div className="card-body">
-                {completed.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "40px 0", color: "var(--ink-3)", fontSize: 13 }}>No transactions yet</div>
-                ) : (
+                {completed.length === 0 ? <div style={{ textAlign: "center", padding: "40px 0", color: "var(--ink-3)", fontSize: 13 }}>No transactions yet</div> : (
                   <>
                     <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 140, marginBottom: 8 }}>
-                      {chartData.map((day, i) => (
-                        <div key={day.date} title={`${day.label}: ${fmt(day.amount)} USDC (${day.count} tx)`} style={{ flex: 1, height: `${Math.max((day.amount / maxAmount) * 100, day.amount > 0 ? 3 : 1.5)}%`, background: day.amount > 0 ? (i === chartData.length - 1 ? "var(--c)" : "rgba(0,229,160,.4)") : "var(--raised)", borderRadius: "3px 3px 0 0", minHeight: 2, transition: "height .4s ease" }} />
-                      ))}
+                      {chartData.map((day, i) => <div key={day.date} title={`${day.label}: ${fmt(day.amount)} USDC (${day.count} tx)`} style={{ flex: 1, height: `${Math.max((day.amount / maxAmount) * 100, day.amount > 0 ? 3 : 1.5)}%`, background: day.amount > 0 ? (i === chartData.length - 1 ? "var(--c)" : "rgba(0,229,160,.4)") : "var(--raised)", borderRadius: "3px 3px 0 0", minHeight: 2, transition: "height .4s ease" }} />)}
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      {chartData.filter((_, i) => i % (chartDays <= 7 ? 1 : chartDays <= 30 ? 5 : 10) === 0 || i === chartData.length - 1).map(day => (
-                        <span key={day.date} style={{ fontSize: 9, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>{day.label}</span>
-                      ))}
+                      {chartData.filter((_, i) => i % (chartDays <= 7 ? 1 : chartDays <= 30 ? 5 : 10) === 0 || i === chartData.length - 1).map(day => <span key={day.date} style={{ fontSize: 9, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>{day.label}</span>)}
                     </div>
                   </>
                 )}
               </div>
             </div>
 
-            {/* Bottom grid */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginBottom: 18 }}>
               <div className="card">
-                <div className="card-head">
-                  <div className="card-head-icon"><svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M10 2l2.4 4.8 5.6.8-4 3.9.9 5.5L10 14.5l-4.9 2.5.9-5.5L2 7.6l5.6-.8L10 2z" stroke="var(--c)" strokeWidth="1.3" strokeLinejoin="round" /></svg></div>
-                  <div><div className="card-title">Top Earners</div><div className="card-subtitle">By total volume</div></div>
-                </div>
+                <div className="card-head"><div className="card-head-icon"><svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M10 2l2.4 4.8 5.6.8-4 3.9.9 5.5L10 14.5l-4.9 2.5.9-5.5L2 7.6l5.6-.8L10 2z" stroke="var(--c)" strokeWidth="1.3" strokeLinejoin="round" /></svg></div><div><div className="card-title">Top Earners</div><div className="card-subtitle">By total volume</div></div></div>
                 <div style={{ padding: "0 0 8px" }}>
-                  {topEarners.length === 0 ? (
-                    <div style={{ padding: 24, textAlign: "center", color: "var(--ink-3)", fontSize: 12 }}>No data yet</div>
-                  ) : topEarners.map(([addr, vol], i) => (
+                  {topEarners.length === 0 ? <div style={{ padding: 24, textAlign: "center", color: "var(--ink-3)", fontSize: 12 }}>No data yet</div> : topEarners.map(([addr, vol], i) => (
                     <div key={addr} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", borderBottom: i < topEarners.length - 1 ? "1px solid var(--stroke)" : "none" }}>
                       <span style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace", width: 18, flexShrink: 0 }}>#{i + 1}</span>
                       <span style={{ flex: 1, fontSize: 12, color: "var(--ink-2)", fontFamily: "IBM Plex Mono, monospace", overflow: "hidden", textOverflow: "ellipsis" }}>{addr.slice(0, 10)}...{addr.slice(-4)}</span>
@@ -536,69 +385,38 @@ export default function AdminPage() {
                   ))}
                 </div>
               </div>
-
               <div className="card">
-                <div className="card-head">
-                  <div className="card-head-icon"><svg viewBox="0 0 20 20" fill="none" width="16" height="16"><circle cx="10" cy="10" r="8" stroke="var(--c)" strokeWidth="1.3" /></svg></div>
-                  <div><div className="card-title">Platform Breakdown</div><div className="card-subtitle">All links by status</div></div>
-                </div>
+                <div className="card-head"><div className="card-head-icon"><svg viewBox="0 0 20 20" fill="none" width="16" height="16"><circle cx="10" cy="10" r="8" stroke="var(--c)" strokeWidth="1.3" /></svg></div><div><div className="card-title">Platform Breakdown</div><div className="card-subtitle">All links by status</div></div></div>
                 <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
-                  {[
-                    { label: "Completed", count: completed.length, color: "var(--c)" },
-                    { label: "Active", count: active.length, color: "var(--warning)" },
-                    { label: "Expired", count: expired.length, color: "var(--danger)" },
-                    { label: "Stealth", count: stealthCount, color: "#a78bfa" },
-                  ].map(s => (
+                  {[{ label: "Completed", count: completed.length, color: "var(--c)" }, { label: "Active", count: active.length, color: "var(--warning)" }, { label: "Expired", count: expired.length, color: "var(--danger)" }, { label: "Stealth", count: stealthCount, color: "#a78bfa" }].map(s => (
                     <div key={s.label}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                        <span style={{ fontSize: 12, color: "var(--ink-2)", fontWeight: 600 }}>{s.label}</span>
-                        <span style={{ fontSize: 12, fontFamily: "IBM Plex Mono, monospace", color: s.color, fontWeight: 700 }}>{s.count}</span>
-                      </div>
-                      <div style={{ height: 4, borderRadius: 4, background: "var(--raised)", overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: links.length > 0 ? `${(s.count / links.length) * 100}%` : "0%", background: s.color, borderRadius: 4, transition: "width .5s ease" }} />
-                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}><span style={{ fontSize: 12, color: "var(--ink-2)", fontWeight: 600 }}>{s.label}</span><span style={{ fontSize: 12, fontFamily: "IBM Plex Mono, monospace", color: s.color, fontWeight: 700 }}>{s.count}</span></div>
+                      <div style={{ height: 4, borderRadius: 4, background: "var(--raised)", overflow: "hidden" }}><div style={{ height: "100%", width: links.length > 0 ? `${(s.count / links.length) * 100}%` : "0%", background: s.color, borderRadius: 4, transition: "width .5s ease" }} /></div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Recent transactions */}
             <div className="card">
-              <div className="card-head">
-                <div className="card-head-icon"><svg viewBox="0 0 20 20" fill="none" width="16" height="16"><circle cx="10" cy="10" r="8" stroke="var(--c)" strokeWidth="1.3" /><path d="M10 6v4l2.5 2.5" stroke="var(--c)" strokeWidth="1.3" strokeLinecap="round" /></svg></div>
-                <div><div className="card-title">Recent Transactions</div><div className="card-subtitle">Latest 20 — payments, escrow releases & refunds</div></div>
-              </div>
+              <div className="card-head"><div className="card-head-icon"><svg viewBox="0 0 20 20" fill="none" width="16" height="16"><circle cx="10" cy="10" r="8" stroke="var(--c)" strokeWidth="1.3" /><path d="M10 6v4l2.5 2.5" stroke="var(--c)" strokeWidth="1.3" strokeLinecap="round" /></svg></div><div><div className="card-title">Recent Transactions</div><div className="card-subtitle">Latest 20 — payments, escrow releases & refunds</div></div></div>
               <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr", gap: 12, padding: "10px 24px", background: "var(--raised)", borderBottom: "1px solid var(--stroke)" }}>
-                {["TITLE", "TYPE", "AMOUNT", "RECIPIENT", "PAYER", "DATE"].map(c => (
-                  <span key={c} style={{ fontSize: 9, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink-3)", letterSpacing: ".12em", fontWeight: 600 }}>{c}</span>
-                ))}
+                {["TITLE", "TYPE", "AMOUNT", "RECIPIENT", "PAYER", "DATE"].map(c => <span key={c} style={{ fontSize: 9, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink-3)", letterSpacing: ".12em", fontWeight: 600 }}>{c}</span>)}
               </div>
               <div style={{ maxHeight: 400, overflowY: "auto" }}>
-                {recentTx.length === 0 ? (
-                  <div style={{ padding: 32, textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>No transactions yet</div>
-                ) : recentTx.map((tx, i) => (
-                  <div key={tx.id}
-                    style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr", gap: 12, padding: "13px 24px", alignItems: "center", borderBottom: i < recentTx.length - 1 ? "1px solid var(--stroke)" : "none", transition: "background .12s" }}
+                {recentTx.length === 0 ? <div style={{ padding: 32, textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>No transactions yet</div> : recentTx.map((tx, i) => (
+                  <div key={tx.id} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr", gap: 12, padding: "13px 24px", alignItems: "center", borderBottom: i < recentTx.length - 1 ? "1px solid var(--stroke)" : "none", transition: "background .12s" }}
                     onMouseEnter={e => (e.currentTarget.style.background = "var(--raised)")}
                     onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                   >
                     <div style={{ minWidth: 0 }}>
                       <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tx.title}</p>
-                      {tx.txHash && (
-                        <a href={`https://testnet.arcscan.app/tx/${tx.txHash}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", textDecoration: "none" }}>
-                          {tx.txHash.slice(0, 8)}...↗
-                        </a>
-                      )}
+                      {tx.txHash && <a href={`https://testnet.arcscan.app/tx/${tx.txHash}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", textDecoration: "none" }}>{tx.txHash.slice(0, 8)}...↗</a>}
                     </div>
                     <div>
-                      {(tx as any).isRefunded ? (
-                        <span style={{ fontSize: 9, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: "var(--danger)", background: "rgba(240,62,95,.1)", border: "1px solid rgba(240,62,95,.25)", borderRadius: 4, padding: "1px 5px" }}>REFUNDED</span>
-                      ) : (tx as any).isEscrow ? (
-                        <span style={{ fontSize: 9, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: "#5b8ff9", background: "rgba(91,143,249,.1)", border: "1px solid rgba(91,143,249,.25)", borderRadius: 4, padding: "1px 5px" }}>ESCROW</span>
-                      ) : (
-                        <span style={{ fontSize: 9, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: "var(--c)", background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 4, padding: "1px 5px" }}>PAYMENT</span>
-                      )}
+                      {(tx as any).isRefunded ? <span style={{ fontSize: 9, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: "var(--danger)", background: "rgba(240,62,95,.1)", border: "1px solid rgba(240,62,95,.25)", borderRadius: 4, padding: "1px 5px" }}>REFUNDED</span>
+                        : (tx as any).isEscrow ? <span style={{ fontSize: 9, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: "#5b8ff9", background: "rgba(91,143,249,.1)", border: "1px solid rgba(91,143,249,.25)", borderRadius: 4, padding: "1px 5px" }}>ESCROW</span>
+                          : <span style={{ fontSize: 9, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: "var(--c)", background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 4, padding: "1px 5px" }}>PAYMENT</span>}
                     </div>
                     <span style={{ fontSize: 13, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: (tx as any).isRefunded ? "var(--danger)" : "var(--c)" }}>{(tx as any).isRefunded ? `-${fmt(parseFloat(tx.amount))}` : `+${fmt(parseFloat(tx.amount))}`} <span style={{ fontSize: 10, color: "var(--ink-3)" }}>USDC</span></span>
                     <span style={{ fontSize: 11, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink-2)" }}>{tx.recipientAddress.slice(0, 6)}...{tx.recipientAddress.slice(-4)}</span>

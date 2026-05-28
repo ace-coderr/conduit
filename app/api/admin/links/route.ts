@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-
-const ADMIN_WALLET = "0x8557fabdc62f59a1ba7d6a74aaf0942cdcb68f69";
+import { verifyAdmin } from "@/lib/adminAuth";
 
 export async function GET(req: NextRequest) {
-  const wallet = req.headers.get("x-wallet-address")?.toLowerCase();
-  const { searchParams } = new URL(req.url);
-  const queryWallet = searchParams.get("wallet")?.toLowerCase();
-  const caller = wallet ?? queryWallet ?? "";
-  if (caller !== ADMIN_WALLET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { ok, error } = verifyAdmin(req);
+  if (!ok) return NextResponse.json({ error }, { status: 401 });
+
   try {
     const [links, escrows] = await Promise.all([
       db.paymentLink.findMany({

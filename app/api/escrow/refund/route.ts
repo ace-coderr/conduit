@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { transferFromWallet } from "@/lib/circle";
-
-const ADMIN_WALLET = "0x8557fabdc62f59a1ba7d6a74aaf0942cdcb68f69";
+import { verifyAdminQuery } from "@/lib/adminAuth";
 
 export async function POST(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const wallet = searchParams.get("wallet")?.toLowerCase();
-  if (wallet !== ADMIN_WALLET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { ok, error } = verifyAdminQuery(req);
+  if (!ok) return NextResponse.json({ error }, { status: 401 });
 
   let body: any;
   try { body = await req.json(); } catch {
@@ -23,10 +19,7 @@ export async function POST(req: NextRequest) {
   if (!escrow) return NextResponse.json({ error: "Escrow not found." }, { status: 404 });
 
   if (escrow.status !== "DISPUTED") {
-    return NextResponse.json(
-      { error: "Can only refund disputed escrows." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Can only refund disputed escrows." }, { status: 400 });
   }
 
   if (!escrow.buyerAddress) {
@@ -38,10 +31,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!escrow.circleWalletId) {
-    return NextResponse.json(
-      { error: "No Circle wallet associated with this escrow." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "No Circle wallet associated with this escrow." }, { status: 400 });
   }
 
   console.log(`[escrow refund] Refunding ${escrow.amount} USDC to buyer ${escrow.buyerAddress}`);

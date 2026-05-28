@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-
-const ADMIN_WALLET = "0x8557fabdc62f59a1ba7d6a74aaf0942cdcb68f69";
+import { verifyAdminQuery } from "@/lib/adminAuth";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status") ?? "APPROVED";
   const category = searchParams.get("category");
-  const wallet = searchParams.get("wallet");
 
-  // Admin can see all, public sees only approved
-  const isAdmin = wallet?.toLowerCase() === ADMIN_WALLET;
+  // Check admin via secret or wallet
+  const { ok: isAdmin } = verifyAdminQuery(req);
 
   const where: any = {};
   if (!isAdmin) where.status = "APPROVED";
@@ -44,7 +42,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid endpoint URL" }, { status: 400 });
   }
 
-  // Auto-lookup username from profile
   const profile = await db.userProfile.findUnique({
     where: { address: creatorAddress.toLowerCase() },
   });
@@ -67,12 +64,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const wallet = searchParams.get("wallet")?.toLowerCase();
-
-  if (wallet !== ADMIN_WALLET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { ok, error } = verifyAdminQuery(req);
+  if (!ok) return NextResponse.json({ error }, { status: 401 });
 
   let body: any;
   try { body = await req.json(); } catch {
@@ -94,13 +87,11 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const wallet = searchParams.get("wallet")?.toLowerCase();
-  const id = searchParams.get("id");
+  const { ok, error } = verifyAdminQuery(req);
+  if (!ok) return NextResponse.json({ error }, { status: 401 });
 
-  if (wallet !== ADMIN_WALLET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
   await db.marketplaceListing.delete({ where: { id } });
