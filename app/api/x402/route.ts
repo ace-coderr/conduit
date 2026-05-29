@@ -8,7 +8,7 @@ const USDC_ADDRESS = "0x3600000000000000000000000000000000000000";
 const facilitatorData = {
     name: "Conduit x402 Facilitator",
     description: "The first public x402 facilitator on Arc Network. Verify and settle USDC micropayments on Arc — the chain where USDC is the native gas token.",
-    url: "https://conduit-pay.vercel.app",
+    url: "https://conduitpay.xyz",
     version: "2",
     supportedSchemes: ["exact"],
     supportedNetworks: [
@@ -97,7 +97,7 @@ function buildHumanPage() {
         <div class="card-row"><span class="card-key">Network</span><span class="card-val blue">Arc Testnet · eip155:5042002</span></div>
         <div class="card-row"><span class="card-key">Token</span><span class="card-val green">USDC (native)</span></div>
         <div class="card-row"><span class="card-key">USDC Address</span><span class="card-val" style="font-size:10px">0x3600000000000000000000000000000000000000</span></div>
-        <div class="card-row"><span class="card-key">Facilitator URL</span><span class="card-val purple">conduit-pay.vercel.app/api/x402</span></div>
+        <div class="card-row"><span class="card-key">Facilitator URL</span><span class="card-val purple">conduitpay.xyz/api/x402</span></div>
       </div>
     </div>
 
@@ -136,9 +136,9 @@ function buildHumanPage() {
     <div class="section">
       <div class="section-title">TRY IT</div>
       <div class="code-block"><span class="code-comment"># Hit the demo endpoint and see the 402 response</span>
-curl -i https://conduit-pay.vercel.app/api/arc-stats</div>
+curl -i https://conduitpay.xyz/api/arc-stats</div>
       <div class="code-block"><span class="code-comment"># Get raw facilitator JSON</span>
-curl https://conduit-pay.vercel.app/api/x402 \
+curl https://conduitpay.xyz/api/x402 \
   -H "Accept: application/json"</div>
       <div class="btns">
         <a href="/api/arc-stats" class="btn">Try Demo Endpoint →</a>

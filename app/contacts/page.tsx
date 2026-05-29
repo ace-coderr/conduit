@@ -130,7 +130,7 @@ export default function ContactsPage() {
                                     </div>
                                     <div style={{ flex: 1, minWidth: 0 }}>
                                         <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-1)" }}>{c.nickname || c.profile?.displayName || (c.profile?.username ? `@${c.profile.username}` : `${c.contactAddress.slice(0, 6)}...${c.contactAddress.slice(-4)}`)}</p>
-                                        <p style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>{c.profile?.username ? `conduit-pay.vercel.app/u/${c.profile.username}` : `${c.contactAddress.slice(0, 6)}...${c.contactAddress.slice(-4)}`}</p>
+                                        <p style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>{c.profile?.username ? `conduitpay.xyz/u/${c.profile.username}` : `${c.contactAddress.slice(0, 6)}...${c.contactAddress.slice(-4)}`}</p>
                                     </div>
                                     <div style={{ display: "flex", gap: 6 }}>
                                         <button onClick={() => copyPayLink(c)} style={{ padding: "6px 12px", background: "var(--c)", border: "none", borderRadius: 6, color: "#000", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>

@@ -40,8 +40,8 @@ export default function DevelopersPage() {
                 {/* Quick links */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 56 }}>
                     {[
-                        { label: "Facilitator URL", value: "conduit-pay.vercel.app/api/x402", href: "https://conduit-pay.vercel.app/api/x402", color: "var(--c)" },
-                        { label: "Demo endpoint", value: "/api/arc-stats", href: "https://conduit-pay.vercel.app/api/arc-stats", color: "var(--info)" },
+                        { label: "Facilitator URL", value: "conduitpay.xyz/api/x402", href: "https://conduitpay.xyz/api/x402", color: "var(--c)" },
+                        { label: "Demo endpoint", value: "/api/arc-stats", href: "https://conduitpay.xyz/api/arc-stats", color: "var(--info)" },
                         { label: "Network", value: "Arc Testnet · eip155:5042002", href: "https://testnet.arcscan.app", color: "#a78bfa" },
                     ].map(s => (
                         <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" style={{ background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: 12, padding: "16px 18px", textDecoration: "none", display: "block" }}>
@@ -78,7 +78,7 @@ export default function DevelopersPage() {
                     <p style={{ fontSize: 13, color: "var(--ink-3)", marginBottom: 16 }}>Hit the live demo endpoint and see the 402 response:</p>
                     <div style={{ background: "#0d0d0d", border: "1px solid #222", borderRadius: 12, padding: "20px 24px", fontFamily: "IBM Plex Mono, monospace" }}>
                         <p style={{ fontSize: 11, color: "#666", marginBottom: 8 }}># Returns 402 with payment details</p>
-                        <p style={{ fontSize: 13, color: "#00E5A0" }}>curl -i https://conduit-pay.vercel.app/api/arc-stats</p>
+                        <p style={{ fontSize: 13, color: "#00E5A0" }}>curl -i https://conduitpay.xyz/api/arc-stats</p>
                         <div style={{ height: 1, background: "#222", margin: "16px 0" }} />
                         <p style={{ fontSize: 11, color: "#666", marginBottom: 8 }}># Expected response</p>
                         <p style={{ fontSize: 12, color: "#5b8ff9" }}>HTTP/1.1 402 Payment Required</p>
@@ -97,7 +97,7 @@ export default function DevelopersPage() {
                         <br />
                         <p style={{ color: "#888" }}>{"const PAYMENT_ADDRESS = \"0xYOUR_WALLET\";"}</p>
                         <p style={{ color: "#888" }}>{"const PRICE = \"1000\"; // 0.001 USDC"}</p>
-                        <p style={{ color: "#888" }}>{"const FACILITATOR = \"https://conduit-pay.vercel.app/api/x402\";"}</p>
+                        <p style={{ color: "#888" }}>{"const FACILITATOR = \"https://conduitpay.xyz/api/x402\";"}</p>
                         <br />
                         <p style={{ color: "#a78bfa" }}>{"export async function GET(req: NextRequest) {"}</p>
                         <p style={{ color: "#5b8ff9", paddingLeft: 16 }}>{"const sig = req.headers.get(\"PAYMENT-SIGNATURE\");"}</p>

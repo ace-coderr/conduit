@@ -105,7 +105,7 @@ export function PnlCardImage({
         {/* Footer */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ fontSize: 12, color: "#424d5e", letterSpacing: "0.06em" }}>{shortAddr}</span>
-          <span style={{ fontSize: 11, color: "#424d5e", letterSpacing: "0.04em" }}>conduit-pay.vercel.app</span>
+          <span style={{ fontSize: 11, color: "#424d5e", letterSpacing: "0.04em" }}>conduitpay.xyz</span>
         </div>
 
       </div>

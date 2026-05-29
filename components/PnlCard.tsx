@@ -128,7 +128,7 @@ export function PnlCard({
           {/* Footer */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: 10, color: "#424d5e", fontFamily: "IBM Plex Mono, monospace" }}>{shortAddr}</span>
-            <span style={{ fontSize: 9, color: "#424d5e", fontFamily: "IBM Plex Mono, monospace" }}>conduit-pay.vercel.app</span>
+            <span style={{ fontSize: 9, color: "#424d5e", fontFamily: "IBM Plex Mono, monospace" }}>conduitpay.xyz</span>
           </div>
         </div>
 

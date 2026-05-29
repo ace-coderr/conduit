@@ -6,7 +6,7 @@ import { decodeAbiParameters, parseAbiParameters, getAddress } from "viem";
 const PAYMENT_ADDRESS = "0x2d2eba8c0da5879ab25b5bd37e211d230aabbb5c";
 const PRICE = "1000"; // 0.001 USDC in atomic units (6 decimals)
 const NETWORK = "eip155:5042002";
-const FACILITATOR = "https://conduit-pay.vercel.app/api/x402";
+const FACILITATOR = "https://conduitpay.xyz/api/x402";
 const USDC = "0x3600000000000000000000000000000000000000";
 const MAX_TX_AGE_SECONDS = 300;
 
@@ -14,7 +14,7 @@ const paymentDetails = {
   scheme: "exact",
   network: NETWORK,
   maxAmountRequired: PRICE,
-  resource: "https://conduit-pay.vercel.app/api/arc-stats",
+  resource: "https://conduitpay.xyz/api/arc-stats",
   description: "Live Arc Network and Conduit platform stats",
   mimeType: "application/json",
   payTo: PAYMENT_ADDRESS,
@@ -110,7 +110,7 @@ function buildHumanPayPage() {
     <div class="status" id="status"></div>
     <div class="result" id="result"></div>
   </div>
-  <p class="powered">Powered by <a href="https://conduit-pay.vercel.app">Conduit</a> · Built on Arc Network · Circle USDC</p>
+  <p class="powered">Powered by <a href="https://conduitpay.xyz">Conduit</a> · Built on Arc Network · Circle USDC</p>
 
   <script>
   // ERC-20 transfer(address,uint256) selector + encoded args
@@ -333,7 +333,7 @@ async function settlePayment(paymentHeader: string): Promise<void> {
           maxAmountRequired: PRICE,
           payTo: PAYMENT_ADDRESS,
           asset: USDC,
-          resource: "https://conduit-pay.vercel.app/api/arc-stats",
+          resource: "https://conduitpay.xyz/api/arc-stats",
         },
       }),
     });
@@ -370,7 +370,7 @@ export async function GET(req: NextRequest) {
           payTo: PAYMENT_ADDRESS.toLowerCase(),
           amount: (parseInt(PRICE) / 1_000_000).toFixed(6),
           network: NETWORK,
-          resource: "https://conduit-pay.vercel.app/api/arc-stats",
+          resource: "https://conduitpay.xyz/api/arc-stats",
           nonce: txHash, // use txHash as nonce for tx-based payments
           settledAt: new Date(),
         },

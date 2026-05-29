@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   keywords: ["USDC", "payment links", "Web3 payments", "Arc Network", "crypto payments", "stealth payments", "Circle"],
   authors: [{ name: "Conduit" }],
   creator: "Conduit",
-  metadataBase: new URL("https://conduit-pay.vercel.app"),
+  metadataBase: new URL("https://conduitpay.xyz"),
   icons: {
     icon: "/favicon.png",
     apple: "/favicon.png",
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     title: "Conduit - USDC Payment Links on Arc Network",
     description: "Create a payment link, share it, get paid in USDC from any chain. No sign-up. No KYC. Instant.",
     siteName: "Conduit",
-    url: "https://conduit-pay.vercel.app",
+    url: "https://conduitpay.xyz",
     type: "website",
     images: [{
       url: "/conduit-logo-white.png",

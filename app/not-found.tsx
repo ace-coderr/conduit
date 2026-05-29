@@ -59,7 +59,7 @@ export default function NotFound() {
       </div>
 
       <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 24, fontFamily: "IBM Plex Mono, monospace" }}>
-        conduit-pay.vercel.app
+        conduitpay.xyz
       </p>
     </div>
   );

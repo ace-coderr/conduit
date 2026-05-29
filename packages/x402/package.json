@@ -1,6 +1,6 @@
 {
     "name": "@ace_won/x402",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Drop-in x402 payment middleware for Next.js — powered by Conduit on Arc Network. Wrap any API route with one line to require USDC micropayments.",
     "main": "dist/index.js",
     "module": "dist/index.mjs",

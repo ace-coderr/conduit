@@ -64,7 +64,7 @@ export default function ProfilePage() {
     };
 
     const payUrl = profile
-        ? `${typeof window !== "undefined" ? window.location.origin : "https://conduit-pay.vercel.app"}/u/${profile.username}`
+        ? `${typeof window !== "undefined" ? window.location.origin : "https://conduitpay.xyz"}/u/${profile.username}`
         : null;
 
     return (
@@ -88,7 +88,7 @@ export default function ProfilePage() {
                             <div style={{ background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 12, padding: "16px 20px", marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                                 <div>
                                     <p style={{ fontSize: 10, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, letterSpacing: ".08em", marginBottom: 4 }}>YOUR PAYMENT PAGE</p>
-                                    <p style={{ fontSize: 13, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700 }}>conduit-pay.vercel.app/u/{profile.username}</p>
+                                    <p style={{ fontSize: 13, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700 }}>conduitpay.xyz/u/{profile.username}</p>
                                 </div>
                                 <div style={{ display: "flex", gap: 8 }}>
                                     <button onClick={() => navigator.clipboard.writeText(payUrl)} style={{ padding: "7px 14px", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Copy</button>

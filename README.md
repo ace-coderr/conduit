@@ -2,7 +2,7 @@
 
 Conduit lets you generate shareable "pay me" links that accept USDC payments on Arc Network. Pay from any chain — Base, Ethereum, Arbitrum, Polygon and more. Privacy-first with stealth mode.
 
-**Live:** https://conduit-pay.vercel.app
+**Live:** https://conduitpay.xyz
 
 ---
 

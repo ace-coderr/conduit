@@ -2,7 +2,7 @@ import { x402ResourceServer, HTTPFacilitatorClient } from "@x402/core/server";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
 
 const facilitatorClient = new HTTPFacilitatorClient({
-    url: "https://conduit-pay.vercel.app/api/x402",
+    url: "https://conduitpay.xyz/api/x402",
 });
 
 export const x402Server = new x402ResourceServer(facilitatorClient);
