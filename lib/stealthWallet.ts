@@ -109,7 +109,7 @@ export async function forwardFunds(
     await publicClient.waitForTransactionReceipt({ hash: fundTxHash, timeout: 20_000 });
     console.log(`[forward] Gas funded: ${fundTxHash}`);
 
-    // ✅ Forward FULL amount to recipient
+    // Forward FULL amount to recipient
     // Fee is already collected client-side separately — do NOT deduct here
     const recipientWei = parseEther(paymentAmount);
 

@@ -58,7 +58,12 @@ export default function SubmitListingPage() {
         <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Sora, sans-serif", padding: 20 }}>
             <div style={{ background: "var(--surface)", border: "1px solid var(--c-border)", borderRadius: "var(--r-xl)", padding: "40px 36px", maxWidth: 440, width: "100%", textAlign: "center", position: "relative", overflow: "hidden" }}>
                 <div style={{ height: 2, background: "var(--c)", position: "absolute", top: 0, left: 0, right: 0 }} />
-                <div style={{ fontSize: 40, marginBottom: 16 }}>🎉</div>
+                <div style={{ marginBottom: 16 }}>
+                    <svg viewBox="0 0 40 40" fill="none" width="40" height="40">
+                        <circle cx="20" cy="20" r="18" stroke="var(--c)" strokeWidth="1.5" opacity=".3" />
+                        <path d="M13 20l5 5 9-9" stroke="var(--c)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                </div>
                 <h2 style={{ fontSize: 20, fontWeight: 900, color: "var(--ink-1)", marginBottom: 8 }}>Listing Submitted!</h2>
                 <p style={{ fontSize: 13, color: "var(--ink-3)", lineHeight: 1.6, marginBottom: 24 }}>Your API is pending review. It'll appear in the marketplace once approved.</p>
                 <Link href="/marketplace" style={{ display: "inline-flex", padding: "10px 20px", background: "var(--c)", borderRadius: "var(--r-md)", color: "#000", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>

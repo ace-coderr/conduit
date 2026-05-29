@@ -174,11 +174,11 @@ export default function AdminPage() {
       const data = await res.json();
       if (res.ok) {
         const { verdict, executed } = data;
-        const emoji = verdict.decision === "RELEASE" ? "✅" : verdict.decision === "REFUND" ? "🔄" : "⚠️";
-        const action = executed ? "— Auto-executed ✓" : "— Manual review needed";
+        const label = verdict.decision === "RELEASE" ? "[RELEASE]" : verdict.decision === "REFUND" ? "[REFUND]" : "[UNCERTAIN]";
+        const action = executed ? "— Auto-executed" : "— Manual review needed";
         setResolveMsg(prev => ({
           ...prev,
-          [escrowId]: `${emoji} AI: ${verdict.summary} (${verdict.confidence}% confidence) ${action}`,
+          [escrowId]: `AI ${label}: ${verdict.summary} (${verdict.confidence}% confidence) ${action}`,
         }));
         fetchAll();
       } else {
@@ -325,7 +325,7 @@ export default function AdminPage() {
               </div>
               <div style={{ maxHeight: 400, overflowY: "auto" }}>
                 {filteredEscrows.length === 0 ? (
-                  <div style={{ padding: 32, textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>{escrowTab === "disputed" ? "No disputes 🎉" : escrowTab === "holding" ? "No funds currently held" : "No escrow links yet"}</div>
+                  <div style={{ padding: 32, textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>{escrowTab === "disputed" ? "No disputes" : escrowTab === "holding" ? "No funds currently held" : "No escrow links yet"}</div>
                 ) : filteredEscrows.map((e, i) => (
                   <div key={e.id} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr", gap: 12, padding: "13px 24px", alignItems: "center", borderBottom: i < filteredEscrows.length - 1 ? "1px solid var(--stroke)" : "none", transition: "background .12s", background: e.status === "DISPUTED" ? "rgba(240,62,95,.03)" : "transparent" }}
                     onMouseEnter={ev => (ev.currentTarget.style.background = e.status === "DISPUTED" ? "rgba(240,62,95,.06)" : "var(--raised)")}
@@ -337,7 +337,10 @@ export default function AdminPage() {
                         {e.status === "DISPUTED" && <span style={{ fontSize: 8, background: "var(--danger)", color: "#fff", borderRadius: 4, padding: "1px 5px", fontWeight: 700, fontFamily: "IBM Plex Mono, monospace", flexShrink: 0 }}>DISPUTE</span>}
                       </div>
                       {e.status === "DISPUTED" && e.disputeReason && <p style={{ fontSize: 11, color: "var(--danger)", marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>"{e.disputeReason}"</p>}
-                      {e.sellerContact && <p style={{ fontSize: 10, color: "var(--ink-3)", marginTop: 2, fontFamily: "IBM Plex Mono, monospace" }}>📞 {e.sellerContact}</p>}
+                      {e.sellerContact && <p style={{ fontSize: 10, color: "var(--ink-3)", marginTop: 2, fontFamily: "IBM Plex Mono, monospace" }}>
+                        <svg viewBox="0 0 12 12" fill="none" width="10" height="10" style={{ verticalAlign: "middle", marginRight: 3 }}><path d="M2 2h2l1 2.5-1.5 1a7 7 0 003 3l1-1.5L10 8v2a1 1 0 01-1 1A9 9 0 011 3a1 1 0 011-1z" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        {e.sellerContact}
+                      </p>}
                       {e.txHash && <a href={`https://testnet.arcscan.app/tx/${e.txHash}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 10, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", textDecoration: "none" }}>{e.txHash.slice(0, 8)}...↗</a>}
                     </div>
                     <div><span style={{ fontSize: 11, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: escrowStatusColor(e.status), background: `${escrowStatusColor(e.status)}15`, border: `1px solid ${escrowStatusColor(e.status)}30`, borderRadius: 20, padding: "2px 8px" }}>{e.status}</span></div>
@@ -369,7 +372,16 @@ export default function AdminPage() {
                               </button>
                               <button onClick={() => requestAiVerdict(e.id)} disabled={resolvingId === e.id || aiLoading === e.id}
                                 style={{ padding: "7px 16px", background: "rgba(167,139,250,.15)", border: "1px solid rgba(167,139,250,.4)", borderRadius: "var(--r-sm)", color: "#a78bfa", fontSize: 12, fontWeight: 700, cursor: aiLoading === e.id ? "not-allowed" : "pointer", fontFamily: "Sora, sans-serif", opacity: aiLoading === e.id ? .6 : 1 }}>
-                                {aiLoading === e.id ? "🤖 Analyzing..." : "🤖 AI Verdict"}
+                                {aiLoading === e.id ? "Analyzing..." : (
+                                  <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                                    <svg viewBox="0 0 16 16" fill="none" width="12" height="12">
+                                      <circle cx="8" cy="6" r="3" stroke="currentColor" strokeWidth="1.3" />
+                                      <path d="M4 14c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                                      <path d="M11 2l1 1M13 5h1M11 8l1 1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                                    </svg>
+                                    AI Verdict
+                                  </span>
+                                )}
                               </button>
                               <span style={{ fontSize: 10, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>Review dispute reason above before resolving</span>
                             </>

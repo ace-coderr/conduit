@@ -147,12 +147,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     });
 
     // Add system message to thread
-    const verdictEmoji = verdict.decision === "RELEASE" ? "✅" : verdict.decision === "REFUND" ? "🔄" : "⚠️";
+    const verdictLabel = verdict.decision === "RELEASE" ? "[RELEASE]" : verdict.decision === "REFUND" ? "[REFUND]" : "[UNCERTAIN]";
     await db.escrowMessage.create({
         data: {
             escrowId: params.linkId,
             sender: "SYSTEM",
-            message: `${verdictEmoji} AI Mediator verdict: ${verdict.summary} (Confidence: ${verdict.confidence}%)`,
+            message: `AI Mediator verdict ${verdictLabel}: ${verdict.summary} (Confidence: ${verdict.confidence}%)`,
         },
     });
 
@@ -183,7 +183,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
                         data: {
                             escrowId: params.linkId,
                             sender: "SYSTEM",
-                            message: `✅ Funds automatically released to seller by AI Mediator. Transaction: ${result.txHash.slice(0, 10)}...`,
+                            message: `Funds automatically released to seller by AI Mediator. Transaction: ${result.txHash.slice(0, 10)}...`,
                         },
                     });
                     executed = true;
@@ -206,7 +206,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
                             data: {
                                 escrowId: params.linkId,
                                 sender: "SYSTEM",
-                                message: `🔄 Funds automatically refunded to buyer by AI Mediator. Transaction: ${result.txHash.slice(0, 10)}...`,
+                                message: `Funds automatically refunded to buyer by AI Mediator. Transaction: ${result.txHash.slice(0, 10)}...`,
                             },
                         });
                         executed = true;
