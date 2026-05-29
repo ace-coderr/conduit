@@ -1,8 +1,17 @@
-# Conduit — USDC Payment Links on Arc Network
+# Conduit Pay — USDC Payment Infrastructure on Arc Network
 
-Conduit lets you generate shareable "pay me" links that accept USDC payments on Arc Network. Pay from any chain — Base, Ethereum, Arbitrum, Polygon and more. Privacy-first with stealth mode.
+Conduit is a full-stack USDC payment platform built on Arc Network, powered by Circle. Payment links, P2P escrow, seedless wallets, username payments, x402 facilitator, and an AI-powered API marketplace — all live on Arc Testnet.
 
-**Live:** https://conduitpay.xyz
+**Live:** <https://conduitpay.xyz> · **Docs:** <https://conduitpay.xyz/developers> · **Marketplace:** <https://conduitpay.xyz/marketplace>
+
+---
+
+## Traction
+
+- **2,670+ USDC** processed on Arc Testnet
+- **71 payment links** created
+- **11 escrow contracts** opened
+- First public x402 facilitator on Arc Network
 
 ---
 
@@ -10,25 +19,63 @@ Conduit lets you generate shareable "pay me" links that accept USDC payments on 
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 14 + React + TypeScript |
-| Web3 | wagmi v2 + viem |
-| Multi-chain | Circle Unified Balance SDK |
+| Frontend | Next.js 14 + TypeScript |
+| Blockchain | wagmi v2 + viem |
+| Multi-chain | Circle CCTP V2 + Unified Balance SDK |
+| Auth & Wallets | Privy (email, Google, passkey) |
+| Escrow Custody | Circle Developer-Controlled Wallets |
 | Database | Prisma + Supabase (PostgreSQL) |
+| Email | Resend |
+| AI Mediation | Google Gemini 2.0 Flash |
 | Hosting | Vercel |
-| Blockchain | Arc Testnet (Chain ID 5042002, USDC native) |
+| Chain | Arc Testnet (Chain ID 5042002) |
 
 ---
 
 ## Features
 
-- **Payment links** — Create shareable one-time USDC payment links
-- **Stealth mode** — Route payments through a temp wallet to hide your real address
-- **Multi-chain** — Accept USDC from Base, Ethereum, Arbitrum, Polygon, Avalanche, Optimism
+### Payments
+
+- **Payment links** — Shareable one-time USDC payment links with title, amount, and optional expiry
+- **Stealth mode** — Optional privacy toggle. Routes payments through a temporary wallet to hide your real address
+- **Multi-chain** — Accept USDC from Base, Ethereum, Arbitrum, Polygon, Avalanche, Optimism via Circle CCTP V2
+- **Username payments** — Claim @username and share `conduitpay.xyz/u/yourname` instead of a wallet address
+- **Contacts** — Save wallet addresses and usernames for quick payments
 - **Fee system** — 0.5% platform fee on all payments
-- **Analytics** — Earnings chart, milestones, streak tracking
-- **PnL card** — Downloadable PNG card to share your earnings on X
-- **Transactions** — Full history with CSV export
-- **Dark/Light mode** — System-aware theme toggle
+
+### Escrow
+
+- **P2P escrow** — Lock USDC in a Circle Developer-Controlled Wallet until delivery is confirmed
+- **Delivery windows** — Set a delivery deadline; auto-release after confirmation window
+- **Dispute system** — Buyer raises dispute, both parties submit evidence in a mediation thread
+- **Auto-resolution** — If seller goes silent after 48hrs → auto-refund. If buyer goes silent → auto-release
+- **AI dispute agent** — Gemini 2.0 Flash reads the full dispute thread and issues a binding verdict. 80%+ confidence → auto-executes via Circle wallet
+
+### Wallets & Auth
+
+- **Seedless wallets** — Sign up with email, Google, or passkey via Privy. No seed phrase required
+- **MetaMask support** — Full support for existing wallets via injected connector
+
+### x402 Facilitator
+
+- **First x402 facilitator on Arc** — Any developer can gate their API behind USDC micropayments
+- **One-line integration** — `npm install @ace_won/x402` and wrap your route
+- **Human pay page** — Browser users see a clean MetaMask pay page
+- **Agent flow** — AI agents pay automatically via EIP-3009 USDC authorization
+- **npm package** — [@ace_won/x402](https://npmjs.com/package/@ace_won/x402)
+
+### x402 API Marketplace
+
+- **Live marketplace** — Developers list x402-gated APIs at `conduitpay.xyz/marketplace`
+- **Per-request billing** — No subscriptions. Pay per request in USDC on Arc
+- **AI agent customers** — Agents browse, pay, and get data back automatically in under a second
+
+### Platform
+
+- **Analytics dashboard** — Volume, link performance, earnings history
+- **Admin dashboard** — Full platform stats, dispute management, AI verdict, marketplace approval
+- **Email notifications** — Payment received, escrow funded, dispute raised, listing approved via Resend
+- **Transactions page** — Full history with PAYMENT / ESCROW / REFUNDED tags
 
 ---
 
@@ -38,7 +85,8 @@ Conduit lets you generate shareable "pay me" links that accept USDC payments on 
 
 - Node.js v20+
 - MetaMask browser extension
-- Supabase account (free) — https://supabase.com
+- Supabase account — <https://supabase.com>
+- Privy account — <https://console.privy.io>
 
 ### Add Arc Testnet to MetaMask
 
@@ -52,20 +100,20 @@ Conduit lets you generate shareable "pay me" links that accept USDC payments on 
 
 ### Get Testnet USDC
 
-Go to **https://faucet.circle.com** → select Arc Testnet → paste your wallet address.
+Go to **<https://faucet.circle.com>** → select Arc Testnet → paste your wallet address.
 
 ### Install & Run
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/ace-coderr/arcwave.git conduit
+git clone https://github.com/ace-coderr/conduit.git
 cd conduit
 
 # 2. Install dependencies
 npm install
 
 # 3. Create environment file
-cp .env.example .env.local
+cp .env.example .env
 
 # 4. Fill in your environment variables (see below)
 
@@ -76,7 +124,7 @@ npx prisma db push
 npm run dev
 ```
 
-Open **http://localhost:3000**
+Open **<http://localhost:3000>**
 
 ---
 
@@ -87,17 +135,32 @@ Open **http://localhost:3000**
 DATABASE_URL="postgresql://..."
 DIRECT_URL="postgresql://..."
 
-# WalletConnect (get free ID at cloud.walletconnect.com)
+# WalletConnect
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID="your_project_id"
 
-# Stealth wallet encryption key (any random 64-char hex string)
+# Privy
+NEXT_PUBLIC_PRIVY_APP_ID="your_privy_app_id"
+
+# Stealth wallet encryption key (64-char hex string)
 STEALTH_SECRET="your_secret_here"
 
-# Forwarder wallet private key (for stealth forwarding)
+# Forwarder wallet private key
 FORWARDER_PRIVATE_KEY="0x..."
 
-# Admin recovery token
+# Admin
+ADMIN_SECRET="your_admin_secret"
 RECOVER_TOKEN="your_token_here"
+
+# Circle
+CIRCLE_API_KEY="your_circle_api_key"
+CIRCLE_ENTITY_SECRET="your_entity_secret"
+CIRCLE_WALLET_SET_ID="your_wallet_set_id"
+
+# Resend (email notifications)
+RESEND_API_KEY="re_..."
+
+# Gemini (AI dispute agent)
+GEMINI_API_KEY="AIza..."
 ```
 
 ---
@@ -107,101 +170,80 @@ RECOVER_TOKEN="your_token_here"
 ```
 conduit/
 ├── app/
-│   ├── page.tsx                  # Dashboard + landing
-│   ├── links/page.tsx            # All payment links
-│   ├── transactions/page.tsx     # Transaction history
-│   ├── analytics/page.tsx        # Analytics dashboard
-│   ├── pay/[linkId]/page.tsx     # Public payment page
-│   ├── u/[address]/page.tsx      # Public profile page
+│   ├── page.tsx                        # Dashboard + landing
+│   ├── escrow/page.tsx                 # Escrow dashboard
+│   ├── transactions/page.tsx           # Transaction history
+│   ├── analytics/page.tsx              # Analytics
+│   ├── marketplace/page.tsx            # x402 API Marketplace
+│   ├── marketplace/[id]/page.tsx       # Listing detail
+│   ├── marketplace/submit/page.tsx     # Developer submission
+│   ├── developers/page.tsx             # x402 developer docs
+│   ├── profile/page.tsx                # Username + email settings
+│   ├── contacts/page.tsx               # Saved contacts
+│   ├── pay/[linkId]/page.tsx           # Public payment page
+│   ├── escrow/[linkId]/page.tsx        # Public escrow page
+│   ├── u/[username]/page.tsx           # Public username pay page
 │   └── api/
-│       ├── links/                # CRUD for payment links
-│       ├── forward/              # Stealth forwarding
-│       └── og/                   # PnL card image generation
+│       ├── links/                      # Payment link CRUD
+│       ├── escrow/                     # Escrow CRUD + dispute + AI verdict
+│       ├── forward/                    # Stealth forwarding
+│       ├── marketplace/                # Marketplace CRUD
+│       ├── profile/                    # Username + email
+│       ├── x402/                       # x402 facilitator discovery
+│       ├── x402/verify/                # Payment verification
+│       ├── x402/settle/                # Payment settlement
+│       └── arc-stats/                  # Live demo x402 endpoint
 ├── components/
-│   ├── NavBar.tsx
-│   ├── PayPage.tsx               # Payment UI for payers
-│   ├── CreateLinkForm.tsx
-│   ├── PaymentLinksTable.tsx
-│   ├── StatsRow.tsx
-│   └── PnlCard.tsx               # Downloadable PnL card
+│   └── NavBar.tsx
 ├── lib/
-│   ├── arcChain.ts               # Arc Testnet config
-│   ├── db.ts                     # Prisma client
-│   ├── fees.ts                   # Fee configuration
-│   ├── stealthWallet.ts          # Stealth wallet logic
-│   ├── appKit.ts                 # Unified Balance SDK
-│   └── utils.ts
+│   ├── arcChain.ts                     # Arc Testnet config
+│   ├── arcClient.ts                    # Arc viem client
+│   ├── circle.ts                       # Circle Developer Wallets
+│   ├── db.ts                           # Prisma client
+│   ├── email.ts                        # Resend email templates
+│   ├── adminAuth.ts                    # Admin authentication
+│   ├── fees.ts                         # Fee config
+│   ├── stealthWallet.ts                # Stealth wallet logic
+│   └── x402.ts                         # x402 middleware
+├── packages/
+│   └── x402/                           # @ace_won/x402 npm package
 └── prisma/
     └── schema.prisma
 ```
 
 ---
 
-## How It Works
+## x402 Integration
 
-### Creating a Payment Link
+Add USDC-gated payments to any API route:
 
-1. Connect your MetaMask wallet on Arc Testnet
-2. Enter title, USDC amount, optional description
-3. Toggle **Stealth Mode** to hide your real address
-4. Click **Generate Link** → get a shareable URL
-5. Share with anyone — they pay, you receive
+```bash
+npm install @ace_won/x402
+```
 
-### Stealth Mode
+```ts
+import { withPayment } from "@ace_won/x402";
 
-When stealth is enabled:
-- A fresh temporary wallet is generated for each link
-- Payer sends USDC to the temp wallet
-- A forwarder automatically routes funds to your real address
-- Payer cannot trace your identity on ArcScan
+export const GET = withPayment({ amount: "0.001" }, async (req) => {
+  return NextResponse.json({ data: "paid content" });
+});
+```
 
-### Multi-chain Payments (Unified Balance)
+**Demo endpoint:** `https://conduitpay.xyz/api/arc-stats` — pay 0.001 USDC, get live Arc Network stats.
 
-Payers can pay from any supported chain using Circle's Unified Balance:
-- Deposit USDC from source chain (e.g. Base)
-- Circle routes it to Arc Testnet
-- You receive USDC on Arc — no bridging needed
-
-### Fee System
-
-- 0.5% fee on all payments
-- Fee is added on top of the link amount
-- Payer pays `amount + fee` in two MetaMask confirmations
-- Fees go to a separate collector wallet
+**Full docs:** <https://conduitpay.xyz/developers>
 
 ---
 
 ## Deployment
 
-### 1. Push to GitHub
-
 ```bash
 git add .
-git commit -m "Deploy Conduit"
+git commit -m "Deploy"
 git push
 ```
 
-### 2. Deploy on Vercel
-
-1. Go to **https://vercel.com** → import your GitHub repo
-2. Add all environment variables from `.env.local`
-3. Click **Deploy**
-
-### 3. Database
-
-Uses Supabase PostgreSQL with connection pooling via pgBouncer.
-Run `npx prisma db push` after any schema changes.
-
----
-
-## Useful Commands
-
-```bash
-npm run dev          # Start local dev server
-npm run build        # Build for production
-npx prisma db push   # Sync database schema
-npx prisma studio    # Open visual database browser
-```
+Import to Vercel, add environment variables, deploy. Database uses Supabase PostgreSQL — run `npx prisma db push` after schema changes.
 
 ---
 
@@ -209,13 +251,15 @@ npx prisma studio    # Open visual database browser
 
 | Resource | URL |
 |---|---|
-| Arc Network | https://www.arc.network |
-| Arc Testnet Explorer | https://testnet.arcscan.app |
-| Circle Faucet | https://faucet.circle.com |
-| Circle Docs | https://developers.circle.com |
-| Supabase | https://supabase.com |
-| Vercel | https://vercel.com |
+| Live App | <https://conduitpay.xyz> |
+| Developer Docs | <https://conduitpay.xyz/developers> |
+| x402 Marketplace | <https://conduitpay.xyz/marketplace> |
+| npm Package | <https://npmjs.com/package/@ace_won/x402> |
+| Arc Network | <https://arc.network> |
+| Arc Testnet Explorer | <https://testnet.arcscan.app> |
+| Circle Faucet | <https://faucet.circle.com> |
+| Circle Docs | <https://developers.circle.com> |
 
 ---
 
-Built with ♥ on Arc Network · Powered by Circle
+Built on Arc Network · Powered by Circle USDC · Facilitated by Conduit
