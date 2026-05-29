@@ -1,7 +1,3 @@
-// FILE: conduit/app/admin/x402/page.tsx
-// CREATE folder: conduit/app/admin/x402/
-// CREATE file: conduit/app/admin/x402/page.tsx
-
 "use client";
 
 import { useEffect, useState } from "react";

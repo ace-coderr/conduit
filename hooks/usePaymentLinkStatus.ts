@@ -1,7 +1,3 @@
-// hooks/usePaymentLinkStatus.ts
-// Custom hook that polls the API to check if a payment link has been paid.
-// Used by the PayPage to auto-update status after a transaction is submitted.
-
 import { useState, useEffect, useRef } from "react";
 
 interface PaymentLinkStatus {

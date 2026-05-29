@@ -1,7 +1,3 @@
-// app/api/recover/route.ts
-// Secure recovery route - only callable server-side with RECOVER_TOKEN
-// NOT exposed to frontend — call via Vercel Functions log or curl only
-
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { forwardFunds } from "@/lib/stealthWallet";

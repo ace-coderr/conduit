@@ -1,5 +1,3 @@
-// FILE: conduit/app/api/x402/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { arcTestnet } from "@/lib/arcChain";
 

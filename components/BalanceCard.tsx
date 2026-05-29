@@ -1,6 +1,4 @@
 "use client";
-// components/BalanceCard.tsx
-// Shows the connected wallet's USDC balance on Arc Testnet
 
 import { useAccount, useBalance } from "wagmi";
 import { arcTestnet } from "@/lib/arcChain";

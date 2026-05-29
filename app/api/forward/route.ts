@@ -1,8 +1,3 @@
-// app/api/forward/route.ts
-// Handles stealth wallet forwarding as a separate fast API call.
-// Called by the client AFTER payment is confirmed on-chain.
-// Separated from PATCH to avoid Vercel 10-second function timeout.
-
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { forwardFunds } from "@/lib/stealthWallet";

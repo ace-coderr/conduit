@@ -1,6 +1,3 @@
-// components/LoadingSkeleton.tsx
-// Reusable skeleton placeholder for loading states
-
 export function LoadingSkeleton() {
   return (
     <div className="arc-card p-6 space-y-4 animate-pulse">
