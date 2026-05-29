@@ -12,6 +12,7 @@ export default function ProfilePage() {
     const [username, setUsername] = useState("");
     const [displayName, setDisplayName] = useState("");
     const [bio, setBio] = useState("");
+    const [email, setEmail] = useState("");
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const [error, setError] = useState("");
@@ -29,6 +30,7 @@ export default function ProfilePage() {
                     setUsername(d.profile.username ?? "");
                     setDisplayName(d.profile.displayName ?? "");
                     setBio(d.profile.bio ?? "");
+                    setEmail(d.profile.email ?? "");
                 }
             });
     }, [address]);
@@ -39,7 +41,6 @@ export default function ProfilePage() {
         setError("");
         setSaved(false);
         try {
-            // Sign message to prove wallet ownership
             const message = `Conduit: Set username @${username} for ${address} at ${Date.now()}`;
             let signature: string;
             try {
@@ -52,7 +53,7 @@ export default function ProfilePage() {
             const res = await fetch("/api/profile", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ address, username, displayName, bio, signature, message }),
+                body: JSON.stringify({ address, username, displayName, bio, email, signature, message }),
             });
             const data = await res.json();
             if (!res.ok) { setError(data.error ?? "Failed to save"); return; }
@@ -98,45 +99,40 @@ export default function ProfilePage() {
                         )}
 
                         <div className="card" style={{ padding: "24px" }}>
+                            {/* Username */}
                             <div style={{ marginBottom: 20 }}>
-                                <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>
-                                    Username <span style={{ color: "var(--c)" }}>*</span>
-                                </label>
+                                <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Username <span style={{ color: "var(--c)" }}>*</span></label>
                                 <div style={{ position: "relative" }}>
                                     <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, fontSize: 14 }}>@</span>
-                                    <input
-                                        value={username}
-                                        onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
-                                        placeholder="yourname"
-                                        maxLength={20}
-                                        style={{ width: "100%", padding: "10px 12px 10px 28px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 14, fontFamily: "IBM Plex Mono, monospace", outline: "none", boxSizing: "border-box" as const }}
-                                    />
+                                    <input value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))} placeholder="yourname" maxLength={20}
+                                        style={{ width: "100%", padding: "10px 12px 10px 28px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 14, fontFamily: "IBM Plex Mono, monospace", outline: "none", boxSizing: "border-box" as const }} />
                                 </div>
                                 <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4 }}>Letters, numbers, underscores only. 3-20 characters.</p>
                             </div>
 
+                            {/* Display Name */}
                             <div style={{ marginBottom: 20 }}>
                                 <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Display Name</label>
-                                <input
-                                    value={displayName}
-                                    onChange={e => setDisplayName(e.target.value)}
-                                    placeholder="Your Name"
-                                    maxLength={50}
-                                    style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", boxSizing: "border-box" as const }}
-                                />
+                                <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your Name" maxLength={50}
+                                    style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", boxSizing: "border-box" as const }} />
                             </div>
 
-                            <div style={{ marginBottom: 24 }}>
+                            {/* Bio */}
+                            <div style={{ marginBottom: 20 }}>
                                 <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Bio</label>
-                                <textarea
-                                    value={bio}
-                                    onChange={e => setBio(e.target.value)}
-                                    placeholder="Freelancer, builder, creator..."
-                                    maxLength={160}
-                                    rows={3}
-                                    style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", resize: "none", boxSizing: "border-box" as const }}
-                                />
+                                <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Freelancer, builder, creator..." maxLength={160} rows={3}
+                                    style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", resize: "none", boxSizing: "border-box" as const }} />
                                 <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 2 }}>{bio.length}/160</p>
+                            </div>
+
+                            {/* Email */}
+                            <div style={{ marginBottom: 24 }}>
+                                <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>
+                                    Email <span style={{ color: "var(--ink-3)", fontWeight: 400 }}>(optional — for payment notifications)</span>
+                                </label>
+                                <input value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" type="email"
+                                    style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", boxSizing: "border-box" as const }} />
+                                <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4 }}>Get notified when you receive payments, escrow updates, and dispute alerts.</p>
                             </div>
 
                             {error && <p style={{ fontSize: 12, color: "var(--danger)", marginBottom: 12 }}>{error}</p>}

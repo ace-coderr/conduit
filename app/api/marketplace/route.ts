@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyAdminQuery } from "@/lib/adminAuth";
+import { sendListingApprovedEmail, sendListingRejectedEmail } from "@/lib/email";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status") ?? "APPROVED";
   const category = searchParams.get("category");
-
-  // Check admin via secret or wallet
   const { ok: isAdmin } = verifyAdminQuery(req);
 
   const where: any = {};
@@ -82,6 +81,32 @@ export async function PATCH(req: NextRequest) {
       ...(featured !== undefined && { featured }),
     },
   });
+
+  // Send email when approved or rejected
+  if (status === "APPROVED" || status === "REJECTED") {
+    try {
+      const profile = await db.userProfile.findUnique({
+        where: { address: listing.creatorAddress },
+        select: { email: true },
+      });
+      if (profile?.email) {
+        if (status === "APPROVED") {
+          sendListingApprovedEmail({
+            to: profile.email,
+            name: listing.name,
+            endpoint: listing.endpoint,
+            price: listing.price,
+            listingId: listing.id,
+          }).catch(() => {});
+        } else {
+          sendListingRejectedEmail({
+            to: profile.email,
+            name: listing.name,
+          }).catch(() => {});
+        }
+      }
+    } catch { }
+  }
 
   return NextResponse.json({ listing });
 }

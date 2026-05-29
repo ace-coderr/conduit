@@ -16,13 +16,13 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { address, username, displayName, bio, signature, message } = body;
+  const { address, username, displayName, bio, email, signature, message } = body;
 
   if (!address) return NextResponse.json({ error: "Address required" }, { status: 400 });
   if (!username) return NextResponse.json({ error: "Username required" }, { status: 400 });
   if (!signature || !message) return NextResponse.json({ error: "Signature required" }, { status: 400 });
 
-  // Verify signature — proves the caller owns the wallet
+  // Verify signature
   try {
     const valid = await verifyMessage({
       address: address as `0x${string}`,
@@ -34,7 +34,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Signature verification failed" }, { status: 401 });
   }
 
-  // Verify message contains the address (prevents replay attacks)
   if (!message.toLowerCase().includes(address.toLowerCase())) {
     return NextResponse.json({ error: "Message must contain your wallet address" }, { status: 400 });
   }
@@ -43,7 +42,12 @@ export async function POST(req: NextRequest) {
   if (clean.length < 3) return NextResponse.json({ error: "Username must be at least 3 characters" }, { status: 400 });
   if (clean.length > 20) return NextResponse.json({ error: "Username must be 20 characters or less" }, { status: 400 });
 
-  // Check if username taken by another address
+  // Validate email if provided
+  const cleanEmail = email?.trim().toLowerCase() || null;
+  if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
+  }
+
   const existing = await db.userProfile.findUnique({ where: { username: clean } });
   if (existing && existing.address !== address.toLowerCase()) {
     return NextResponse.json({ error: "Username already taken" }, { status: 409 });
@@ -51,8 +55,21 @@ export async function POST(req: NextRequest) {
 
   const profile = await db.userProfile.upsert({
     where: { address: address.toLowerCase() },
-    update: { username: clean, displayName: displayName?.trim() || null, bio: bio?.trim() || null, avatar: body.avatar || null },
-    create: { address: address.toLowerCase(), username: clean, displayName: displayName?.trim() || null, bio: bio?.trim() || null, avatar: body.avatar || null },
+    update: {
+      username: clean,
+      displayName: displayName?.trim() || null,
+      bio: bio?.trim() || null,
+      avatar: body.avatar || null,
+      email: cleanEmail,
+    },
+    create: {
+      address: address.toLowerCase(),
+      username: clean,
+      displayName: displayName?.trim() || null,
+      bio: bio?.trim() || null,
+      avatar: body.avatar || null,
+      email: cleanEmail,
+    },
   });
 
   return NextResponse.json({ profile });

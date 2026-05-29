@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { arcPublicClient } from "@/lib/arcClient";
 import { parseEther } from "viem";
+import { sendEscrowPaidEmail, sendDisputeRaisedEmail } from "@/lib/email";
 
 const ADMIN_WALLET = "0x8557fabdc62f59a1ba7d6a74aaf0942cdcb68f69";
 interface RouteParams { params: { linkId: string } }
@@ -15,14 +16,18 @@ async function checkDisputeDeadline(escrow: any, reqUrl: string) {
   if (!escrow.sellerRespondedAt) {
     await db.escrowLink.update({ where: { id: escrow.id }, data: { status: "CANCELLED" } });
     await db.escrowMessage.create({ data: { escrowId: escrow.id, sender: "SYSTEM", message: "Seller did not respond within 48 hours. Funds have been automatically refunded to the buyer." } });
-    fetch(new URL(`/api/escrow/refund?wallet=${ADMIN_WALLET}`, reqUrl).toString(), {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ escrowId: escrow.id }),
+    fetch(new URL(`/api/escrow/refund`, reqUrl).toString(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-wallet-address": ADMIN_WALLET },
+      body: JSON.stringify({ escrowId: escrow.id }),
     }).catch(console.error);
   } else if (!escrow.buyerLastMessageAt) {
     await db.escrowLink.update({ where: { id: escrow.id }, data: { status: "CONFIRMED", confirmedAt: now } });
     await db.escrowMessage.create({ data: { escrowId: escrow.id, sender: "SYSTEM", message: "Buyer did not respond within 48 hours. Funds have been automatically released to the seller." } });
     fetch(new URL("/api/escrow/release", reqUrl).toString(), {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ escrowId: escrow.id }),
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ escrowId: escrow.id }),
     }).catch(console.error);
   }
 }
@@ -74,15 +79,31 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     const paidAt = new Date();
     const days = escrow.deliveryDays ?? 7;
-    // Delivery deadline = paidAt + deliveryDays
     const deliveryDeadline = new Date(paidAt.getTime() + days * 24 * 60 * 60 * 1000);
-    // Auto-release = deliveryDeadline + 7 days (grace period after delivery)
     const releaseDeadline = new Date(deliveryDeadline.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     await db.escrowLink.update({
       where: { id: params.linkId },
       data: { status: "HOLDING", txHash, buyerAddress: paidBy ? paidBy.toLowerCase() : null, paidAt, deliveryDeadline, releaseDeadline },
     });
+
+    // Email seller
+    try {
+      const profile = await db.userProfile.findUnique({
+        where: { address: escrow.sellerAddress.toLowerCase() },
+        select: { email: true },
+      });
+      if (profile?.email) {
+        sendEscrowPaidEmail({
+          to: profile.email,
+          title: escrow.title,
+          amount: escrow.amount,
+          buyerAddress: paidBy ?? undefined,
+          deliveryDays: days,
+          escrowId: params.linkId,
+        }).catch(() => { });
+      }
+    } catch { }
 
     return NextResponse.json({ success: true, status: "HOLDING", deliveryDeadline, releaseDeadline });
   }
@@ -92,7 +113,9 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     if (escrow.status !== "HOLDING") return NextResponse.json({ error: "Escrow is not in HOLDING status." }, { status: 409 });
     await db.escrowLink.update({ where: { id: params.linkId }, data: { status: "CONFIRMED", confirmedAt: new Date() } });
     fetch(new URL("/api/escrow/release", req.url).toString(), {
-      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ escrowId: params.linkId }),
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ escrowId: params.linkId }),
     }).catch(console.error);
     return NextResponse.json({ success: true, status: "CONFIRMED" });
   }
@@ -110,6 +133,25 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     await db.escrowMessage.create({
       data: { escrowId: params.linkId, sender: "SYSTEM", message: `Dispute opened by buyer. Reason: "${disputeReason?.trim() || "No reason provided"}". Both parties have 48 hours to submit their side. If the seller does not respond, funds will be automatically refunded to the buyer.` },
     });
+
+    // Email seller about dispute
+    try {
+      const profile = await db.userProfile.findUnique({
+        where: { address: escrow.sellerAddress.toLowerCase() },
+        select: { email: true },
+      });
+      if (profile?.email) {
+        sendDisputeRaisedEmail({
+          to: profile.email,
+          title: escrow.title,
+          amount: escrow.amount,
+          disputeReason: disputeReason?.trim(),
+          escrowId: params.linkId,
+          buyerAddress: escrow.buyerAddress ?? undefined,
+        }).catch(() => { });
+      }
+    } catch { }
+
     return NextResponse.json({ success: true, status: "DISPUTED", disputeDeadline });
   }
 

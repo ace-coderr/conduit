@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { transferFromWallet } from "@/lib/circle";
 import { verifyAdminQuery } from "@/lib/adminAuth";
+import { sendEscrowRefundedEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const { ok, error } = verifyAdminQuery(req);
@@ -36,17 +37,31 @@ export async function POST(req: NextRequest) {
 
   console.log(`[escrow refund] Refunding ${escrow.amount} USDC to buyer ${escrow.buyerAddress}`);
 
-  const result = await transferFromWallet(
-    escrow.circleWalletId,
-    escrow.buyerAddress,
-    escrow.amount
-  );
+  const result = await transferFromWallet(escrow.circleWalletId, escrow.buyerAddress, escrow.amount);
 
   if (result.success && result.txHash) {
     await db.escrowLink.update({
       where: { id: escrowId },
       data: { status: "CANCELLED", releaseTxHash: result.txHash },
     });
+
+    // Email buyer
+    try {
+      const profile = await db.userProfile.findUnique({
+        where: { address: escrow.buyerAddress.toLowerCase() },
+        select: { email: true },
+      });
+      if (profile?.email) {
+        sendEscrowRefundedEmail({
+          to: profile.email,
+          title: escrow.title,
+          amount: escrow.amount,
+          txHash: result.txHash,
+          escrowId,
+        }).catch(() => { });
+      }
+    } catch { }
+
     return NextResponse.json({ success: true, refundTxHash: result.txHash });
   }
 
