@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { generateStealthWallet } from "@/lib/stealthWallet";
 
+const RATE_LIMIT = 20;        // max links per wallet
+const RATE_WINDOW_MS = 60 * 60 * 1000; // per hour
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const address = searchParams.get("address");
@@ -78,6 +81,25 @@ export async function POST(req: NextRequest) {
   const parsed = parseFloat(amount);
   if (isNaN(parsed) || parsed <= 0) return NextResponse.json({ error: "Enter a valid amount greater than 0." }, { status: 400 });
 
+  // ── Rate limiting ─────────────────────────────────────────────────────────
+  const addr = recipientAddress.toLowerCase();
+  const windowStart = new Date(Date.now() - RATE_WINDOW_MS);
+
+  const recentCount = await db.paymentLink.count({
+    where: {
+      recipientAddress: addr,
+      createdAt: { gte: windowStart },
+    },
+  });
+
+  if (recentCount >= RATE_LIMIT) {
+    return NextResponse.json(
+      { error: `Too many links created. You can create up to ${RATE_LIMIT} links per hour.` },
+      { status: 429 }
+    );
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   let stealthAddress: string | null = null;
   let stealthPrivateKey: string | null = null;
 
@@ -92,7 +114,7 @@ export async function POST(req: NextRequest) {
       title: title.trim(),
       amount: parsed.toString(),
       description: description?.trim() || null,
-      recipientAddress: recipientAddress.toLowerCase(),
+      recipientAddress: addr,
       stealthAddress,
       stealthPrivateKey,
       expiresAt: expiresAt ? new Date(expiresAt) : null,
