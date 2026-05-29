@@ -5,8 +5,6 @@ node_modules/
 
 # Local environment variables — NEVER commit these
 .env
-.env.local
-.env*.local
 
 # Next.js build output
 .next/
