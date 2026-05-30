@@ -54,7 +54,12 @@ const GROUPS = [
       {
         label: "Developers", href: "/developers",
         icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><path d="M5 4l-3 4 3 4M11 4l3 4-3 4M9 2l-2 12" strokeLinecap="round" strokeLinejoin="round" /></svg>,
-        desc: "Docs and integration guide",
+        desc: "x402 API & integration docs",
+      },
+      {
+        label: "Docs", href: "/docs",
+        icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" strokeLinecap="round" /><path d="M5 6h6M5 9h6M5 12h4" strokeLinecap="round" /></svg>,
+        desc: "Product documentation",
       },
     ],
   },
