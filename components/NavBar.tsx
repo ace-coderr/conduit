@@ -7,8 +7,6 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useAccount, useDisconnect } from "wagmi";
 import { useEffect, useState, useRef } from "react";
 
-// ─── Nav structure ────────────────────────────────────────────────────────────
-
 const STANDALONE = [
   {
     label: "Dashboard", href: "/",
@@ -17,6 +15,10 @@ const STANDALONE = [
   {
     label: "Escrow", href: "/escrow",
     icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><rect x="2" y="6" width="12" height="9" rx="1.5" /><path d="M5 6V4.5a3 3 0 016 0V6" strokeLinecap="round" /><circle cx="8" cy="10.5" r="1.2" fill="currentColor" stroke="none" /><path d="M8 11.7v1.3" strokeLinecap="round" /></svg>,
+  },
+  {
+    label: "Docs", href: "/docs",
+    icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" strokeLinecap="round" /><path d="M5 6h6M5 9h6M5 12h4" strokeLinecap="round" /></svg>,
   },
 ];
 
@@ -56,11 +58,6 @@ const GROUPS = [
         icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><path d="M5 4l-3 4 3 4M11 4l3 4-3 4M9 2l-2 12" strokeLinecap="round" strokeLinejoin="round" /></svg>,
         desc: "x402 API & integration docs",
       },
-      {
-        label: "Docs", href: "/docs",
-        icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" strokeLinecap="round" /><path d="M5 6h6M5 9h6M5 12h4" strokeLinecap="round" /></svg>,
-        desc: "Product documentation",
-      },
     ],
   },
   {
@@ -80,8 +77,6 @@ const GROUPS = [
     ],
   },
 ];
-
-// ─── Dropdown component ───────────────────────────────────────────────────────
 
 function NavDropdown({ group, pathname }: { group: typeof GROUPS[0]; pathname: string }) {
   const [open, setOpen] = useState(false);
@@ -141,8 +136,6 @@ function NavDropdown({ group, pathname }: { group: typeof GROUPS[0]; pathname: s
     </div>
   );
 }
-
-// ─── Main NavBar ──────────────────────────────────────────────────────────────
 
 export function NavBar() {
   const pathname = usePathname();
@@ -206,7 +199,6 @@ export function NavBar() {
           )}
         </Link>
 
-        {/* Desktop nav */}
         <div className="nav-links">
           {STANDALONE.map(l => (
             <Link key={l.href} href={l.href} className={`nav-link${pathname === l.href ? " active" : ""}`}>
