@@ -1,10 +1,8 @@
-import Link from "next/link";
-import type { Metadata } from "next";
+"use client";
 
-export const metadata: Metadata = {
-    title: "Developers — Conduit Pay",
-    description: "Build on Conduit. The first public x402 facilitator on Arc Network. Accept USDC micropayments from AI agents and HTTP clients.",
-};
+import Link from "next/link";
+
+export const dynamic = "force-dynamic";
 
 const NAV = [
     { id: "overview", label: "Overview" },
@@ -89,7 +87,7 @@ export default function DevelopersPage() {
                     </nav>
                     <div style={{ marginTop: 32, padding: "12px", background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 8 }}>
                         <p style={{ fontSize: 10, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, marginBottom: 6 }}>LIVE DEMO</p>
-                        <a href="https://conduitpay.xyz/api/arc-stats" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", textDecoration: "none", wordBreak: "break-all" }}>/api/arc-stats ↗</a>
+                        <a href="https://conduitpay.xyz/api/arc-stats" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "var(--c)", textDecoration: "none", wordBreak: "break-all" }}>/api/arc-stats ↗</a>
                     </div>
                 </aside>
 
@@ -123,7 +121,6 @@ export default function DevelopersPage() {
                         ))}
                     </div>
 
-                    {/* Overview */}
                     <Section id="overview" title="Overview">
                         <p style={{ fontSize: 14, color: "var(--ink-3)", lineHeight: 1.8, marginBottom: 16 }}>
                             x402 is an HTTP-native payment protocol. Instead of blocking access with a subscription or API key, your server returns a <Mono>402 Payment Required</Mono> response. The client pays and retries — automatically.
@@ -146,13 +143,10 @@ export default function DevelopersPage() {
                         </div>
                     </Section>
 
-                    {/* Quick Start */}
                     <Section id="quickstart" title="Quick Start">
                         <p style={{ fontSize: 14, color: "var(--ink-3)", lineHeight: 1.8, marginBottom: 20 }}>Get a USDC-gated API route live in under 5 minutes.</p>
-
                         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>1. Install the package</p>
                         <Code>{`npm install @ace_won/x402`}</Code>
-
                         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>2. Wrap your route</p>
                         <Code>{`// app/api/your-endpoint/route.ts
 import { withPayment } from "@ace_won/x402";
@@ -164,7 +158,6 @@ async function handler(req: NextRequest) {
 
 // Requires 0.001 USDC to access
 export const GET = withPayment({ amount: "0.001" }, handler);`}</Code>
-
                         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>3. Test it</p>
                         <Code>{`# Returns 402 with payment details
 curl -i https://your-app.vercel.app/api/your-endpoint
@@ -172,16 +165,12 @@ curl -i https://your-app.vercel.app/api/your-endpoint
 # Expected
 HTTP/1.1 402 Payment Required
 Payment-Required: eyJhY2NlcHRzIjpbeyJzY2hlb...`}</Code>
-
                         <div style={{ background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 10, padding: "14px 18px" }}>
                             <p style={{ fontSize: 12, color: "var(--c)", fontWeight: 700, marginBottom: 4 }}>Live demo</p>
-                            <p style={{ fontSize: 12, color: "var(--ink-3)" }}>
-                                Hit <a href="https://conduitpay.xyz/api/arc-stats" target="_blank" rel="noopener noreferrer" style={{ color: "var(--c)" }}>conduitpay.xyz/api/arc-stats</a> in your browser. Pay 0.001 USDC. Get live Arc Network stats back in under a second.
-                            </p>
+                            <p style={{ fontSize: 12, color: "var(--ink-3)" }}>Hit <a href="https://conduitpay.xyz/api/arc-stats" target="_blank" rel="noopener noreferrer" style={{ color: "var(--c)" }}>conduitpay.xyz/api/arc-stats</a> in your browser. Pay 0.001 USDC. Get live Arc Network stats back in under a second.</p>
                         </div>
                     </Section>
 
-                    {/* How it works */}
                     <Section id="how-it-works" title="How It Works">
                         <p style={{ fontSize: 14, color: "var(--ink-3)", lineHeight: 1.8, marginBottom: 20 }}>The full payment flow from request to response:</p>
                         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
@@ -206,15 +195,10 @@ Payment-Required: eyJhY2NlcHRzIjpbeyJzY2hlb...`}</Code>
                         </p>
                     </Section>
 
-                    {/* npm package */}
                     <Section id="npm-package" title="npm Package">
-                        <p style={{ fontSize: 14, color: "var(--ink-3)", lineHeight: 1.8, marginBottom: 20 }}>
-                            <Mono>@ace_won/x402</Mono> is a drop-in middleware for Next.js 14+. Install once, use on any route.
-                        </p>
-
+                        <p style={{ fontSize: 14, color: "var(--ink-3)", lineHeight: 1.8, marginBottom: 20 }}><Mono>@ace_won/x402</Mono> is a drop-in middleware for Next.js 14+. Install once, use on any route.</p>
                         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>Install</p>
                         <Code>{`npm install @ace_won/x402`}</Code>
-
                         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>All options</p>
                         <Code>{`withPayment({
   // Required
@@ -231,7 +215,6 @@ Payment-Required: eyJhY2NlcHRzIjpbeyJzY2hlb...`}</Code>
   rpcUrl: "https://rpc.testnet.arc.network",
   maxTimeoutSeconds: 300,    // Max payment age in seconds
 }, handler);`}</Code>
-
                         <div style={{ background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: 10, overflow: "hidden", marginBottom: 24 }}>
                             {[
                                 { k: "Next.js", v: "14+" },
@@ -245,18 +228,14 @@ Payment-Required: eyJhY2NlcHRzIjpbeyJzY2hlb...`}</Code>
                                 </div>
                             ))}
                         </div>
-
                         <a href="https://npmjs.com/package/@ace_won/x402" target="_blank" rel="noopener noreferrer"
                             style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 18px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, fontSize: 12, fontWeight: 700, color: "var(--ink-2)", textDecoration: "none" }}>
                             View on npm ↗
                         </a>
                     </Section>
 
-                    {/* Endpoints */}
                     <Section id="endpoints" title="API Endpoints">
-                        <p style={{ fontSize: 14, color: "var(--ink-3)", lineHeight: 1.8, marginBottom: 20 }}>
-                            All endpoints are live at <Mono>conduitpay.xyz</Mono>
-                        </p>
+                        <p style={{ fontSize: 14, color: "var(--ink-3)", lineHeight: 1.8, marginBottom: 20 }}>All endpoints live at <Mono>conduitpay.xyz</Mono></p>
                         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                             {[
                                 { method: "GET", path: "/api/x402", desc: "Facilitator discovery — returns supported networks, assets, and facilitator info.", color: "#00E5A0" },
@@ -276,12 +255,8 @@ Payment-Required: eyJhY2NlcHRzIjpbeyJzY2hlb...`}</Code>
                         </div>
                     </Section>
 
-                    {/* Verify */}
                     <Section id="verify" title="Verify">
-                        <p style={{ fontSize: 14, color: "var(--ink-3)", lineHeight: 1.8, marginBottom: 20 }}>
-                            Call <Mono>POST /api/x402/verify</Mono> before serving your resource. <Mono>withPayment()</Mono> does this automatically.
-                        </p>
-
+                        <p style={{ fontSize: 14, color: "var(--ink-3)", lineHeight: 1.8, marginBottom: 20 }}>Call <Mono>POST /api/x402/verify</Mono> before serving your resource. <Mono>withPayment()</Mono> does this automatically.</p>
                         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>Request body</p>
                         <Code>{`{
   "payload": "<base64 encoded payment data>",
@@ -292,7 +267,6 @@ Payment-Required: eyJhY2NlcHRzIjpbeyJzY2hlb...`}</Code>
     "asset": "0x3600000000000000000000000000000000000000"
   }
 }`}</Code>
-
                         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>Response — valid</p>
                         <Code>{`{
   "isValid": true,
@@ -301,13 +275,11 @@ Payment-Required: eyJhY2NlcHRzIjpbeyJzY2hlb...`}</Code>
   "amount": "1000",
   "token": "0x3600000000000000000000000000000000000000"
 }`}</Code>
-
                         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>Response — invalid</p>
                         <Code>{`{
   "isValid": false,
   "error": "Payment nonce already used"
 }`}</Code>
-
                         <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-2)", marginBottom: 10 }}>What gets checked</p>
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                             {[
@@ -319,19 +291,14 @@ Payment-Required: eyJhY2NlcHRzIjpbeyJzY2hlb...`}</Code>
                                 "Payer has sufficient USDC balance on Arc",
                             ].map(c => (
                                 <div key={c} style={{ display: "flex", gap: 10, fontSize: 12, color: "var(--ink-3)" }}>
-                                    <span style={{ color: "var(--c)", flexShrink: 0 }}>✓</span>
-                                    {c}
+                                    <span style={{ color: "var(--c)", flexShrink: 0 }}>✓</span>{c}
                                 </div>
                             ))}
                         </div>
                     </Section>
 
-                    {/* Settle */}
                     <Section id="settle" title="Settle">
-                        <p style={{ fontSize: 14, color: "var(--ink-3)", lineHeight: 1.8, marginBottom: 20 }}>
-                            Call <Mono>POST /api/x402/settle</Mono> after serving your resource. This executes the on-chain USDC transfer. <Mono>withPayment()</Mono> calls this automatically in the background.
-                        </p>
-
+                        <p style={{ fontSize: 14, color: "var(--ink-3)", lineHeight: 1.8, marginBottom: 20 }}>Call <Mono>POST /api/x402/settle</Mono> after serving your resource. <Mono>withPayment()</Mono> calls this automatically in the background.</p>
                         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>Request body</p>
                         <Code>{`{
   "payload": "<base64 encoded payment data>",
@@ -341,7 +308,6 @@ Payment-Required: eyJhY2NlcHRzIjpbeyJzY2hlb...`}</Code>
     "asset": "0x3600000000000000000000000000000000000000"
   }
 }`}</Code>
-
                         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>Response</p>
                         <Code>{`{
   "success": true,
@@ -350,12 +316,8 @@ Payment-Required: eyJhY2NlcHRzIjpbeyJzY2hlb...`}</Code>
 }`}</Code>
                     </Section>
 
-                    {/* Marketplace */}
                     <Section id="marketplace" title="Marketplace">
-                        <p style={{ fontSize: 14, color: "var(--ink-3)", lineHeight: 1.8, marginBottom: 20 }}>
-                            The Conduit Marketplace is a public directory of x402-gated APIs. List your API so AI agents and developers can discover and pay for it automatically.
-                        </p>
-
+                        <p style={{ fontSize: 14, color: "var(--ink-3)", lineHeight: 1.8, marginBottom: 20 }}>The Conduit Marketplace is a public directory of x402-gated APIs. List your API so AI agents and developers can discover and pay for it automatically.</p>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 28 }}>
                             {[
                                 { title: "List your API", desc: "Submit your x402 endpoint. Set a USDC price per request. Earn automatically." },
@@ -368,8 +330,6 @@ Payment-Required: eyJhY2NlcHRzIjpbeyJzY2hlb...`}</Code>
                                 </div>
                             ))}
                         </div>
-
-                        <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-2)", marginBottom: 12 }}>How to submit</p>
                         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
                             {[
                                 { n: "01", t: "Build your x402 endpoint", d: "Use withPayment() to gate any Next.js route. Test locally with curl." },
@@ -386,14 +346,12 @@ Payment-Required: eyJhY2NlcHRzIjpbeyJzY2hlb...`}</Code>
                                 </div>
                             ))}
                         </div>
-
                         <a href="https://conduitpay.xyz/marketplace/submit"
                             style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "11px 22px", background: "var(--c)", borderRadius: 8, fontSize: 13, fontWeight: 700, color: "#000", textDecoration: "none" }}>
                             Submit your API →
                         </a>
                     </Section>
 
-                    {/* Network details */}
                     <Section id="network" title="Network Details">
                         <div style={{ background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: 12, overflow: "hidden", marginBottom: 24 }}>
                             {[
@@ -413,23 +371,19 @@ Payment-Required: eyJhY2NlcHRzIjpbeyJzY2hlb...`}</Code>
                                 </div>
                             ))}
                         </div>
-
                         <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>Add Arc Testnet to MetaMask</p>
                         <Code>{`Network name:  Arc Testnet
 RPC URL:       https://rpc.testnet.arc.network
 Chain ID:      5042002
 Currency:      USDC
 Explorer:      https://testnet.arcscan.app`}</Code>
-
                         <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>Get testnet USDC</p>
                         <p style={{ fontSize: 14, color: "var(--ink-3)", lineHeight: 1.8 }}>
-                            Go to <a href="https://faucet.circle.com" target="_blank" rel="noopener noreferrer" style={{ color: "var(--c)" }}>faucet.circle.com</a> → select Arc Testnet → paste your wallet address. Funds arrive in under a minute.
+                            Go to <a href="https://faucet.circle.com" target="_blank" rel="noopener noreferrer" style={{ color: "var(--c)" }}>faucet.circle.com</a> → select Arc Testnet → paste your wallet address.
                         </p>
                     </Section>
 
-                    {/* Code examples */}
                     <Section id="examples" title="Code Examples">
-
                         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>Basic — 0.001 USDC per request</p>
                         <Code>{`import { withPayment } from "@ace_won/x402";
 import { NextRequest, NextResponse } from "next/server";
@@ -437,7 +391,6 @@ import { NextRequest, NextResponse } from "next/server";
 export const GET = withPayment({ amount: "0.001" }, async (req: NextRequest) => {
   return NextResponse.json({ data: "basic content" });
 });`}</Code>
-
                         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>Pay directly to your wallet</p>
                         <Code>{`export const GET = withPayment({
   amount: "0.01",
@@ -446,7 +399,6 @@ export const GET = withPayment({ amount: "0.001" }, async (req: NextRequest) => 
 }, async (req: NextRequest) => {
   return NextResponse.json({ analytics: getData() });
 });`}</Code>
-
                         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>POST endpoint — AI inference</p>
                         <Code>{`export const POST = withPayment({
   amount: "0.005",
@@ -456,7 +408,6 @@ export const GET = withPayment({ amount: "0.001" }, async (req: NextRequest) => 
   const result = await runInference(prompt);
   return NextResponse.json({ result });
 });`}</Code>
-
                         <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>Multiple price tiers</p>
                         <Code>{`// app/api/basic/route.ts — 0.001 USDC
 export const GET = withPayment({ amount: "0.001" }, basicHandler);
@@ -473,33 +424,21 @@ export const GET = withPayment({
   amount: "0.1",
   description: "Enterprise data feed",
 }, enterpriseHandler);`}</Code>
-
                     </Section>
 
-                    {/* CTA */}
                     <div style={{ background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 16, padding: "32px", textAlign: "center" }}>
                         <p style={{ fontSize: 18, fontWeight: 800, color: "var(--ink-1)", marginBottom: 8 }}>Ready to build?</p>
                         <p style={{ fontSize: 13, color: "var(--ink-3)", marginBottom: 24 }}>Start accepting USDC micropayments on Arc. List on the marketplace and let AI agents find you.</p>
                         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-                            <a href="https://conduitpay.xyz/marketplace/submit"
-                                style={{ padding: "11px 22px", background: "var(--c)", borderRadius: 8, color: "#000", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
-                                Submit to Marketplace →
-                            </a>
-                            <a href="https://github.com/ace-coderr/conduit" target="_blank" rel="noopener noreferrer"
-                                style={{ padding: "11px 22px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-2)", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
-                                View on GitHub ↗
-                            </a>
-                            <a href="https://x.com/conduit_pay" target="_blank" rel="noopener noreferrer"
-                                style={{ padding: "11px 22px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-2)", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>
-                                @conduit_pay ↗
-                            </a>
+                            <a href="https://conduitpay.xyz/marketplace/submit" style={{ padding: "11px 22px", background: "var(--c)", borderRadius: 8, color: "#000", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>Submit to Marketplace →</a>
+                            <a href="https://github.com/ace-coderr/conduit" target="_blank" rel="noopener noreferrer" style={{ padding: "11px 22px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-2)", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>View on GitHub ↗</a>
+                            <a href="https://x.com/conduit_pay" target="_blank" rel="noopener noreferrer" style={{ padding: "11px 22px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-2)", fontSize: 13, fontWeight: 700, textDecoration: "none" }}>@conduit_pay ↗</a>
                         </div>
                     </div>
 
                 </main>
             </div>
 
-            {/* Footer */}
             <div style={{ borderTop: "1px solid var(--stroke)", padding: "24px 40px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Built on Arc Network · Powered by Circle USDC</span>
                 <span style={{ fontSize: 12, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>@ace_won/x402 v1.0.2</span>
