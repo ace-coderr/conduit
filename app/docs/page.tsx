@@ -87,12 +87,12 @@ export default function DocsPage() {
 
             <div style={{ display: "flex", maxWidth: 1100, margin: "0 auto" }}>
 
-                <aside style={{ width: 220, flexShrink: 0, padding: "40px 0 40px 24px", position: "sticky", top: 56, height: "calc(100vh - 56px)", overflowY: "auto" }}>
-                    <p style={{ fontSize: 10, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, letterSpacing: ".1em", marginBottom: 12 }}>DOCUMENTATION</p>
+                <aside style={{ width: 260, flexShrink: 0, padding: "40px 0 40px 28px", position: "sticky", top: 56, height: "calc(100vh - 56px)", overflowY: "auto" }}>
+                    <p style={{ fontSize: 10, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, letterSpacing: ".1em", marginBottom: 16 }}>DOCUMENTATION</p>
                     <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                         {NAV.map(n => (
                             <a key={n.id} href={`#${n.id}`}
-                                style={{ fontSize: 13, color: "var(--ink-3)", textDecoration: "none", padding: "6px 10px", borderRadius: 6, fontWeight: 500 }}
+                                style={{ fontSize: 14, color: "var(--ink-3)", textDecoration: "none", padding: "9px 12px", borderRadius: 6, fontWeight: 600 }}
                                 onMouseEnter={e => { (e.target as HTMLElement).style.color = "var(--ink-1)"; (e.target as HTMLElement).style.background = "var(--raised)"; }}
                                 onMouseLeave={e => { (e.target as HTMLElement).style.color = "var(--ink-3)"; (e.target as HTMLElement).style.background = "transparent"; }}
                             >{n.label}</a>
