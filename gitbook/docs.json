@@ -1,0 +1,11 @@
+{
+    "name": "Conduit Docs",
+    "navigation": [
+        {
+            "group": "Getting Started",
+            "pages": [
+                "README"
+            ]
+        }
+    ]
+}
