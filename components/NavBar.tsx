@@ -17,7 +17,7 @@ const STANDALONE = [
     icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><rect x="2" y="6" width="12" height="9" rx="1.5" /><path d="M5 6V4.5a3 3 0 016 0V6" strokeLinecap="round" /><circle cx="8" cy="10.5" r="1.2" fill="currentColor" stroke="none" /><path d="M8 11.7v1.3" strokeLinecap="round" /></svg>,
   },
   {
-    label: "Docs", href: "/docs",
+    label: "Docs", href: "/docs", soon: true,
     icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" strokeLinecap="round" /><path d="M5 6h6M5 9h6M5 12h4" strokeLinecap="round" /></svg>,
   },
 ];
