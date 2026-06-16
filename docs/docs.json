@@ -1,0 +1,108 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Conduit Pay",
+  "colors": {
+    "primary": "#00E5A0",
+    "light": "#00E5A0",
+    "dark": "#00b4d8"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Product",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "product/introduction",
+              "product/who-is-it-for",
+              "product/getting-started"
+            ]
+          },
+          {
+            "group": "Why Conduit",
+            "pages": [
+              "product/the-problem",
+              "product/solution"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "product/payment-links",
+              "product/stealth-mode",
+              "product/multi-chain",
+              "product/escrow",
+              "product/ai-dispute",
+              "product/seedless-wallets",
+              "product/username-payments",
+              "product/notifications"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "product/faq",
+              "product/roadmap"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Developers",
+        "groups": [
+          {
+            "group": "x402 Facilitator",
+            "pages": [
+              "developers/overview",
+              "developers/quickstart",
+              "developers/how-it-works"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "developers/npm-package",
+              "developers/endpoints",
+              "developers/verify",
+              "developers/settle",
+              "developers/network",
+              "developers/examples"
+            ]
+          },
+          {
+            "group": "Marketplace",
+            "pages": [
+              "developers/marketplace"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Live App",
+        "href": "https://conduitpay.xyz"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "GitHub",
+      "href": "https://github.com/ace-coderr/conduit"
+    }
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/conduit_pay",
+      "github": "https://github.com/ace-coderr/conduit"
+    }
+  }
+}

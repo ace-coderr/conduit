@@ -1,0 +1,34 @@
+---
+title: "Verify"
+description: "Validate a payment payload before serving your resource."
+---
+
+`POST /api/x402/verify` validates a payment payload before you serve your resource. The `withPayment()` middleware calls this automatically.
+
+## What gets checked
+
+| Check | Details |
+|-------|---------|
+| Payload decoding | Base64 decodes to a valid payment object |
+| Time validity | `validAfter` has passed, `validBefore` has not expired |
+| Amount | Meets or exceeds the required minimum |
+| Recipient | `to` matches your `payTo` |
+| Nonce | Not already used (via `authorizationState` on Arc USDC) |
+| Balance | Payer has sufficient USDC on Arc |
+
+## Nonce replay protection
+
+Every EIP-3009 authorization includes a unique `nonce`. Conduit calls `authorizationState(authorizer, nonce)` on the Arc USDC contract before processing. If the nonce was already used, Conduit rejects the payment. Replay attacks are impossible.
+
+## Error responses
+
+| Error | Meaning |
+|-------|---------|
+| `Missing payload or paymentDetails` | Request body incomplete |
+| `Invalid payment payload encoding` | Base64 decode failed |
+| `Payment not yet valid` | `validAfter` is in the future |
+| `Payment authorization expired` | `validBefore` has passed |
+| `Insufficient payment` | Amount below the minimum |
+| `Wrong recipient` | `to` doesn't match `payTo` |
+| `Payment nonce already used` | Authorization already submitted |
+| `Insufficient USDC balance` | Payer lacks funds on Arc |

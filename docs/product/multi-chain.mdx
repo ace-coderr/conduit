@@ -1,0 +1,33 @@
+---
+title: "Multi-Chain Payments"
+description: "Accept USDC from any chain via Circle's CCTP V2."
+---
+
+Conduit uses Circle's CCTP V2 (Cross-Chain Transfer Protocol) to accept USDC payments from any supported blockchain. The payer doesn't need to be on Arc — they can pay from wherever they are.
+
+## Supported sending chains
+
+| Chain | Status |
+|-------|--------|
+| Ethereum Mainnet | Supported |
+| Base | Supported |
+| Arbitrum | Supported |
+| Optimism | Supported |
+| Polygon | Supported |
+| Avalanche | Supported |
+
+You always receive **USDC on Arc Network**, regardless of which chain the payer sends from.
+
+## How it works
+
+1. Payer opens your Conduit payment link
+2. They connect their wallet — on any supported chain
+3. They pay in USDC from their chain
+4. Circle's CCTP V2 bridges the payment to Arc
+5. You receive USDC on Arc in under a second
+
+Neither party needs to know or care about network selection. Conduit handles the routing.
+
+## Why it matters
+
+Before Conduit, if your payer was on Ethereum and your wallet was on Arc, the payment would fail or require manual bridging. With multi-chain support there are no "wrong network" errors, no bridging required, and no failed transactions from chain mismatch.

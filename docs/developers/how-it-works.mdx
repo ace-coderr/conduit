@@ -1,0 +1,40 @@
+---
+title: "How It Works"
+description: "The full x402 payment flow from first request to on-chain settlement."
+---
+
+## The 5-step flow
+
+<Steps>
+  <Step title="Client hits your API">
+    No payment header present. Your route returns `402 Payment Required` with a `Payment-Required` header containing amount, token, network, recipient, and facilitator URL.
+  </Step>
+  <Step title="Client pays on Arc">
+    AI agents sign an EIP-3009 `transferWithAuthorization` and retry with a `Payment-Signature` header. Browsers are redirected to the Conduit pay page, connect MetaMask, and confirm.
+  </Step>
+  <Step title="withPayment() verifies">
+    The middleware calls `POST /api/x402/verify`. Conduit checks the payload, timing, amount, recipient, nonce (replay protection), and balance.
+  </Step>
+  <Step title="Handler is called">
+    Verification passed — your handler runs and the response is served immediately.
+  </Step>
+  <Step title="Conduit settles async">
+    After serving the response, `withPayment()` calls `POST /api/x402/settle` in the background. Conduit executes the transfer on Arc.
+  </Step>
+</Steps>
+
+## Replay protection
+
+Every EIP-3009 authorization has a unique nonce. Before processing, Conduit calls `authorizationState(from, nonce)` on the USDC contract on Arc. If the nonce was already used, verification is rejected immediately. Replay attacks are impossible.
+
+## Sequence
+
+```
+Client          Your API         Conduit /verify    Arc Network
+  |--- GET ------->|                  |                  |
+  |<-- 402 --------|                  |                  |
+  |  [pays on Arc] |                  |                  |
+  |--- GET + sig ->|--- verify(sig) ->|--- check nonce ->|
+  |                |<-- isValid:true -|<-- nonce ok -----|
+  |<-- 200 --------|--- settle(sig) ->|--- transfer ---->|
+```

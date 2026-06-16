@@ -1,0 +1,35 @@
+---
+title: "Settle"
+description: "Execute the on-chain USDC transfer after serving the response."
+---
+
+`POST /api/x402/settle` executes the on-chain USDC transfer after your handler has served the response. The `withPayment()` middleware calls this automatically in the background.
+
+## When it's called
+
+Settle runs **after** your handler returns, so the client receives your data immediately without waiting for blockchain confirmation.
+
+```
+Client receives response → settle() runs in background → USDC transfers on Arc
+```
+
+## What it does
+
+1. Decodes the payment payload
+2. Calls `transferWithAuthorization` on the Arc USDC contract
+3. Waits for confirmation
+4. Returns the transaction hash
+
+## Response
+
+```json
+{
+  "success": true,
+  "txHash": "0x1c07e4c7...",
+  "network": "eip155:5042002"
+}
+```
+
+<Info>
+The settle call is fire-and-forget from your API's perspective. If it fails, the payload is still valid and can be retried. Nonces prevent double-spending.
+</Info>

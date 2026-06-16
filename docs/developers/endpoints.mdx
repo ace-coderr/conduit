@@ -1,0 +1,49 @@
+---
+title: "API Endpoints"
+description: "Facilitator endpoints live at conduitpay.xyz."
+---
+
+All endpoints are live at `conduitpay.xyz`.
+
+## Discovery
+
+<ParamField path="GET /api/x402" type="endpoint">
+Returns supported networks, assets, and facilitator info. No authentication required.
+</ParamField>
+
+```json
+{
+  "facilitator": "https://conduitpay.xyz/api/x402",
+  "supportedNetworks": ["eip155:5042002"],
+  "supportedAssets": ["0x3600000000000000000000000000000000000000"],
+  "version": "1.0"
+}
+```
+
+## Verify
+
+<ParamField path="POST /api/x402/verify" type="endpoint">
+Verify a payment payload before serving your resource. Called automatically by `withPayment()`.
+</ParamField>
+
+Returns `{ "isValid": true, "payer": "0x...", "amount": "1000" }` on success, or `{ "isValid": false, "error": "..." }` on failure.
+
+## Settle
+
+<ParamField path="POST /api/x402/settle" type="endpoint">
+Execute the on-chain USDC transfer. Called automatically after your handler responds.
+</ParamField>
+
+```json
+{ "success": true, "txHash": "0x1c07e4c7...", "network": "eip155:5042002" }
+```
+
+## Demo
+
+<ParamField path="GET /api/arc-stats" type="endpoint">
+Pay 0.001 USDC to receive live Arc Network block stats.
+</ParamField>
+
+```bash
+curl -i https://conduitpay.xyz/api/arc-stats
+```

@@ -1,0 +1,47 @@
+---
+title: "AI Dispute Agent"
+description: "Gemini-powered mediation that resolves escrow disputes automatically."
+---
+
+Conduit uses an AI mediator powered by **Google Gemini 2.0 Flash** to automatically resolve escrow disputes. When a dispute is escalated, the AI reads the full evidence thread and issues a binding verdict.
+
+## How it works
+
+<Steps>
+  <Step title="Evidence is submitted">
+    Both parties submit their case in the mediation thread.
+  </Step>
+  <Step title="AI reads the thread">
+    Gemini analyzes the full escrow details and every message.
+  </Step>
+  <Step title="Verdict is issued">
+    A structured verdict is returned with a confidence score.
+  </Step>
+  <Step title="Auto-execution">
+    If confidence is 80%+, the verdict executes automatically via Circle wallet. Otherwise it's saved as advisory for admin review.
+  </Step>
+</Steps>
+
+## Verdict types
+
+| Verdict | Meaning | When issued |
+|---------|---------|-------------|
+| `RELEASE` | Funds go to seller | Seller provided convincing delivery evidence |
+| `REFUND` | Funds go to buyer | Seller failed to deliver or ignored the dispute |
+| `UNCERTAIN` | Human review needed | Evidence is genuinely ambiguous |
+
+## Confidence scoring
+
+| Confidence | Behavior |
+|-----------|----------|
+| 80–100% | Auto-executes on-chain |
+| 50–79% | Advisory only |
+| Below 50% | Returns UNCERTAIN |
+
+## Fairness
+
+The AI evaluates only the content of the dispute thread — not wallet identities or amounts. It cannot be biased toward buyer or seller. Decisions are consistent, evidence-based, and instant.
+
+<Info>
+Auto-execution happens via Circle Developer-Controlled Wallets. No human presses a button — the USDC transfer executes directly on Arc when confidence is sufficient.
+</Info>

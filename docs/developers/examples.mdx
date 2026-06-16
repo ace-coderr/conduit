@@ -1,5 +1,6 @@
-# Code Examples
-
+---
+title: "Code Examples"
+description: "Copy-paste x402 endpoint patterns."
 ---
 
 ## Basic — 0.001 USDC per request
@@ -12,8 +13,6 @@ export const GET = withPayment({ amount: "0.001" }, async (req: NextRequest) => 
   return NextResponse.json({ data: "basic content" });
 });
 ```
-
----
 
 ## Pay directly to your wallet
 
@@ -28,8 +27,6 @@ export const GET = withPayment({
 });
 ```
 
----
-
 ## POST endpoint — AI inference
 
 ```typescript
@@ -42,8 +39,6 @@ export const POST = withPayment({
   return NextResponse.json({ result });
 });
 ```
-
----
 
 ## Multiple price tiers
 
@@ -60,32 +55,17 @@ export const GET = withPayment({
   payTo: "0xYourWallet",
   description: "Premium tier with full dataset",
 }, premiumHandler);
-
-// app/api/enterprise/route.ts — 0.1 USDC
-export const GET = withPayment({
-  amount: "0.1",
-  description: "Enterprise real-time feed",
-}, enterpriseHandler);
 ```
-
----
 
 ## Access payer address in your handler
 
 ```typescript
 export const GET = withPayment({ amount: "0.001" }, async (req: NextRequest) => {
-  // The payer's wallet address is available after verification
   const payerAddress = req.headers.get("x-payment-payer");
-
-  return NextResponse.json({
-    data: "your content",
-    paidBy: payerAddress,
-  });
+  return NextResponse.json({ data: "your content", paidBy: payerAddress });
 });
 ```
 
----
-
-## Live demo reference
-
-The full source for `/api/arc-stats` is in the [GitHub repo](https://github.com/ace-coderr/conduit/blob/main/app/api/arc-stats/route.ts). It's a working x402 endpoint that returns live Arc Network stats — use it as a reference.
+<Tip>
+The full source for `/api/arc-stats` is in the [GitHub repo](https://github.com/ace-coderr/conduit). Use it as a working reference.
+</Tip>

@@ -1,0 +1,49 @@
+---
+title: "Escrow"
+description: "Funds held safely in a Circle wallet until delivery is confirmed."
+---
+
+Conduit Escrow protects both buyer and seller in a peer-to-peer transaction. The buyer locks USDC before anything is delivered. Funds are held securely until the buyer confirms receipt — then released instantly to the seller.
+
+<Note>
+All escrow funds are held in a **Circle Developer-Controlled Wallet** — a secure MPC wallet managed by Circle. No private keys are stored in Conduit's database.
+</Note>
+
+## How it works
+
+<Steps>
+  <Step title="Seller creates the escrow link">
+    Set title, description, amount, and a delivery window.
+  </Step>
+  <Step title="Buyer pays">
+    USDC is locked in a dedicated Circle wallet. Status becomes HOLDING.
+  </Step>
+  <Step title="Seller delivers">
+    The seller completes the work or delivers the goods.
+  </Step>
+  <Step title="Buyer confirms receipt">
+    Funds release instantly to the seller. Status becomes RELEASED.
+  </Step>
+</Steps>
+
+If the buyer doesn't confirm or dispute within 7 days after delivery, funds auto-release to the seller.
+
+## Escrow statuses
+
+| Status | Meaning |
+|--------|---------|
+| `ACTIVE` | Created, waiting for buyer to pay |
+| `HOLDING` | Buyer paid — funds locked |
+| `CONFIRMED` | Buyer confirmed — release in progress |
+| `RELEASED` | Funds transferred to seller |
+| `DISPUTED` | Buyer raised a dispute |
+| `MEDIATION` | Both sides responded — awaiting review |
+| `CANCELLED` | Escrow refunded to buyer |
+
+## Disputes
+
+If something goes wrong, the buyer can raise a dispute before confirming receipt. Both parties have 48 hours to submit evidence. Auto-resolution applies: if the seller goes silent for 48 hours funds are refunded to the buyer; if the buyer goes silent after the seller responds funds release to the seller; if both respond it escalates to the AI Dispute Agent or admin review.
+
+## Fees
+
+Conduit takes 0.5% of the escrow amount on release, deducted from the amount transferred to the seller. No fee is charged if the escrow is refunded.

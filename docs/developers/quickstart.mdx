@@ -1,0 +1,42 @@
+---
+title: "Quick Start"
+description: "Get a USDC-gated API route live in under 5 minutes."
+---
+
+<Steps>
+  <Step title="Install the package">
+    ```bash
+    npm install @ace_won/x402
+    ```
+  </Step>
+  <Step title="Wrap your route">
+    ```typescript app/api/your-endpoint/route.ts
+    import { withPayment } from "@ace_won/x402";
+    import { NextRequest, NextResponse } from "next/server";
+
+    async function handler(req: NextRequest) {
+      return NextResponse.json({ data: "your content here" });
+    }
+
+    // Requires 0.001 USDC to access
+    export const GET = withPayment({ amount: "0.001" }, handler);
+    ```
+  </Step>
+  <Step title="Test it">
+    ```bash
+    curl -i https://your-app.vercel.app/api/your-endpoint
+    ```
+    Returns `402 Payment Required` with a `Payment-Required` header.
+  </Step>
+  <Step title="List on the marketplace">
+    Submit your endpoint at [conduitpay.xyz/marketplace/submit](https://conduitpay.xyz/marketplace/submit) so AI agents and developers can discover it.
+  </Step>
+</Steps>
+
+## Requirements
+
+| Requirement | Version |
+|-------------|---------|
+| Next.js | 14+ |
+| viem | v2+ (peer dependency) |
+| Node.js | 18+ |

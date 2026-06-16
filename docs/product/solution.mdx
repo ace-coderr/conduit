@@ -1,0 +1,33 @@
+---
+title: "Conduit's Solution"
+description: "Four primitives that make USDC payments private, cross-chain, and programmable."
+---
+
+Conduit solves all four problems with four core primitives.
+
+## 1. Payment Abstraction
+
+Users never interact directly with wallet addresses. Instead they use payment links (a URL anyone can pay), @usernames (`conduitpay.xyz/u/yourname`), or embedded checkout flows. The wallet address is handled invisibly in the background.
+
+## 2. Privacy Layer — Stealth Architecture
+
+Payments are routed through temporary intermediary wallets:
+
+1. Conduit generates a fresh temporary wallet for your link
+2. Payer sends USDC to the temporary address
+3. Conduit forwards funds to your real wallet automatically
+4. Payer cannot trace your real address or history on-chain
+
+Stealth mode is optional — toggle it per link when privacy matters.
+
+## 3. Cross-Chain Settlement Layer
+
+Through Circle's CCTP V2, Conduit abstracts away chain selection entirely. Payers send from Ethereum, Base, Arbitrum, Optimism, Polygon, or Avalanche — you always receive USDC on Arc Network. No bridging, no network switching, no errors.
+
+## 4. Programmable Payment Layer — x402
+
+Conduit enables HTTP-native payments. APIs return `402 Payment Required` to unpaid requests. AI agents automatically authorize and settle USDC payments. Every API call becomes a monetized transaction — no subscriptions, no API keys, no accounts.
+
+<Note>
+Conduit is a privacy-preserving, cross-chain, programmable payment infrastructure that enables instant USDC settlement for humans, businesses, and autonomous agents.
+</Note>

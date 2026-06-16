@@ -1,0 +1,33 @@
+---
+title: "Stealth Mode"
+description: "Optional privacy — your real wallet address is never exposed."
+---
+
+Stealth mode is an optional privacy feature available on every payment link. When enabled, your real wallet address is never exposed to payers or visible on the blockchain.
+
+## Why it exists
+
+On a public blockchain, your wallet address is like a bank account number anyone can search. If you share it with every client, they can see your full transaction history, know your balance, and track who else has paid you. Stealth mode eliminates this.
+
+## How it works
+
+When stealth mode is ON:
+
+1. Conduit generates a fresh temporary wallet for that link
+2. The payer sends USDC to the temporary wallet
+3. Conduit's forwarder routes the funds to your real wallet automatically
+4. The payer only ever sees the temporary address on-chain
+
+Your real wallet address never appears in the transaction.
+
+## How to enable it
+
+Stealth mode is a toggle when creating a payment link — go to **Links → Create Link** and toggle **Stealth Mode** on. Each link has its own independent setting.
+
+<Info>
+Stealth mode adds a small delay — the forwarding transaction happens after the initial payment. Funds still arrive within seconds.
+</Info>
+
+<Warning>
+Stealth mode is optional. For public fundraising where transparency is desired, leave it off — payments go directly to your wallet with no forwarding step.
+</Warning>

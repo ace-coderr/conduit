@@ -1,0 +1,39 @@
+---
+title: "Overview"
+description: "Conduit is the first public x402 facilitator on Arc Network."
+---
+
+Conduit is the first public x402 facilitator on Arc Network. Gate any API, content, or data behind USDC micropayments — paid automatically by AI agents and HTTP clients.
+
+## What is x402?
+
+x402 is an HTTP-native payment protocol. Instead of blocking access with a subscription or API key, your server returns a `402 Payment Required` response. The client pays and retries — automatically.
+
+Conduit is the facilitator. It handles verification, settlement, and the human pay page. You focus on your API.
+
+## Quick reference
+
+| Property | Value |
+|----------|-------|
+| Facilitator URL | `https://conduitpay.xyz/api/x402` |
+| Demo endpoint | `https://conduitpay.xyz/api/arc-stats` |
+| Network | Arc Testnet |
+| Chain ID | `5042002` |
+| USDC | `0x3600000000000000000000000000000000000000` |
+| npm package | `@ace_won/x402` |
+
+## Who is this for?
+
+| User | What Conduit enables |
+|------|---------------------|
+| AI agents | Pay for APIs automatically via EIP-3009 |
+| Humans (browser) | A clean MetaMask pay page |
+| Developers | One npm package, one line of code |
+
+## Try it now
+
+```bash
+curl -i https://conduitpay.xyz/api/arc-stats
+```
+
+You'll get a `402 Payment Required` response. Pay 0.001 USDC. Get live Arc Network stats back in under a second.

@@ -1,0 +1,50 @@
+---
+title: "x402 Marketplace"
+description: "List your x402-gated API so AI agents and developers can discover it."
+---
+
+The Conduit Marketplace is a public directory of x402-gated APIs. List your API so AI agents and developers can discover and pay for it automatically.
+
+**Browse:** [conduitpay.xyz/marketplace](https://conduitpay.xyz/marketplace)
+**Submit:** [conduitpay.xyz/marketplace/submit](https://conduitpay.xyz/marketplace/submit)
+
+## How it works
+
+| Role | What they do |
+|------|-------------|
+| Developers | Submit an x402 endpoint, set a price, earn USDC |
+| AI agents | Discover APIs, pay per request, get data back |
+| Humans | Browse, test endpoints, integrate |
+| Conduit | Routes payments on Arc, takes 0.5% |
+
+## Submission
+
+<Steps>
+  <Step title="Build your x402 endpoint">
+    ```typescript
+    export const GET = withPayment({ amount: "0.001" }, async (req) => {
+      return NextResponse.json({ data: yourData });
+    });
+    ```
+  </Step>
+  <Step title="Submit">
+    Fill in name, description, endpoint URL, price, category, and optional docs URL at the submit page.
+  </Step>
+  <Step title="Get approved">
+    Conduit reviews within 24 hours. You'll get an email when approved.
+  </Step>
+  <Step title="Start earning">
+    AI agents and developers can browse, click Try It, pay, and receive your data automatically.
+  </Step>
+</Steps>
+
+## What makes a strong listing
+
+- Clear, specific description of what your API returns
+- Reasonable price (0.001–0.01 USDC is standard for data APIs)
+- A working endpoint that returns a real 402 when unpaid
+- A link to documentation
+
+<Info>
+Conduit's own demo endpoint `/api/arc-stats` is listed on the marketplace. Use it as a reference for a good listing.
+</Info>

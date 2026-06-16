@@ -1,0 +1,63 @@
+---
+title: "FAQ"
+description: "Common questions about Conduit, payments, escrow, and x402."
+---
+
+## General
+
+<AccordionGroup>
+  <Accordion title="Is Conduit custodial? Does it hold my funds?">
+    No. Payment links go directly to your wallet. Escrow funds are held in Circle Developer-Controlled Wallets — not Conduit's servers. No one at Conduit can access or move your escrow funds.
+  </Accordion>
+  <Accordion title="What is USDC?">
+    USDC is a digital dollar issued by Circle. 1 USDC = $1 USD, always. It's a stablecoin — it doesn't fluctuate in price like Bitcoin or Ethereum.
+  </Accordion>
+  <Accordion title="What is Arc Network?">
+    Arc is a blockchain built by Circle specifically for USDC payments. Transactions settle in half a second and cost almost nothing. Conduit is built natively on Arc.
+  </Accordion>
+  <Accordion title="Is Conduit live on mainnet?">
+    Conduit is currently live on Arc Testnet. Mainnet launch is planned for when Arc Network goes live. All testnet transactions use free testnet USDC.
+  </Accordion>
+</AccordionGroup>
+
+## Payments
+
+<AccordionGroup>
+  <Accordion title="Do I need MetaMask?">
+    No. Conduit supports seedless wallets — sign up with email, Google, or passkey. MetaMask is optional.
+  </Accordion>
+  <Accordion title="What chains can payers use?">
+    Ethereum, Base, Arbitrum, Optimism, Polygon, or Avalanche. You always receive USDC on Arc regardless of which chain they send from.
+  </Accordion>
+  <Accordion title="What is the fee?">
+    Conduit charges 0.5% per payment, deducted automatically. No other fees, subscriptions, or hidden charges.
+  </Accordion>
+  <Accordion title="Can a link be paid more than once?">
+    No. Each payment link is one-time use only.
+  </Accordion>
+</AccordionGroup>
+
+## Escrow
+
+<AccordionGroup>
+  <Accordion title="What happens if the seller disappears?">
+    If the seller doesn't respond to a dispute within 48 hours, funds are automatically refunded to the buyer. No admin action required.
+  </Accordion>
+  <Accordion title="What happens if the buyer disputes but goes silent?">
+    If the seller responds and the buyer then goes silent for 48 hours, funds are automatically released to the seller.
+  </Accordion>
+  <Accordion title="Can I cancel an escrow after creating it?">
+    Yes — as long as the buyer hasn't paid yet. Once in HOLDING status, it can only be released or refunded.
+  </Accordion>
+</AccordionGroup>
+
+## x402
+
+<AccordionGroup>
+  <Accordion title="What is x402?">
+    x402 is an HTTP payment protocol. A server returns `402 Payment Required` instead of blocking with a subscription or API key. The client pays and retries automatically. AI agents can do this without human involvement.
+  </Accordion>
+  <Accordion title="Is the npm package free?">
+    Yes. `@ace_won/x402` is free and open source. Conduit takes 0.5% per payment processed through its facilitator.
+  </Accordion>
+</AccordionGroup>

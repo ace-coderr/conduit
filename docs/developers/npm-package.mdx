@@ -1,0 +1,57 @@
+---
+title: "npm Package"
+description: "@ace_won/x402 — drop-in middleware for Next.js 14+."
+---
+
+`@ace_won/x402` is a drop-in middleware for Next.js 14+. Install once, use on any API route.
+
+## Install
+
+```bash
+npm install @ace_won/x402
+```
+
+## Basic usage
+
+```typescript
+import { withPayment } from "@ace_won/x402";
+import { NextRequest, NextResponse } from "next/server";
+
+export const GET = withPayment({ amount: "0.001" }, async (req: NextRequest) => {
+  return NextResponse.json({ data: "your content" });
+});
+```
+
+## All options
+
+```typescript
+withPayment({
+  amount: "0.001",            // Required — USDC amount as string
+  payTo: "0xYourWallet",      // Who receives payment (default: fee collector)
+  description: "...",         // Shown in 402 response and pay page
+  resource: "https://...",    // URL of this resource for tracking
+  facilitatorUrl: "...",      // Default: https://conduitpay.xyz/api/x402
+  network: "eip155:5042002",  // Default: Arc Testnet
+  asset: "0x3600...",         // Default: Arc Testnet USDC
+  rpcUrl: "https://rpc.testnet.arc.network",
+  maxTimeoutSeconds: 300,     // Max payment age (default: 300)
+}, handler);
+```
+
+## Amount format
+
+| String | USDC |
+|--------|------|
+| `"0.001"` | 0.001 USDC |
+| `"0.01"` | 0.01 USDC |
+| `"1"` | 1 USDC |
+| `"10"` | 10 USDC |
+
+## Requirements
+
+| Requirement | Version |
+|-------------|---------|
+| Next.js | 14+ |
+| viem | v2+ (peer dependency) |
+| Node.js | 18+ |
+| Package version | v1.0.2 |
