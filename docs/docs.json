@@ -7,7 +7,7 @@
     "light": "#00E5A0",
     "dark": "#00b4d8"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/favicon.png",
   "navigation": {
     "tabs": [
       {
@@ -83,8 +83,8 @@
     ]
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/conduit-logo-black.png",
+    "dark": "/logo/conduit-logo-white.png"
   },
   "navbar": {
     "links": [
