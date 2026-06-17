@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAccount } from "wagmi";
 import { NavBar } from "@/components/NavBar";
 import { formatDate } from "@/lib/utils";
@@ -49,6 +49,9 @@ function Countdown({ deadline, label }: { deadline: string; label: string }) {
 const statusColor = (s: string) => ({ ACTIVE: "#f5a623", HOLDING: "#5b8ff9", CONFIRMED: "#00E5A0", RELEASED: "#00E5A0", DISPUTED: "#f03e5f", MEDIATION: "#a78bfa", CANCELLED: "#666" }[s] ?? "#666");
 const statusClass = (s: string) => ({ ACTIVE: "status-yellow", HOLDING: "status-blue", CONFIRMED: "status-green", RELEASED: "status-green", DISPUTED: "status-red", MEDIATION: "status-red", CANCELLED: "status-red" }[s] ?? "status-red");
 
+// An escrow whose funds have actually left the wallet — show as Released regardless of status label lag
+const isEffectivelyReleased = (e: EscrowLink) => e.status === "RELEASED" || (e.status === "CONFIRMED" && !!e.releaseTxHash);
+
 export default function EscrowPage() {
   const { address, isConnected } = useAccount();
   const [escrows, setEscrows] = useState<EscrowLink[]>([]);
@@ -67,6 +70,8 @@ export default function EscrowPage() {
   const [filter, setFilter] = useState<"ALL" | "ACTIVE" | "HOLDING" | "RELEASED" | "DISPUTED">("ALL");
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [buyerOrders, setBuyerOrders] = useState<{ id: string; title: string; amount: string; paidAt: string }[]>([]);
+
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -89,6 +94,23 @@ export default function EscrowPage() {
   }, [address]);
 
   useEffect(() => { if (isConnected && address) fetchEscrows(); }, [isConnected, address, fetchEscrows]);
+
+  // Auto-poll while any escrow is mid-release (CONFIRMED without a releaseTxHash yet).
+  // Stops automatically once everything settles, so it's not constantly hitting the API.
+  useEffect(() => {
+    const stillReleasing = escrows.some(e => e.status === "CONFIRMED" && !e.releaseTxHash);
+
+    if (stillReleasing && !pollRef.current) {
+      pollRef.current = setInterval(() => { fetchEscrows(); }, 5000);
+    } else if (!stillReleasing && pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+
+    return () => {
+      if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+    };
+  }, [escrows, fetchEscrows]);
 
   const createEscrow = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,17 +161,22 @@ export default function EscrowPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const filtered = filter === "ALL" ? escrows : escrows.filter(e => e.status === filter);
+  const filtered = filter === "ALL"
+    ? escrows
+    : filter === "RELEASED"
+      ? escrows.filter(e => isEffectivelyReleased(e))
+      : escrows.filter(e => e.status === filter);
+
   const counts = {
     ALL: escrows.length,
     ACTIVE: escrows.filter(e => e.status === "ACTIVE").length,
     HOLDING: escrows.filter(e => e.status === "HOLDING").length,
-    RELEASED: escrows.filter(e => ["RELEASED", "CONFIRMED"].includes(e.status)).length,
+    RELEASED: escrows.filter(e => isEffectivelyReleased(e)).length,
     DISPUTED: escrows.filter(e => ["DISPUTED", "MEDIATION"].includes(e.status)).length,
   };
 
   const totalHeld = escrows.filter(e => e.status === "HOLDING").reduce((s, e) => s + parseFloat(e.amount), 0);
-  const totalReleased = escrows.filter(e => ["RELEASED", "CONFIRMED"].includes(e.status)).reduce((s, e) => s + parseFloat(e.amount), 0);
+  const totalReleased = escrows.filter(e => isEffectivelyReleased(e)).reduce((s, e) => s + parseFloat(e.amount), 0);
   const fmt = (n: number) => n % 1 === 0 ? n.toString() : n.toFixed(2);
 
   const DELIVERY_PRESETS = [
@@ -373,52 +400,60 @@ export default function EscrowPage() {
                 </div>
               )}
 
-              {!isLoading && filtered.map(e => (
-                <div key={e.id} className="table-row" style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr" }}>
-                  <div className="table-cell-title">
-                    <div className="table-cell-title-name">
-                      <span className="table-cell-status-dot" style={{ background: statusColor(e.status) }} />
-                      <span className="table-cell-title-text">{e.title}</span>
-                      {["DISPUTED", "MEDIATION"].includes(e.status) && <span style={{ fontSize: 9, background: "rgba(240,62,95,.15)", color: "var(--danger)", border: "1px solid rgba(240,62,95,.3)", borderRadius: 4, padding: "1px 5px", fontWeight: 700 }}>DISPUTE</span>}
+              {!isLoading && filtered.map(e => {
+                const released = isEffectivelyReleased(e);
+                return (
+                  <div key={e.id} className="table-row" style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr" }}>
+                    <div className="table-cell-title">
+                      <div className="table-cell-title-name">
+                        <span className="table-cell-status-dot" style={{ background: statusColor(released ? "RELEASED" : e.status) }} />
+                        <span className="table-cell-title-text">{e.title}</span>
+                        {["DISPUTED", "MEDIATION"].includes(e.status) && <span style={{ fontSize: 9, background: "rgba(240,62,95,.15)", color: "var(--danger)", border: "1px solid rgba(240,62,95,.3)", borderRadius: 4, padding: "1px 5px", fontWeight: 700 }}>DISPUTE</span>}
+                      </div>
+                      {e.description && <p className="table-cell-description">{e.description}</p>}
+                      {e.deliveryDays && e.status === "HOLDING" && <p style={{ fontSize: 10, color: "var(--ink-3)", marginTop: 2, fontFamily: "IBM Plex Mono, monospace" }}>Delivery: {e.deliveryDays} day{e.deliveryDays > 1 ? "s" : ""}</p>}
+                      {e.status === "HOLDING" && e.deliveryDeadline && <Countdown deadline={e.deliveryDeadline} label="Delivery in" />}
+                      {e.disputeReason && <p style={{ fontSize: 10, color: "var(--danger)", marginTop: 3 }}>"{e.disputeReason}"</p>}
+                      {e.releaseTxHash && (
+                        <a href={`https://testnet.arcscan.app/tx/${e.releaseTxHash}`} target="_blank" rel="noopener noreferrer" className="table-cell-txhash">released ↗</a>
+                      )}
                     </div>
-                    {e.description && <p className="table-cell-description">{e.description}</p>}
-                    {e.deliveryDays && e.status === "HOLDING" && <p style={{ fontSize: 10, color: "var(--ink-3)", marginTop: 2, fontFamily: "IBM Plex Mono, monospace" }}>Delivery: {e.deliveryDays} day{e.deliveryDays > 1 ? "s" : ""}</p>}
-                    {e.status === "HOLDING" && e.deliveryDeadline && <Countdown deadline={e.deliveryDeadline} label="Delivery in" />}
-                    {e.disputeReason && <p style={{ fontSize: 10, color: "var(--danger)", marginTop: 3 }}>"{e.disputeReason}"</p>}
-                    {e.releaseTxHash && (
-                      <a href={`https://testnet.arcscan.app/tx/${e.releaseTxHash}`} target="_blank" rel="noopener noreferrer" className="table-cell-txhash">released ↗</a>
-                    )}
-                  </div>
-                  <div>
-                    <span className={`status-badge ${statusClass(e.status)}`}>
-                      <span className="status-badge-dot" />
-                      {e.status}
+                    <div>
+                      <span className={`status-badge ${statusClass(released ? "RELEASED" : e.status)}`}>
+                        <span className="status-badge-dot" />
+                        {released ? "RELEASED" : e.status}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="table-amount">{parseFloat(e.amount) % 1 === 0 ? e.amount : parseFloat(e.amount).toFixed(2)}<span className="table-amount-unit">USDC</span></span>
+                    </div>
+                    <span style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>
+                      {e.buyerAddress ? `${e.buyerAddress.slice(0, 6)}...${e.buyerAddress.slice(-4)}` : "—"}
                     </span>
+                    <span className="table-date">{formatDate(e.createdAt)}</span>
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      {e.status === "ACTIVE" && (
+                        <>
+                          <button className="table-copy-btn" onClick={() => copyLink(e.id)}>Copy Link</button>
+                          <button className="table-cancel-btn" onClick={() => cancelEscrow(e.id)} disabled={cancellingId === e.id}>
+                            {cancellingId === e.id ? "..." : "Cancel"}
+                          </button>
+                        </>
+                      )}
+                      {e.status === "HOLDING" && <span style={{ fontSize: 11, color: "var(--info)", fontFamily: "IBM Plex Mono, monospace" }}>Awaiting delivery</span>}
+                      {e.status === "CONFIRMED" && !e.releaseTxHash && (
+                        <span style={{ fontSize: 11, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                          <span className="spinner" style={{ width: 10, height: 10 }} />
+                          Releasing...
+                        </span>
+                      )}
+                      {released && <span style={{ fontSize: 11, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace" }}>✓ Released</span>}
+                      {["DISPUTED", "MEDIATION"].includes(e.status) && <a href={`/escrow/${e.id}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "var(--danger)", fontFamily: "IBM Plex Mono, monospace", textDecoration: "none", fontWeight: 700 }}>View Dispute →</a>}
+                      {e.status === "CANCELLED" && <span style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>Cancelled</span>}
+                    </div>
                   </div>
-                  <div>
-                    <span className="table-amount">{parseFloat(e.amount) % 1 === 0 ? e.amount : parseFloat(e.amount).toFixed(2)}<span className="table-amount-unit">USDC</span></span>
-                  </div>
-                  <span style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>
-                    {e.buyerAddress ? `${e.buyerAddress.slice(0, 6)}...${e.buyerAddress.slice(-4)}` : "—"}
-                  </span>
-                  <span className="table-date">{formatDate(e.createdAt)}</span>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    {e.status === "ACTIVE" && (
-                      <>
-                        <button className="table-copy-btn" onClick={() => copyLink(e.id)}>Copy Link</button>
-                        <button className="table-cancel-btn" onClick={() => cancelEscrow(e.id)} disabled={cancellingId === e.id}>
-                          {cancellingId === e.id ? "..." : "Cancel"}
-                        </button>
-                      </>
-                    )}
-                    {e.status === "HOLDING" && <span style={{ fontSize: 11, color: "var(--info)", fontFamily: "IBM Plex Mono, monospace" }}>Awaiting delivery</span>}
-                    {e.status === "CONFIRMED" && <span style={{ fontSize: 11, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace" }}>Releasing...</span>}
-                    {e.status === "RELEASED" && <span style={{ fontSize: 11, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace" }}>✓ Released</span>}
-                    {["DISPUTED", "MEDIATION"].includes(e.status) && <a href={`/escrow/${e.id}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "var(--danger)", fontFamily: "IBM Plex Mono, monospace", textDecoration: "none", fontWeight: 700 }}>View Dispute →</a>}
-                    {e.status === "CANCELLED" && <span style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>Cancelled</span>}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
