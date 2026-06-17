@@ -1,21 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { transferFromWallet } from "@/lib/circle";
+import { verifyAdminQuery } from "@/lib/adminAuth";
 import { recordReputationEvent } from "@/lib/reputation";
 
 /**
- * POST /api/escrow/retry-release
+ * POST /api/escrow/retry-release   (admin only)
  *
- * Finds escrows that are stuck: status CONFIRMED but releaseTxHash is null
- * (the confirm fired but the release transfer never completed), and re-runs
+ * Finds escrows that are stuck — status CONFIRMED but releaseTxHash is null
+ * (the confirm fired but the release transfer never completed) — and re-runs
  * the release for each one.
  *
  * Body (optional): { escrowId } to retry a single escrow.
  * If no escrowId is given, it sweeps ALL stuck escrows.
  *
- * Safe to call repeatedly — escrows that already have a releaseTxHash are skipped.
+ * Requires admin auth (x-wallet-address header matching the admin wallet),
+ * the same guard used by the refund route. Safe to call repeatedly —
+ * escrows that already have a releaseTxHash are skipped.
  */
 export async function POST(req: NextRequest) {
+    const { ok, error } = verifyAdminQuery(req);
+    if (!ok) return NextResponse.json({ error }, { status: 401 });
+
     let body: any = {};
     try { body = await req.json(); } catch { /* no body is fine */ }
 
@@ -35,7 +41,6 @@ export async function POST(req: NextRequest) {
     const results: any[] = [];
 
     for (const escrow of stuck) {
-        // Skip if it already released (race-safety) or has no wallet
         if (escrow.releaseTxHash) {
             results.push({ id: escrow.id, skipped: "already released" });
             continue;
