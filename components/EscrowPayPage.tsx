@@ -9,6 +9,7 @@ import {
 import { injected } from "wagmi/connectors";
 import { parseEther, formatEther } from "viem";
 import { arcTestnet } from "@/lib/arcChain";
+import { TrustBadge } from "@/components/TrustBadge";
 
 const FEE_COLLECTOR = "0x2d2eba8c0da5879ab25b5bd37e211d230aabbb5c";
 const FEE_PERCENT = 0.5;
@@ -558,6 +559,10 @@ export function EscrowPayPage({ escrow: initialEscrow }: { escrow: EscrowData })
           <div className="pay-detail">
             <span className="pay-detail-k">Seller</span>
             <span className="pay-detail-v" style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 11 }}>{escrow.sellerAddress.slice(0, 6)}...{escrow.sellerAddress.slice(-4)}</span>
+          </div>
+          <div className="pay-detail">
+            <span className="pay-detail-k">Seller reputation</span>
+            <TrustBadge address={escrow.sellerAddress} size="sm" />
           </div>
           <div className="pay-detail">
             <span className="pay-detail-k">Held in</span>
