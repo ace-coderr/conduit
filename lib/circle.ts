@@ -24,7 +24,9 @@ async function generateCiphertext(): Promise<string> {
     return encrypted.toString("base64");
 }
 
-// Create a new wallet for an escrow — returns wallet ID and address
+// Create a new wallet for an escrow — returns wallet ID and address.
+// Uses SCA (Smart Contract Account) so Gas Station can sponsor gas —
+// the wallet never needs to hold native gas (USDC on Arc) to transact.
 export async function createEscrowWallet(escrowId: string): Promise<{
     walletId: string;
     address: string;
@@ -43,7 +45,7 @@ export async function createEscrowWallet(escrowId: string): Promise<{
             walletSetId: WALLET_SET_ID,
             blockchains: ["ARC-TESTNET"],
             count: 1,
-            accountType: "EOA",
+            accountType: "SCA", // SCA enables Gas Station gas sponsorship
             metadata: [{ name: `escrow-${escrowId}`, refId: escrowId }],
         }),
     });
@@ -61,7 +63,9 @@ export async function createEscrowWallet(escrowId: string): Promise<{
     };
 }
 
-// Transfer USDC from a Circle-managed escrow wallet to a recipient
+// Transfer USDC from a Circle-managed escrow wallet to a recipient.
+// With Gas Station enabled on the wallet set, gas is sponsored — the wallet
+// does not need to hold extra USDC for gas.
 export async function transferFromWallet(
     walletId: string,
     recipientAddress: string,
