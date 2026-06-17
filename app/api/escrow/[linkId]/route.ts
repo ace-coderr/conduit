@@ -4,6 +4,7 @@ import { arcPublicClient } from "@/lib/arcClient";
 import { parseEther } from "viem";
 import { sendEscrowPaidEmail, sendDisputeRaisedEmail } from "@/lib/email";
 import { recordReputationEvent } from "@/lib/reputation";
+import { transferFromWallet } from "@/lib/circle";
 
 const ADMIN_WALLET = "0x8557fabdc62f59a1ba7d6a74aaf0942cdcb68f69";
 interface RouteParams { params: { linkId: string } }
@@ -25,12 +26,31 @@ async function checkDisputeDeadline(escrow: any, reqUrl: string) {
   } else if (!escrow.buyerLastMessageAt) {
     await db.escrowLink.update({ where: { id: escrow.id }, data: { status: "CONFIRMED", confirmedAt: now } });
     await db.escrowMessage.create({ data: { escrowId: escrow.id, sender: "SYSTEM", message: "Buyer did not respond within 48 hours. Funds have been automatically released to the seller." } });
-    fetch(new URL("/api/escrow/release", reqUrl).toString(), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ escrowId: escrow.id }),
-    }).catch(console.error);
+    // Release directly and reliably (not fire-and-forget)
+    await releaseEscrowFunds(escrow.id);
   }
+}
+
+/**
+ * Releases escrow funds to the seller, sets status to RELEASED, records reputation.
+ * Returns { success, txHash?, error? }. Idempotent — skips if already released.
+ */
+async function releaseEscrowFunds(escrowId: string): Promise<{ success: boolean; txHash?: string; error?: string }> {
+  const escrow = await db.escrowLink.findUnique({ where: { id: escrowId } });
+  if (!escrow) return { success: false, error: "Escrow not found" };
+  if (escrow.releaseTxHash) return { success: true, txHash: escrow.releaseTxHash };
+  if (!escrow.circleWalletId) return { success: false, error: "No Circle wallet" };
+
+  const result = await transferFromWallet(escrow.circleWalletId, escrow.sellerAddress, escrow.amount);
+  if (result.success && result.txHash) {
+    await db.escrowLink.update({
+      where: { id: escrowId },
+      data: { status: "RELEASED", releaseTxHash: result.txHash },
+    });
+    await recordReputationEvent(escrow.sellerAddress, "COMPLETED", escrow.amount);
+    return { success: true, txHash: result.txHash };
+  }
+  return { success: false, error: result.error ?? "Transfer failed" };
 }
 
 export async function GET(req: NextRequest, { params }: RouteParams) {
@@ -112,13 +132,22 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
   // ── CONFIRM ───────────────────────────────────────────────────
   if (action === "confirm") {
     if (escrow.status !== "HOLDING") return NextResponse.json({ error: "Escrow is not in HOLDING status." }, { status: 409 });
+
+    // Mark confirmed, then release synchronously so we KNOW if it worked.
     await db.escrowLink.update({ where: { id: params.linkId }, data: { status: "CONFIRMED", confirmedAt: new Date() } });
-    fetch(new URL("/api/escrow/release", req.url).toString(), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ escrowId: params.linkId }),
-    }).catch(console.error);
-    return NextResponse.json({ success: true, status: "CONFIRMED" });
+
+    const release = await releaseEscrowFunds(params.linkId);
+
+    if (!release.success) {
+      // Release failed — report it so the UI can show an error and allow retry.
+      // Status stays CONFIRMED; the retry-release endpoint or a re-confirm can recover it.
+      return NextResponse.json(
+        { success: false, status: "CONFIRMED", error: release.error ?? "Release failed. Please retry.", releasePending: true },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json({ success: true, status: "RELEASED", releaseTxHash: release.txHash });
   }
 
   // ── DISPUTE ───────────────────────────────────────────────────
