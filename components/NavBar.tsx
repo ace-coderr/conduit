@@ -7,6 +7,12 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useAccount, useDisconnect } from "wagmi";
 import { useEffect, useState, useRef } from "react";
 
+const DOCS_URL = "https://docs.conduitpay.xyz";
+
+const DocsIcon = () => (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" strokeLinecap="round" /><path d="M5 6h6M5 9h6M5 12h4" strokeLinecap="round" /></svg>
+);
+
 const STANDALONE = [
   {
     label: "Dashboard", href: "/",
@@ -15,10 +21,6 @@ const STANDALONE = [
   {
     label: "Escrow", href: "/escrow",
     icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><rect x="2" y="6" width="12" height="9" rx="1.5" /><path d="M5 6V4.5a3 3 0 016 0V6" strokeLinecap="round" /><circle cx="8" cy="10.5" r="1.2" fill="currentColor" stroke="none" /><path d="M8 11.7v1.3" strokeLinecap="round" /></svg>,
-  },
-  {
-    label: "Docs", href: "/docs",
-    icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" strokeLinecap="round" /><path d="M5 6h6M5 9h6M5 12h4" strokeLinecap="round" /></svg>,
   },
 ];
 
@@ -206,6 +208,10 @@ export function NavBar() {
               {l.label}
             </Link>
           ))}
+          <a href={DOCS_URL} target="_blank" rel="noopener noreferrer" className="nav-link">
+            <span className="nav-link-icon"><DocsIcon /></span>
+            Docs
+          </a>
           {GROUPS.map(g => (
             <NavDropdown key={g.label} group={g} pathname={pathname} />
           ))}
@@ -255,6 +261,10 @@ export function NavBar() {
             {l.label}
           </Link>
         ))}
+        <a href={DOCS_URL} target="_blank" rel="noopener noreferrer" className="nav-link">
+          <span className="nav-link-icon"><DocsIcon /></span>
+          Docs
+        </a>
         <div style={{ height: 1, background: "var(--stroke)", margin: "6px 0" }} />
         {GROUPS.map(g => (
           <div key={g.label}>
