@@ -83,18 +83,18 @@ export function TrustBadge({ address, size = "full" }: { address: string; size?:
 
     return (
         <div style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            background: bg, border: `1px solid ${border}`,
-            padding: "6px 12px", borderRadius: 20,
+            display: "inline-flex", alignItems: "center", gap: 9,
+            background: bg, border: `1.5px solid ${border}`,
+            padding: "9px 16px", borderRadius: 24,
         }}>
-            <svg viewBox="0 0 14 14" fill="none" width="12" height="12">
-                <path d="M7 1l1.6 3.3 3.6.5-2.6 2.5.6 3.6L7 9.7 3.8 11.4l.6-3.6L1.8 4.8l3.6-.5L7 1z" stroke={color} strokeWidth="1.2" strokeLinejoin="round" />
+            <svg viewBox="0 0 14 14" fill="none" width="15" height="15">
+                <path d="M7 1l1.6 3.3 3.6.5-2.6 2.5.6 3.6L7 9.7 3.8 11.4l.6-3.6L1.8 4.8l3.6-.5L7 1z" stroke={color} strokeWidth="1.3" strokeLinejoin="round" />
             </svg>
-            <span style={{ fontSize: 12, fontWeight: 700, color, fontFamily: "Sora, sans-serif" }}>
+            <span style={{ fontSize: 14, fontWeight: 800, color, fontFamily: "Sora, sans-serif" }}>
                 {rep.isNew ? "New seller" : `${label} · ${score}`}
             </span>
             {!rep.isNew && (
-                <span style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>
+                <span style={{ fontSize: 12, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>
                     {rep.completedEscrows}✓{rep.disputedEscrows > 0 ? ` · ${rep.disputedEscrows}⚠` : ""}
                 </span>
             )}

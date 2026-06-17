@@ -555,14 +555,28 @@ export function EscrowPayPage({ escrow: initialEscrow }: { escrow: EscrowData })
           <p className="pay-link-title">{escrow.title}</p>
           {escrow.description && <p className="pay-link-desc">{escrow.description}</p>}
         </div>
+        <div style={{ padding: "0 24px", marginBottom: 16 }}>
+          <div style={{
+            background: "var(--raised)",
+            border: "1px solid var(--stroke)",
+            borderRadius: "var(--r-md)",
+            padding: "14px 16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+          }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span style={{ fontSize: 10, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, letterSpacing: ".08em" }}>SELLER REPUTATION</span>
+              <span style={{ fontSize: 11, color: "var(--ink-3)" }}>Based on completed escrows</span>
+            </div>
+            <TrustBadge address={escrow.sellerAddress} size="full" />
+          </div>
+        </div>
         <div className="pay-details">
           <div className="pay-detail">
             <span className="pay-detail-k">Seller</span>
             <span className="pay-detail-v" style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 11 }}>{escrow.sellerAddress.slice(0, 6)}...{escrow.sellerAddress.slice(-4)}</span>
-          </div>
-          <div className="pay-detail">
-            <span className="pay-detail-k">Seller reputation</span>
-            <TrustBadge address={escrow.sellerAddress} size="sm" />
           </div>
           <div className="pay-detail">
             <span className="pay-detail-k">Held in</span>
