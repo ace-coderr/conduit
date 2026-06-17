@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { arcPublicClient } from "@/lib/arcClient";
 import { parseEther } from "viem";
 import { sendEscrowPaidEmail, sendDisputeRaisedEmail } from "@/lib/email";
+import { recordReputationEvent } from "@/lib/reputation";
 
 const ADMIN_WALLET = "0x8557fabdc62f59a1ba7d6a74aaf0942cdcb68f69";
 interface RouteParams { params: { linkId: string } }
@@ -133,6 +134,9 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     await db.escrowMessage.create({
       data: { escrowId: params.linkId, sender: "SYSTEM", message: `Dispute opened by buyer. Reason: "${disputeReason?.trim() || "No reason provided"}". Both parties have 48 hours to submit their side. If the seller does not respond, funds will be automatically refunded to the buyer.` },
     });
+
+    // Record reputation: a dispute counts against the seller's trust score
+    await recordReputationEvent(escrow.sellerAddress, "DISPUTED", escrow.amount);
 
     // Email seller about dispute
     try {

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { transferFromWallet } from "@/lib/circle";
 import { verifyAdminQuery } from "@/lib/adminAuth";
 import { sendEscrowRefundedEmail } from "@/lib/email";
+import { recordReputationEvent } from "@/lib/reputation";
 
 export async function POST(req: NextRequest) {
   const { ok, error } = verifyAdminQuery(req);
@@ -44,6 +45,10 @@ export async function POST(req: NextRequest) {
       where: { id: escrowId },
       data: { status: "CANCELLED", releaseTxHash: result.txHash },
     });
+
+    // Record reputation: a refund counts as a refunded escrow for the seller
+    // (tracked, but does not lower trust score — a fair refund isn't the seller's fault)
+    await recordReputationEvent(escrow.sellerAddress, "REFUNDED", escrow.amount);
 
     // Email buyer
     try {
