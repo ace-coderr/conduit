@@ -125,3 +125,17 @@ model MarketplaceListing {
   @@index([category])
   @@index([creatorAddress])
 }
+
+model WalletReputation {
+  id               String   @id @default(cuid())
+  address          String   @unique
+  completedEscrows Int      @default(0)
+  disputedEscrows  Int      @default(0)
+  refundedEscrows  Int      @default(0)
+  totalVolume      String   @default("0")
+  trustScore       Int      @default(100)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([address])
+}
