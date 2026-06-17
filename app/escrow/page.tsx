@@ -447,7 +447,7 @@ export default function EscrowPage() {
                           Releasing...
                         </span>
                       )}
-                      {released && <span style={{ fontSize: 11, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace" }}>✓ Released</span>}
+                      {released && <span style={{ fontSize: 11, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace" }}>Released</span>}
                       {["DISPUTED", "MEDIATION"].includes(e.status) && <a href={`/escrow/${e.id}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "var(--danger)", fontFamily: "IBM Plex Mono, monospace", textDecoration: "none", fontWeight: 700 }}>View Dispute →</a>}
                       {e.status === "CANCELLED" && <span style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>Cancelled</span>}
                     </div>
