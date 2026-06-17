@@ -7,7 +7,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useAccount, useDisconnect } from "wagmi";
 import { useEffect, useState, useRef } from "react";
 
-const DOCS_URL = "https://docs.conduitpay.xyz";
+const DOCS_URL = "https://conduitpay.mintlify.app";
 
 const DocsIcon = () => (
   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" strokeLinecap="round" /><path d="M5 6h6M5 9h6M5 12h4" strokeLinecap="round" /></svg>
