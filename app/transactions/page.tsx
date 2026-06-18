@@ -74,9 +74,17 @@ export default function TransactionsPage() {
     if (!address) return;
     setIsLoading(true);
     fetch(`/api/transactions/all?address=${address}`)
-      .then(r => r.json())
-      .then((d: AllData) => setData({ ...EMPTY, ...d }))
-      .catch(console.error)
+      .then(async r => {
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || `HTTP ${r.status}`);
+        return d as AllData;
+      })
+      .then((d: AllData) => setData({
+        payments: d.payments ?? EMPTY.payments,
+        escrow: d.escrow ?? EMPTY.escrow,
+        splits: d.splits ?? EMPTY.splits,
+      }))
+      .catch(err => { console.error("[transactions] load failed:", err); setData(EMPTY); })
       .finally(() => setIsLoading(false));
   }, [address]);
 
