@@ -30,7 +30,7 @@ const statusClass = (s: string) =>
 ({ COMPLETED: "status-green", ACTIVE: "status-yellow", HOLDING: "status-blue", DISTRIBUTING: "status-blue", FAILED: "status-red" }[s] ?? "status-red");
 
 export default function SplitsPage() {
-    const { address } = useAccount();
+    const { address, isConnected } = useAccount();
     const { authenticated, login } = usePrivy();
     const [mounted, setMounted] = useState(false);
     const [splits, setSplits] = useState<SplitLink[]>([]);
@@ -47,7 +47,8 @@ export default function SplitsPage() {
     ]);
     const [formError, setFormError] = useState("");
     const [formLoading, setFormLoading] = useState(false);
-    const [justCreated, setJustCreated] = useState<SplitLink | null>(null);
+    const [createdLink, setCreatedLink] = useState<string | null>(null);
+    const [copiedCreated, setCopiedCreated] = useState(false);
 
     useEffect(() => { setMounted(true); }, []);
 
@@ -121,8 +122,7 @@ export default function SplitsPage() {
             });
             const data = await res.json();
             if (!res.ok) { setFormError(data.error || "Failed to create split."); return; }
-            setJustCreated(data.split);
-            setShowForm(false);
+            setCreatedLink(`${BASE}/pay/split/${data.split.id}`);
             setTitle(""); setDescription(""); setAmount("");
             setRecipients([{ address: "", percentage: "", label: "" }, { address: "", percentage: "", label: "" }]);
             fetchSplits();
@@ -130,75 +130,88 @@ export default function SplitsPage() {
         finally { setFormLoading(false); }
     };
 
-    if (!mounted) return <div className="app"><NavBar /></div>;
+    // Stats
+    const completed = splits.filter(s => s.status === "COMPLETED");
+    const totalDistributed = completed.reduce((sum, s) => sum + parseFloat(s.amount || "0"), 0);
+    const activeCount = splits.filter(s => ["ACTIVE", "HOLDING", "DISTRIBUTING"].includes(s.status)).length;
+
+    const stats = [
+        { value: formatUSDC(totalDistributed.toString()), unit: "USDC", label: "Total Distributed", sub: `${completed.length} completed`, color: "#00E5A0" },
+        { value: String(splits.length), unit: "", label: "Total Splits", sub: `${activeCount} active`, color: "#5b8ff9" },
+        { value: String(splits.reduce((n, s) => n + s.recipients.length, 0)), unit: "", label: "Total Recipients", sub: "across all splits", color: "#a78bfa" },
+    ];
 
     return (
         <div className="app">
             <NavBar />
-            <div className="app-body">
-                {!authenticated ? (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 340, gap: 12 }}>
-                        <p style={{ fontSize: 16, fontWeight: 800, color: "var(--ink-1)" }}>Connect your wallet</p>
-                        <p style={{ fontSize: 13, color: "var(--ink-3)", marginBottom: 8 }}>Sign in to create split payment links.</p>
-                        <button className="btn-primary" style={{ width: "auto", padding: "12px 28px" }} onClick={login}>Connect Wallet</button>
-                    </div>
-                ) : (
-                    <div style={{ maxWidth: 880, margin: "0 auto" }}>
+            <div className="page-wrap">
 
-                        {/* Header */}
-                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, gap: 12 }}>
-                            <div>
-                                <h1 style={{ fontSize: 22, fontWeight: 900, color: "var(--ink-1)", letterSpacing: "-.03em", marginBottom: 4 }}>
-                                    Split Payments
-                                </h1>
-                                <p style={{ fontSize: 13, color: "var(--ink-3)" }}>
-                                    One payment auto-splits to multiple wallets by percentage.
-                                </p>
+                {/* Header */}
+                <div className="page-header" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+                    <div>
+                        <h1 className="page-title">Split Payments</h1>
+                        <p className="page-subtitle">One payment auto-splits to multiple wallets by percentage</p>
+                    </div>
+                    {mounted && isConnected && (
+                        <button
+                            onClick={() => { setShowForm(!showForm); setCreatedLink(null); }}
+                            className="form-submit-btn"
+                            style={{ width: "auto", padding: "10px 20px" }}
+                        >
+                            {showForm ? "✕ Close" : "+ New Split"}
+                        </button>
+                    )}
+                </div>
+
+                {/* Not connected */}
+                {mounted && !authenticated && (
+                    <div className="card" style={{ padding: "60px 24px", textAlign: "center" }}>
+                        <p style={{ fontSize: 16, fontWeight: 800, color: "var(--ink-1)", marginBottom: 6 }}>Connect your wallet</p>
+                        <p style={{ fontSize: 13, color: "var(--ink-3)", marginBottom: 18 }}>Sign in to create split payment links.</p>
+                        <button className="form-submit-btn" style={{ width: "auto", padding: "12px 28px", margin: "0 auto" }} onClick={login}>Connect Wallet</button>
+                    </div>
+                )}
+
+                {mounted && isConnected && (
+                    <>
+                        {/* Stats */}
+                        {splits.length > 0 && (
+                            <div className="stats-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)", marginBottom: 20 }}>
+                                {stats.map((s, i) => (
+                                    <div key={i} className="stat-card">
+                                        <div className="stat-card-line" style={{ background: s.color }} />
+                                        <div className="stat-value">{s.value}{s.unit && <span style={{ fontSize: 13, color: s.color, marginLeft: 4, fontFamily: "IBM Plex Mono, monospace" }}>{s.unit}</span>}</div>
+                                        <div className="stat-label">{s.label}</div>
+                                        <div className="stat-sub">{s.sub}</div>
+                                    </div>
+                                ))}
                             </div>
-                            <button
-                                onClick={() => { setShowForm(!showForm); setJustCreated(null); }}
-                                style={{
-                                    display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0,
-                                    padding: "10px 18px", background: "var(--c)", border: "none",
-                                    borderRadius: "var(--r-md)", color: "#000", fontSize: 13, fontWeight: 700,
-                                    cursor: "pointer", fontFamily: "Sora, sans-serif", boxShadow: "0 4px 16px rgba(0,229,160,.3)",
-                                }}
-                            >
-                                {showForm ? "✕ Cancel" : (
-                                    <>
-                                        <svg viewBox="0 0 14 14" fill="none" width="11" height="11"><path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-                                        New Split
-                                    </>
-                                )}
-                            </button>
-                        </div>
+                        )}
 
                         {/* Created banner */}
-                        {justCreated && (
-                            <div style={{
-                                background: "rgba(0,229,160,.06)", border: "1px solid rgba(0,229,160,.2)",
-                                borderRadius: 12, padding: "14px 18px", marginBottom: 20,
-                                display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap",
-                            }}>
-                                <div>
-                                    <p style={{ fontSize: 13, fontWeight: 700, color: "var(--c)", marginBottom: 3 }}>
-                                        ✓ Split created — {justCreated.title}
-                                    </p>
-                                    <p style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>
-                                        {`${BASE}/pay/split/${justCreated.id}`}
-                                    </p>
+                        {createdLink && (
+                            <div className="card" style={{ marginBottom: 20, padding: 0 }}>
+                                <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                                    <div>
+                                        <p style={{ fontSize: 13, fontWeight: 700, color: "var(--c)", marginBottom: 3 }}>✓ Split link created</p>
+                                        <p style={{ fontSize: 12, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>{createdLink}</p>
+                                    </div>
+                                    <button
+                                        className="form-submit-btn"
+                                        style={{ width: "auto", padding: "9px 18px" }}
+                                        onClick={() => { navigator.clipboard.writeText(createdLink); setCopiedCreated(true); setTimeout(() => setCopiedCreated(false), 2000); }}
+                                    >
+                                        {copiedCreated ? "Copied!" : "Copy Pay Link"}
+                                    </button>
                                 </div>
-                                <button className={`table-copy-btn${copiedId === justCreated.id ? " copied" : ""}`} onClick={() => handleCopyLink(justCreated.id)} style={{ flexShrink: 0 }}>
-                                    {copiedId === justCreated.id ? "Copied!" : "Copy Pay Link"}
-                                </button>
                             </div>
                         )}
 
                         {/* Create form */}
                         {showForm && (
-                            <div className="form-card" style={{ marginBottom: 24 }}>
-                                <div className="form-card-header">
-                                    <div className="form-card-header-icon">
+                            <div className="card" style={{ marginBottom: 20 }}>
+                                <div className="card-head">
+                                    <div className="card-head-icon">
                                         <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
                                             <circle cx="4" cy="4" r="2" stroke="var(--c)" strokeWidth="1.3" />
                                             <circle cx="12" cy="4" r="2" stroke="var(--c)" strokeWidth="1.3" />
@@ -207,19 +220,19 @@ export default function SplitsPage() {
                                         </svg>
                                     </div>
                                     <div>
-                                        <div className="form-card-title">New Split Payment</div>
-                                        <div className="form-card-subtitle">Funds auto-distribute to all recipients on payment</div>
+                                        <div className="card-title">New Split Payment</div>
+                                        <div className="card-subtitle">Funds auto-distribute to all recipients on payment</div>
                                     </div>
                                 </div>
 
-                                <div className="form-card-body">
-                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                                <div className="card-body">
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                                         <div className="form-group" style={{ marginBottom: 0 }}>
-                                            <label className="form-label">Title *</label>
-                                            <input className="input" placeholder="Team revenue split" value={title} onChange={e => setTitle(e.target.value)} maxLength={80} />
+                                            <label className="form-label">Title</label>
+                                            <input className="input" placeholder="e.g. Team revenue split" value={title} onChange={e => setTitle(e.target.value)} maxLength={80} />
                                         </div>
                                         <div className="form-group" style={{ marginBottom: 0 }}>
-                                            <label className="form-label">Total amount *</label>
+                                            <label className="form-label">Total Amount</label>
                                             <div className="input-wrap">
                                                 <input className="input mono" type="number" min="0.01" step="0.01" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} style={{ paddingRight: 52 }} />
                                                 <span className="input-suffix">USDC</span>
@@ -227,49 +240,42 @@ export default function SplitsPage() {
                                         </div>
                                     </div>
 
-                                    <div className="form-group" style={{ marginTop: 12 }}>
+                                    <div className="form-group" style={{ marginTop: 16 }}>
                                         <label className="form-label">Description <span className="form-label-opt">(optional)</span></label>
-                                        <input className="input" placeholder="Monthly split for the team" value={description} onChange={e => setDescription(e.target.value)} maxLength={200} />
+                                        <input className="input" placeholder="e.g. Monthly split for the team" value={description} onChange={e => setDescription(e.target.value)} maxLength={200} />
                                     </div>
 
                                     {/* Recipients */}
-                                    <div style={{ marginTop: 18 }}>
-                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                                    <div style={{ marginTop: 20 }}>
+                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                                             <label className="form-label" style={{ marginBottom: 0 }}>Recipients ({recipients.length})</label>
-                                            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                                                <button onClick={splitEvenly} style={{ fontSize: 11, color: "var(--c)", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>
-                                                    Split evenly
-                                                </button>
-                                                <span style={{
-                                                    fontSize: 11, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700,
-                                                    color: Math.abs(pctSum - 100) < 0.01 ? "var(--c)" : "var(--warning)",
-                                                }}>
+                                            <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                                                <button onClick={splitEvenly} style={{ fontSize: 11, color: "var(--c)", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>Split evenly</button>
+                                                <span style={{ fontSize: 12, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: Math.abs(pctSum - 100) < 0.01 ? "var(--c)" : "var(--warning)" }}>
                                                     {pctSum.toFixed(1)}% / 100%
                                                 </span>
                                             </div>
                                         </div>
 
                                         {recipients.map((r, i) => (
-                                            <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 90px 70px 32px", gap: 8, marginBottom: 8, alignItems: "center" }}>
-                                                <input className="input" placeholder="0x... address" value={r.address} onChange={e => updateRecipient(i, "address", e.target.value)} style={{ fontSize: 12 }} />
-                                                <input className="input" placeholder="Label" value={r.label} onChange={e => updateRecipient(i, "label", e.target.value)} style={{ fontSize: 12 }} />
+                                            <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 120px 90px 36px", gap: 10, marginBottom: 10, alignItems: "center" }}>
+                                                <input className="input" placeholder="0x... wallet address" value={r.address} onChange={e => updateRecipient(i, "address", e.target.value)} style={{ fontSize: 13 }} />
+                                                <input className="input" placeholder="Label" value={r.label} onChange={e => updateRecipient(i, "label", e.target.value)} style={{ fontSize: 13 }} />
                                                 <div className="input-wrap">
-                                                    <input className="input mono" type="number" min="0" max="100" step="0.1" placeholder="0" value={r.percentage} onChange={e => updateRecipient(i, "percentage", e.target.value)} style={{ fontSize: 12, paddingRight: 22 }} />
-                                                    <span className="input-suffix" style={{ fontSize: 10, right: 8 }}>%</span>
+                                                    <input className="input mono" type="number" min="0" max="100" step="0.1" placeholder="0" value={r.percentage} onChange={e => updateRecipient(i, "percentage", e.target.value)} style={{ fontSize: 13, paddingRight: 26 }} />
+                                                    <span className="input-suffix" style={{ fontSize: 11 }}>%</span>
                                                 </div>
                                                 <button
                                                     onClick={() => removeRecipient(i)}
                                                     disabled={recipients.length <= 2}
-                                                    style={{ background: "none", border: "none", cursor: recipients.length <= 2 ? "not-allowed" : "pointer", color: recipients.length <= 2 ? "var(--stroke)" : "var(--danger)", fontSize: 18, opacity: recipients.length <= 2 ? .4 : 1 }}
-                                                    title="Remove"
-                                                >
-                                                    ×
-                                                </button>
+                                                    style={{ background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, height: 38, cursor: recipients.length <= 2 ? "not-allowed" : "pointer", color: recipients.length <= 2 ? "var(--stroke2)" : "var(--danger)", fontSize: 18, opacity: recipients.length <= 2 ? .4 : 1 }}
+                                                    title="Remove recipient"
+                                                >×</button>
                                             </div>
                                         ))}
 
                                         {recipients.length < 10 && (
-                                            <button onClick={addRecipient} style={{ marginTop: 4, fontSize: 12, color: "var(--ink-3)", background: "none", border: "1px dashed var(--stroke)", borderRadius: 8, padding: "8px 12px", cursor: "pointer", width: "100%" }}>
+                                            <button onClick={addRecipient} className="btn-ghost" style={{ marginTop: 4 }}>
                                                 + Add recipient
                                             </button>
                                         )}
@@ -320,7 +326,7 @@ export default function SplitsPage() {
                                             </svg>
                                         </div>
                                         <p className="table-empty-title">No splits yet</p>
-                                        <p className="table-empty-sub">Click "New Split" above to create your first one.</p>
+                                        <p className="table-empty-sub">Click "+ New Split" above to create your first one.</p>
                                     </div>
                                 )}
 
@@ -353,7 +359,7 @@ export default function SplitsPage() {
                                             </button>
                                             {s.txHash && (
                                                 <a href={`https://testnet.arcscan.app/tx/${s.txHash}`} target="_blank" rel="noopener noreferrer" className="table-copy-btn" style={{ textDecoration: "none" }}>
-                                                    Funding TX ↗
+                                                    TX ↗
                                                 </a>
                                             )}
                                         </div>
@@ -361,8 +367,7 @@ export default function SplitsPage() {
                                 ))}
                             </div>
                         </div>
-
-                    </div>
+                    </>
                 )}
             </div>
         </div>
