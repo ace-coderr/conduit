@@ -42,12 +42,10 @@ function RequestRow({
     onCopyLink: (id: string) => void;
     copiedId: string | null;
 }) {
-    const payUrl = `${BASE}/pay/req/${request.id}`;
     const counterparty = perspective === "sent" ? request.recipientAddress : request.requesterAddress;
 
     return (
         <div className="table-row">
-            {/* Title + meta */}
             <div className="table-cell-title">
                 <div className="table-cell-title-name">
                     <span className="table-cell-status-dot" style={{ background: statusColor(request.status) }} />
@@ -59,7 +57,6 @@ function RequestRow({
                 </p>
             </div>
 
-            {/* Status */}
             <div>
                 <span className={`status-badge ${statusClass(request.status)}`}>
                     <span className="status-badge-dot" />
@@ -72,17 +69,14 @@ function RequestRow({
                 )}
             </div>
 
-            {/* Amount */}
             <div>
                 <span className="table-amount">{formatUSDC(request.amount)}<span className="table-amount-unit">USDC</span></span>
             </div>
 
-            {/* Created */}
             <span className="table-date">
                 {new Date(request.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </span>
 
-            {/* Actions */}
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                 {request.status === "PENDING" && (
                     <button
@@ -122,7 +116,7 @@ export default function RequestsPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [copiedId, setCopiedId] = useState<string | null>(null);
 
-    // Create form state
+    // Form state
     const [showForm, setShowForm] = useState(false);
     const [formRecipient, setFormRecipient] = useState("");
     const [formAmount, setFormAmount] = useState("");
@@ -213,16 +207,16 @@ export default function RequestsPage() {
             <NavBar />
             <div className="app-body">
                 {!authenticated ? (
-                    <div className="not-connected-wrap">
-                        <p className="not-connected-title">Connect your wallet</p>
-                        <p className="not-connected-sub">Sign in to send and manage payment requests.</p>
-                        <button className="btn-primary" onClick={login}>Connect Wallet</button>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 340, gap: 12 }}>
+                        <p style={{ fontSize: 16, fontWeight: 800, color: "var(--ink-1)" }}>Connect your wallet</p>
+                        <p style={{ fontSize: 13, color: "var(--ink-3)", marginBottom: 8 }}>Sign in to send and manage payment requests.</p>
+                        <button className="btn-primary" style={{ width: "auto", padding: "12px 28px" }} onClick={login}>Connect Wallet</button>
                     </div>
                 ) : (
-                    <div style={{ maxWidth: 860, margin: "0 auto", padding: "0 16px" }}>
+                    <div style={{ maxWidth: 860, margin: "0 auto" }}>
 
                         {/* Header */}
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24, flexWrap: "wrap", gap: 12 }}>
+                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24, gap: 12 }}>
                             <div>
                                 <h1 style={{ fontSize: 22, fontWeight: 900, color: "var(--ink-1)", letterSpacing: "-.03em", marginBottom: 4 }}>
                                     Payment Requests
@@ -232,20 +226,29 @@ export default function RequestsPage() {
                                 </p>
                             </div>
                             <button
-                                className="btn-primary"
                                 onClick={() => { setShowForm(!showForm); setJustCreated(null); }}
-                                style={{ display: "flex", alignItems: "center", gap: 6 }}
+                                style={{
+                                    display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0,
+                                    padding: "10px 18px", background: "var(--c)", border: "none",
+                                    borderRadius: "var(--r-md)", color: "#000", fontSize: 13, fontWeight: 700,
+                                    cursor: "pointer", fontFamily: "Sora, sans-serif",
+                                    boxShadow: "0 4px 16px rgba(0,229,160,.3)",
+                                }}
                             >
-                                {showForm ? "✕ Cancel" : (
+                                {showForm ? (
+                                    "✕ Cancel"
+                                ) : (
                                     <>
-                                        <svg viewBox="0 0 14 14" fill="none" width="12" height="12"><path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                                        <svg viewBox="0 0 14 14" fill="none" width="11" height="11">
+                                            <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                                        </svg>
                                         New Request
                                     </>
                                 )}
                             </button>
                         </div>
 
-                        {/* Just-created banner */}
+                        {/* Just-created success banner */}
                         {justCreated && (
                             <div style={{
                                 background: "rgba(0,229,160,.06)", border: "1px solid rgba(0,229,160,.2)",
@@ -253,7 +256,7 @@ export default function RequestsPage() {
                                 display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap",
                             }}>
                                 <div>
-                                    <p style={{ fontSize: 13, fontWeight: 700, color: "var(--c)", marginBottom: 2 }}>
+                                    <p style={{ fontSize: 13, fontWeight: 700, color: "var(--c)", marginBottom: 3 }}>
                                         ✓ Request created — {justCreated.title}
                                     </p>
                                     <p style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>
@@ -261,7 +264,7 @@ export default function RequestsPage() {
                                     </p>
                                 </div>
                                 <button
-                                    className="table-copy-btn"
+                                    className={`table-copy-btn${copiedId === justCreated.id ? " copied" : ""}`}
                                     onClick={() => handleCopyLink(justCreated.id)}
                                     style={{ flexShrink: 0 }}
                                 >
@@ -272,84 +275,118 @@ export default function RequestsPage() {
 
                         {/* Create form */}
                         {showForm && (
-                            <div className="table-card" style={{ marginBottom: 24, padding: 24 }}>
-                                <p style={{ fontSize: 14, fontWeight: 800, color: "var(--ink-1)", marginBottom: 18 }}>New Payment Request</p>
-                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                                    <div style={{ gridColumn: "1 / -1" }}>
+                            <div className="form-card" style={{ marginBottom: 24 }}>
+                                <div className="form-card-header">
+                                    <div className="form-card-header-icon">
+                                        <svg viewBox="0 0 16 16" fill="none" width="16" height="16">
+                                            <rect x="1" y="3" width="14" height="10" rx="2" stroke="var(--c)" strokeWidth="1.4" />
+                                            <path d="M1 7h14M5 10h3" stroke="var(--c)" strokeWidth="1.4" strokeLinecap="round" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div className="form-card-title">New Payment Request</div>
+                                        <div className="form-card-subtitle">Send a pay-me link to any wallet address</div>
+                                    </div>
+                                </div>
+
+                                <div className="form-card-body">
+                                    <div className="form-group">
                                         <label className="form-label">Recipient wallet address *</label>
                                         <input
-                                            className="form-input"
+                                            className="input"
                                             placeholder="0x..."
                                             value={formRecipient}
                                             onChange={e => setFormRecipient(e.target.value)}
                                         />
                                     </div>
-                                    <div>
-                                        <label className="form-label">Amount (USDC) *</label>
-                                        <input
-                                            className="form-input"
-                                            type="number" min="0.01" step="0.01"
-                                            placeholder="50.00"
-                                            value={formAmount}
-                                            onChange={e => setFormAmount(e.target.value)}
-                                        />
+
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                            <label className="form-label">Amount (USDC) *</label>
+                                            <div className="input-wrap">
+                                                <input
+                                                    className="input mono"
+                                                    type="number" min="0.01" step="0.01"
+                                                    placeholder="0.00"
+                                                    value={formAmount}
+                                                    onChange={e => setFormAmount(e.target.value)}
+                                                    style={{ paddingRight: 52 }}
+                                                />
+                                                <span className="input-suffix">USDC</span>
+                                            </div>
+                                        </div>
+                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                            <label className="form-label">Title *</label>
+                                            <input
+                                                className="input"
+                                                placeholder="Invoice #42, Freelance work…"
+                                                value={formTitle}
+                                                onChange={e => setFormTitle(e.target.value)}
+                                            />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="form-label">Title *</label>
+
+                                    <div className="form-group" style={{ marginTop: 12 }}>
+                                        <label className="form-label">
+                                            Note <span className="form-label-opt">(optional)</span>
+                                        </label>
                                         <input
-                                            className="form-input"
-                                            placeholder="Invoice #42, Freelance work…"
-                                            value={formTitle}
-                                            onChange={e => setFormTitle(e.target.value)}
-                                        />
-                                    </div>
-                                    <div style={{ gridColumn: "1 / -1" }}>
-                                        <label className="form-label">Note (optional)</label>
-                                        <input
-                                            className="form-input"
+                                            className="input"
                                             placeholder="For services rendered in June…"
                                             value={formNote}
                                             onChange={e => setFormNote(e.target.value)}
                                         />
                                     </div>
-                                    <div>
-                                        <label className="form-label">Notify via email (optional)</label>
-                                        <input
-                                            className="form-input"
-                                            type="email"
-                                            placeholder="recipient@email.com"
-                                            value={formEmail}
-                                            onChange={e => setFormEmail(e.target.value)}
-                                        />
+
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                            <label className="form-label">
+                                                Notify via email <span className="form-label-opt">(optional)</span>
+                                            </label>
+                                            <input
+                                                className="input"
+                                                type="email"
+                                                placeholder="recipient@email.com"
+                                                value={formEmail}
+                                                onChange={e => setFormEmail(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="form-group" style={{ marginBottom: 0 }}>
+                                            <label className="form-label">
+                                                Expires at <span className="form-label-opt">(optional)</span>
+                                            </label>
+                                            <input
+                                                className="input"
+                                                type="datetime-local"
+                                                min={minDateTime}
+                                                value={formExpiry}
+                                                onChange={e => setFormExpiry(e.target.value)}
+                                            />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="form-label">Expires at (optional)</label>
-                                        <input
-                                            className="form-input"
-                                            type="datetime-local"
-                                            min={minDateTime}
-                                            value={formExpiry}
-                                            onChange={e => setFormExpiry(e.target.value)}
-                                        />
-                                    </div>
+
+                                    {formError && (
+                                        <div className="form-error" style={{ marginTop: 16 }}>{formError}</div>
+                                    )}
+
+                                    <button
+                                        className="form-submit-btn"
+                                        style={{ marginTop: 20 }}
+                                        onClick={handleCreate}
+                                        disabled={formLoading}
+                                    >
+                                        {formLoading ? (
+                                            <span className="form-submit-spinner">
+                                                <div className="page-spinner" style={{ width: 14, height: 14 }} />
+                                                Creating…
+                                            </span>
+                                        ) : "Send Request"}
+                                    </button>
                                 </div>
-
-                                {formError && (
-                                    <p style={{ color: "var(--danger)", fontSize: 12, marginTop: 10 }}>{formError}</p>
-                                )}
-
-                                <button
-                                    className="btn-primary"
-                                    style={{ marginTop: 18 }}
-                                    onClick={handleCreate}
-                                    disabled={formLoading}
-                                >
-                                    {formLoading ? "Creating…" : "Send Request"}
-                                </button>
                             </div>
                         )}
 
-                        {/* Tabs */}
+                        {/* Table */}
                         <div className="table-card">
                             <div className="table-header">
                                 <div className="table-header-left" style={{ gap: 4 }}>
@@ -363,7 +400,7 @@ export default function RequestsPage() {
                                             {t === "received" && pendingReceived > 0 && (
                                                 <span style={{
                                                     marginLeft: 5, background: "var(--c)", color: "#000",
-                                                    borderRadius: 8, padding: "0 5px", fontSize: 9, fontWeight: 800,
+                                                    borderRadius: 8, padding: "1px 6px", fontSize: 9, fontWeight: 800,
                                                 }}>
                                                     {pendingReceived}
                                                 </span>
@@ -406,7 +443,7 @@ export default function RequestsPage() {
                                         <p className="table-empty-sub">
                                             {tab === "received"
                                                 ? "When someone requests payment from you, it will appear here."
-                                                : "Create a request above and share the link."}
+                                                : "Click \"New Request\" above to send your first one."}
                                         </p>
                                     </div>
                                 )}
@@ -423,6 +460,7 @@ export default function RequestsPage() {
                                 ))}
                             </div>
                         </div>
+
                     </div>
                 )}
             </div>
