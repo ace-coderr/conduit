@@ -32,14 +32,26 @@ interface EscrowTx {
   isRefunded: boolean;
 }
 
+interface SplitTx {
+  id: string;
+  title: string;
+  amount: string;
+  status: string;
+  txHash?: string;
+  recipients: { address: string; percentage: number; label?: string }[];
+  payouts?: { address: string; amount: string; txHash?: string; status: string }[];
+  distributedAt?: string;
+  createdAt: string;
+}
+
 function TxSkeleton() {
   return (
     <div className="tx-row">
-      <div><div className="skeleton" style={{ width: "55%", height: 13, marginBottom: 6, borderRadius: 4 }}/><div className="skeleton" style={{ width: "35%", height: 10, borderRadius: 4 }}/></div>
-      <div className="skeleton" style={{ width: 80, height: 14, borderRadius: 4 }}/>
-      <div className="skeleton" style={{ width: 90, height: 12, borderRadius: 4 }}/>
-      <div className="skeleton" style={{ width: 70, height: 12, borderRadius: 4 }}/>
-      <div className="skeleton" style={{ width: 100, height: 12, borderRadius: 4 }}/>
+      <div><div className="skeleton" style={{ width: "55%", height: 13, marginBottom: 6, borderRadius: 4 }} /><div className="skeleton" style={{ width: "35%", height: 10, borderRadius: 4 }} /></div>
+      <div className="skeleton" style={{ width: 80, height: 14, borderRadius: 4 }} />
+      <div className="skeleton" style={{ width: 90, height: 12, borderRadius: 4 }} />
+      <div className="skeleton" style={{ width: 70, height: 12, borderRadius: 4 }} />
+      <div className="skeleton" style={{ width: 100, height: 12, borderRadius: 4 }} />
     </div>
   );
 }
@@ -56,9 +68,10 @@ const escrowStatusLabel = (s: string, isRefunded: boolean) => {
 
 export default function TransactionsPage() {
   const { address, isConnected } = useAccount();
-  const [tab, setTab] = useState<"payments" | "escrow">("payments");
+  const [tab, setTab] = useState<"payments" | "escrow" | "splits">("payments");
   const [paymentTxs, setPaymentTxs] = useState<PaymentTx[]>([]);
   const [escrowTxs, setEscrowTxs] = useState<EscrowTx[]>([]);
+  const [splitTxs, setSplitTxs] = useState<SplitTx[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -70,7 +83,8 @@ export default function TransactionsPage() {
     Promise.all([
       fetch(`/api/links?address=${address}`).then(r => r.json()),
       fetch(`/api/escrow?address=${address}`).then(r => r.json()),
-    ]).then(([linksData, escrowData]) => {
+      fetch(`/api/splits?address=${address}`).then(r => r.json()),
+    ]).then(([linksData, escrowData, splitData]) => {
       // Payment txs — only non-escrow completed links
       const payments = (linksData.links ?? []).filter((l: any) => !l.isEscrow && l.status === "COMPLETED");
       setPaymentTxs(payments);
@@ -83,6 +97,10 @@ export default function TransactionsPage() {
           isRefunded: e.status === "CANCELLED",
         }));
       setEscrowTxs(escrows);
+
+      // Split txs — only ones that were funded (have a txHash)
+      const splits = (splitData.splits ?? []).filter((s: any) => s.txHash);
+      setSplitTxs(splits);
     }).catch(console.error)
       .finally(() => setIsLoading(false));
   }, [address]);
@@ -96,13 +114,18 @@ export default function TransactionsPage() {
     if (tab === "payments") {
       if (!paymentTxs.length) return;
       const rows = [["Title", "Amount (USDC)", "From", "Date", "TX Hash"],
-        ...paymentTxs.map(tx => [tx.title, tx.amount, tx.paidBy ?? "", tx.paidAt ? formatDate(tx.paidAt) : "", tx.txHash ?? ""])];
+      ...paymentTxs.map(tx => [tx.title, tx.amount, tx.paidBy ?? "", tx.paidAt ? formatDate(tx.paidAt) : "", tx.txHash ?? ""])];
       download(rows, "conduit-payments.csv");
-    } else {
+    } else if (tab === "escrow") {
       if (!escrowTxs.length) return;
       const rows = [["Title", "Amount (USDC)", "Status", "Buyer", "Date", "TX Hash"],
-        ...escrowTxs.map(tx => [tx.title, tx.amount, escrowStatusLabel(tx.status, tx.isRefunded), tx.buyerAddress ?? "", tx.paidAt ? formatDate(tx.paidAt) : "", tx.txHash ?? ""])];
+      ...escrowTxs.map(tx => [tx.title, tx.amount, escrowStatusLabel(tx.status, tx.isRefunded), tx.buyerAddress ?? "", tx.paidAt ? formatDate(tx.paidAt) : "", tx.txHash ?? ""])];
       download(rows, "conduit-escrow.csv");
+    } else {
+      if (!splitTxs.length) return;
+      const rows = [["Title", "Total (USDC)", "Status", "Recipients", "Date", "Funding TX"],
+      ...splitTxs.map(tx => [tx.title, tx.amount, tx.status, String(tx.recipients.length), formatDate(tx.createdAt), tx.txHash ?? ""])];
+      download(rows, "conduit-splits.csv");
     }
   };
 
@@ -116,7 +139,7 @@ export default function TransactionsPage() {
 
   return (
     <div className="app">
-      <NavBar/>
+      <NavBar />
       <div className="page-wrap">
         <div className="page-header">
           <h1 className="page-title">Transactions</h1>
@@ -128,12 +151,13 @@ export default function TransactionsPage() {
           <div className="tx-stats">
             {[
               { label: "Payments Received", value: fmt(totalPayments), unit: "USDC", color: "var(--c)", sub: `${paymentTxs.length} transactions` },
-              { label: "Escrow Released", value: fmt(totalEscrowReleased), unit: "USDC", color: "#5b8ff9", sub: `${escrowTxs.filter(e => ["CONFIRMED","RELEASED"].includes(e.status)).length} completed` },
+              { label: "Escrow Released", value: fmt(totalEscrowReleased), unit: "USDC", color: "#5b8ff9", sub: `${escrowTxs.filter(e => ["CONFIRMED", "RELEASED"].includes(e.status)).length} completed` },
               { label: "Escrow Refunded", value: fmt(totalRefunded), unit: "USDC", color: "var(--danger)", sub: `${escrowTxs.filter(e => e.isRefunded).length} refunded` },
               { label: "Active Escrows", value: escrowTxs.filter(e => e.status === "HOLDING").length.toString(), unit: "", color: "var(--warning)", sub: "awaiting delivery" },
+              { label: "Splits Distributed", value: fmt(splitTxs.filter(s => s.status === "COMPLETED").reduce((sum, s) => sum + parseFloat(s.amount), 0)), unit: "USDC", color: "#a78bfa", sub: `${splitTxs.filter(s => s.status === "COMPLETED").length} completed` },
             ].map(s => (
               <div key={s.label} className="tx-stat">
-                <div className="tx-stat-bar" style={{ background: s.color }}/>
+                <div className="tx-stat-bar" style={{ background: s.color }} />
                 <div className="tx-stat-val">{s.value}{s.unit && <span style={{ fontSize: 13, color: s.color, fontWeight: 700, marginLeft: 4, fontFamily: "IBM Plex Mono, monospace" }}>{s.unit}</span>}</div>
                 <div className="tx-stat-label">{s.label}</div>
                 <div className="tx-stat-sub">{s.sub}</div>
@@ -146,16 +170,16 @@ export default function TransactionsPage() {
         <div className="card" style={{ display: "flex", flexDirection: "column" }}>
           <div className="table-head">
             <div style={{ display: "flex", gap: 4, background: "var(--bg)", borderRadius: "var(--r-sm)", padding: 3 }}>
-              {([["payments", "Payments"], ["escrow", "Escrow"]] as const).map(([t, label]) => (
+              {([["payments", "Payments"], ["escrow", "Escrow"], ["splits", "Splits"]] as const).map(([t, label]) => (
                 <button key={t} onClick={() => setTab(t)} style={{ padding: "7px 18px", borderRadius: 6, border: "none", background: tab === t ? "var(--surface)" : "transparent", color: tab === t ? "var(--ink-1)" : "var(--ink-3)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif", transition: "all .15s" }}>
                   {label}
                   <span style={{ marginLeft: 6, fontSize: 10, fontFamily: "IBM Plex Mono, monospace", color: tab === t ? "var(--c)" : "var(--ink-3)" }}>
-                    {t === "payments" ? paymentTxs.length : escrowTxs.length}
+                    {t === "payments" ? paymentTxs.length : t === "escrow" ? escrowTxs.length : splitTxs.length}
                   </span>
                 </button>
               ))}
             </div>
-            <button className="btn-sm" onClick={exportCSV} disabled={(tab === "payments" ? paymentTxs.length : escrowTxs.length) === 0 || isLoading}>
+            <button className="btn-sm" onClick={exportCSV} disabled={(tab === "payments" ? paymentTxs.length : tab === "escrow" ? escrowTxs.length : splitTxs.length) === 0 || isLoading}>
               Export CSV
             </button>
           </div>
@@ -174,7 +198,7 @@ export default function TransactionsPage() {
                 {!mounted || !isConnected ? (
                   <div className="empty"><p className="empty-title">Connect your wallet</p><p className="empty-sub">Connect to view transactions</p></div>
                 ) : isLoading ? (
-                  <>{[1,2,3,4,5].map(i => <TxSkeleton key={i}/>)}</>
+                  <>{[1, 2, 3, 4, 5].map(i => <TxSkeleton key={i} />)}</>
                 ) : paymentTxs.length === 0 ? (
                   <div className="empty">
                     <p className="empty-title">No payment transactions yet</p>
@@ -193,7 +217,7 @@ export default function TransactionsPage() {
                     <span className="tx-from">{tx.paidBy ? shortenAddress(tx.paidBy) : "—"}</span>
                     <span className="tx-date">{formatDate(tx.createdAt)}</span>
                     {tx.txHash ? (
-                      <a href={`https://testnet.arcscan.app/tx/${tx.txHash}`} target="_blank" rel="noopener noreferrer" className="tx-link">{tx.txHash.slice(0,6)}...{tx.txHash.slice(-4)} ↗</a>
+                      <a href={`https://testnet.arcscan.app/tx/${tx.txHash}`} target="_blank" rel="noopener noreferrer" className="tx-link">{tx.txHash.slice(0, 6)}...{tx.txHash.slice(-4)} ↗</a>
                     ) : <span className="tx-date">—</span>}
                   </div>
                 ))}
@@ -215,7 +239,7 @@ export default function TransactionsPage() {
                 {!mounted || !isConnected ? (
                   <div className="empty"><p className="empty-title">Connect your wallet</p><p className="empty-sub">Connect to view escrow history</p></div>
                 ) : isLoading ? (
-                  <>{[1,2,3,4,5].map(i => <TxSkeleton key={i}/>)}</>
+                  <>{[1, 2, 3, 4, 5].map(i => <TxSkeleton key={i} />)}</>
                 ) : escrowTxs.length === 0 ? (
                   <div className="empty">
                     <p className="empty-title">No escrow transactions yet</p>
@@ -252,6 +276,62 @@ export default function TransactionsPage() {
               </div>
             </>
           )}
+
+          {/* ── SPLITS TAB ── */}
+          {tab === "splits" && (
+            <>
+              {splitTxs.length > 0 && !isLoading && (
+                <div className="tx-cols" style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr" }}>
+                  {["TITLE", "STATUS", "TOTAL", "RECIPIENTS", "DATE", "LINK"].map(c => (
+                    <span key={c} className="tx-col">{c}</span>
+                  ))}
+                </div>
+              )}
+              <div style={{ overflowY: "auto", maxHeight: 520 }}>
+                {!mounted || !isConnected ? (
+                  <div className="empty"><p className="empty-title">Connect your wallet</p><p className="empty-sub">Connect to view split history</p></div>
+                ) : isLoading ? (
+                  <>{[1, 2, 3, 4, 5].map(i => <TxSkeleton key={i} />)}</>
+                ) : splitTxs.length === 0 ? (
+                  <div className="empty">
+                    <p className="empty-title">No split transactions yet</p>
+                    <p className="empty-sub">Funded split links will appear here</p>
+                  </div>
+                ) : splitTxs.map(tx => {
+                  const sentLegs = (tx.payouts ?? []).filter(p => p.status === "SENT").length;
+                  const splitColor = tx.status === "COMPLETED" ? "#00E5A0" : tx.status === "FAILED" ? "#f03e5f" : "#a78bfa";
+                  return (
+                    <div key={tx.id} className="tx-row fade-in" style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr" }}>
+                      <div>
+                        <p className="tx-name">{tx.title}</p>
+                        {sentLegs > 0 && <p className="tx-date-sm">{sentLegs}/{tx.recipients.length} paid out</p>}
+                      </div>
+                      <div>
+                        <span style={{
+                          fontSize: 9, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700,
+                          color: splitColor, background: `${splitColor}18`,
+                          border: `1px solid ${splitColor}40`, borderRadius: 4, padding: "1px 5px",
+                        }}>
+                          {tx.status}
+                        </span>
+                      </div>
+                      <span className="tx-amount">
+                        {formatUSDC(tx.amount)}
+                        <span style={{ fontSize: 10, color: "#a78bfa", marginLeft: 3, fontWeight: 700 }}>USDC</span>
+                      </span>
+                      <span className="tx-from">{tx.recipients.length} wallets</span>
+                      <span className="tx-date">{formatDate(tx.distributedAt ?? tx.createdAt)}</span>
+                      {tx.txHash ? (
+                        <a href={`https://testnet.arcscan.app/tx/${tx.txHash}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "#a78bfa", fontWeight: 700, textDecoration: "none" }}>
+                          Funding ↗
+                        </a>
+                      ) : <span className="tx-date">—</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -259,10 +339,10 @@ export default function TransactionsPage() {
         <span>Conduit v0.1.0</span>
         <div className="footer-links">
           <a href="https://x.com/conduit_pay" target="_blank" rel="noopener noreferrer" className="footer-link">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.845L1.255 2.25H8.08l4.253 5.622 5.912-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.845L1.255 2.25H8.08l4.253 5.622 5.912-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
           </a>
           <a href="https://t.me/conduit_community" target="_blank" rel="noopener noreferrer" className="footer-link">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.667l-2.94-.918c-.64-.203-.654-.64.136-.954l11.49-4.43c.532-.194.998.131.838.856z"/></svg>
+            <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.667l-2.94-.918c-.64-.203-.654-.64.136-.954l11.49-4.43c.532-.194.998.131.838.856z" /></svg>
           </a>
         </div>
         <span>Built on Arc Network · Powered by Circle</span>
