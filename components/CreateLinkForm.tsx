@@ -70,7 +70,7 @@ export function CreateLinkForm({ onLinkCreated }: CreateLinkFormProps) {
       <div className="form-card-header">
         <div className="form-card-header-icon">
           <svg viewBox="0 0 18 18" fill="none" width="15" height="15">
-            <path d="M9 3v12M3 9h12" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M9 3v12M3 9h12" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </div>
         <div>
@@ -86,7 +86,7 @@ export function CreateLinkForm({ onLinkCreated }: CreateLinkFormProps) {
               <div className="success-box-header">
                 <div className="success-check-icon">
                   <svg viewBox="0 0 12 12" fill="none" width="10" height="10">
-                    <path d="M2 6l2.5 2.5L10 3.5" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M2 6l2.5 2.5L10 3.5" stroke="#10b981" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
                 <span className="success-label">Link created successfully</span>
@@ -107,14 +107,14 @@ export function CreateLinkForm({ onLinkCreated }: CreateLinkFormProps) {
 
             <div className="form-group">
               <label className="form-label">Title</label>
-              <input type="text" className="input" placeholder="e.g. Freelance Invoice #102" value={title} onChange={e => setTitle(e.target.value)} maxLength={80} required disabled={!isConnected}/>
+              <input type="text" className="input" placeholder="e.g. Freelance Invoice #102" value={title} onChange={e => setTitle(e.target.value)} maxLength={80} required disabled={!isConnected} />
             </div>
 
             <div className="form-group">
               <label className="form-label">Amount</label>
-              <div className="form-input-wrap">
-                <input type="number" className="input mono" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} min="0.000001" step="any" required disabled={!isConnected} style={{ paddingRight: 52 }}/>
-                <span className="form-input-suffix">USDC</span>
+              <div className="input-wrap">
+                <input type="number" className="input mono" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} min="0.000001" step="any" required disabled={!isConnected} style={{ paddingRight: 52 }} />
+                <span className="input-suffix">USDC</span>
               </div>
             </div>
 
@@ -122,7 +122,7 @@ export function CreateLinkForm({ onLinkCreated }: CreateLinkFormProps) {
               <label className="form-label">
                 Description <span className="form-label-optional">(optional)</span>
               </label>
-              <input type="text" className="input" placeholder="e.g. Logo design for Acme Corp" value={description} onChange={e => setDescription(e.target.value)} maxLength={200} disabled={!isConnected}/>
+              <input type="text" className="input" placeholder="e.g. Logo design for Acme Corp" value={description} onChange={e => setDescription(e.target.value)} maxLength={200} disabled={!isConnected} />
             </div>
 
             {/* Expiry date */}
@@ -130,7 +130,7 @@ export function CreateLinkForm({ onLinkCreated }: CreateLinkFormProps) {
               <label className="form-label">
                 Expiry Date <span className="form-label-optional">(optional)</span>
               </label>
-              <div className="form-input-wrap">
+              <div className="input-wrap">
                 <input
                   type="datetime-local"
                   className="input mono"
@@ -144,8 +144,8 @@ export function CreateLinkForm({ onLinkCreated }: CreateLinkFormProps) {
               {expiresAt && (
                 <div style={{ fontSize: 11, color: "var(--warning)", marginTop: 6, display: "flex", alignItems: "center", gap: 5 }}>
                   <svg viewBox="0 0 14 14" fill="none" width="11" height="11">
-                    <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.2"/>
-                    <path d="M7 4.5v2.8l1.5 1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                    <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.2" />
+                    <path d="M7 4.5v2.8l1.5 1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                   </svg>
                   Expires {new Date(expiresAt).toLocaleString("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                   <button type="button" onClick={() => setExpiresAt("")} style={{ marginLeft: 4, fontSize: 10, color: "var(--ink-3)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>✕ clear</button>
@@ -158,8 +158,8 @@ export function CreateLinkForm({ onLinkCreated }: CreateLinkFormProps) {
               <div className="stealth-toggle-info">
                 <div className="stealth-toggle-label">
                   <svg viewBox="0 0 16 16" fill="none" width="13" height="13" style={{ flexShrink: 0 }}>
-                    <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
-                    <path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                    <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+                    <path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                   </svg>
                   Stealth Mode
                 </div>
@@ -170,15 +170,15 @@ export function CreateLinkForm({ onLinkCreated }: CreateLinkFormProps) {
                 </div>
               </div>
               <button type="button" onClick={() => setStealthMode(!stealthMode)} disabled={!isConnected} className={`toggle-switch${stealthMode ? " on" : ""}`} aria-label="Toggle stealth mode">
-                <span className="toggle-knob"/>
+                <span className="toggle-knob" />
               </button>
             </div>
 
             {stealthMode && (
               <div className="stealth-info-box animate-fade-up">
                 <svg viewBox="0 0 16 16" fill="none" width="14" height="14" style={{ flexShrink: 0, marginTop: 1 }}>
-                  <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="#a78bfa" strokeWidth="1.3"/>
-                  <path d="M5 7V5a3 3 0 016 0v2" stroke="#a78bfa" strokeWidth="1.3" strokeLinecap="round"/>
+                  <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="#a78bfa" strokeWidth="1.3" />
+                  <path d="M5 7V5a3 3 0 016 0v2" stroke="#a78bfa" strokeWidth="1.3" strokeLinecap="round" />
                 </svg>
                 <p style={{ fontSize: 11, color: "#a78bfa", lineHeight: 1.5 }}>
                   A fresh temp wallet will receive the payment and auto-forward to your real address. Payer cannot track you on ArcScan.
@@ -191,15 +191,15 @@ export function CreateLinkForm({ onLinkCreated }: CreateLinkFormProps) {
             <button type="submit" className="form-submit-btn" disabled={isLoading || !isConnected}>
               {isLoading ? (
                 <span className="form-submit-spinner">
-                  <span className="spinner"/>
+                  <span className="spinner" />
                   {stealthMode ? "Generating stealth link..." : "Generating..."}
                 </span>
               ) : !isConnected ? "Connect Wallet First"
                 : stealthMode ? (
                   <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
                     <svg viewBox="0 0 16 16" fill="none" width="13" height="13">
-                      <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
-                      <path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                      <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+                      <path d="M5 7V5a3 3 0 016 0v2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                     </svg>
                     Generate Private Link
                   </span>

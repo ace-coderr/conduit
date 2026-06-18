@@ -264,9 +264,9 @@ export default function EscrowPage() {
                   </div>
                   <div className="form-group">
                     <label className="form-label">Amount</label>
-                    <div className="form-input-wrap">
+                    <div className="input-wrap">
                       <input type="number" className="input mono" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} min="0.000001" step="any" required style={{ paddingRight: 52 }} />
-                      <span className="form-input-suffix">USDC</span>
+                      <span className="input-suffix">USDC</span>
                     </div>
                   </div>
                   <div className="form-group">
@@ -293,9 +293,9 @@ export default function EscrowPage() {
                         </button>
                       ))}
                     </div>
-                    <div className="form-input-wrap">
+                    <div className="input-wrap">
                       <input type="number" className="input mono" placeholder="7" value={deliveryDays} onChange={e => setDeliveryDays(e.target.value)} min="1" max="365" required style={{ paddingRight: 52 }} />
-                      <span className="form-input-suffix">days</span>
+                      <span className="input-suffix">days</span>
                     </div>
                     <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 6 }}>
                       Buyer can only confirm or dispute after this window passes. Auto-releases 7 days after delivery deadline.
