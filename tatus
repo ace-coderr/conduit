@@ -1,0 +1,2 @@
+[33m7adc041[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m fix: transactions showing 0 — match working links query, harden API with try/catch, surface errors
+[33m58919b1[m feat: transactions sent/received toggle — unified /api/transactions/all endpoint, both directions across payments, escrow, splits
