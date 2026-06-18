@@ -44,10 +44,10 @@ model EscrowLink {
   paidAt              DateTime?
   deliveryDays        Int?
   deliveryDeadline    DateTime?
-  aiVerdict         String?
-  aiConfidence      Int?
-  aiReasoning       String?
-  aiVerdictAt       DateTime?
+  aiVerdict           String?
+  aiConfidence        Int?
+  aiReasoning         String?
+  aiVerdictAt         DateTime?
   releaseDeadline     DateTime?
   confirmedAt         DateTime?
   disputedAt          DateTime?
@@ -89,7 +89,7 @@ model UserProfile {
   username    String   @unique
   displayName String?
   bio         String?
-  email             String?
+  email       String?
   avatar      String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -138,4 +138,23 @@ model WalletReputation {
   updatedAt        DateTime @updatedAt
 
   @@index([address])
+}
+
+model PaymentRequest {
+  id               String    @id @default(cuid())
+  requesterAddress String
+  recipientAddress String
+  amount           String
+  title            String
+  note             String?
+  status           String    @default("PENDING")
+  txHash           String?
+  paidAt           DateTime?
+  expiresAt        DateTime?
+  notifiedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([requesterAddress])
+  @@index([recipientAddress])
 }
