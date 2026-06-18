@@ -139,3 +139,24 @@ model WalletReputation {
 
   @@index([address])
 }
+
+model SplitLink {
+  id                String    @id @default(cuid())
+  title             String
+  description       String?
+  amount            String                          // total amount payer sends
+  creatorAddress    String
+  circleWalletId    String?                         // SCA wallet that receives funds
+  splitAddress      String    @default("pending")   // wallet address funds land in
+  recipients        Json                            // [{ address, percentage, label? }]
+  status            String    @default("ACTIVE")    // ACTIVE | HOLDING | DISTRIBUTING | COMPLETED | FAILED
+  txHash            String?                         // payer's funding tx
+  paidBy            String?
+  paidAt            DateTime?
+  payouts           Json?                           // [{ address, amount, txHash, status }]
+  distributedAt     DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([creatorAddress])
+}

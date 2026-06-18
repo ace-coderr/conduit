@@ -144,3 +144,40 @@ export async function getWalletBalance(walletId: string): Promise<string> {
     const tokenBalance = result?.data?.tokenBalances?.[0];
     return tokenBalance?.amount ?? "0";
 }
+// Create a new wallet for a split payment — funds land here, then auto-distribute.
+// SCA type so Gas Station sponsors gas on each outbound distribution leg.
+export async function createSplitWallet(splitId: string): Promise<{
+    walletId: string;
+    address: string;
+}> {
+    const ciphertext = await generateCiphertext();
+
+    const res = await fetch(`${BASE_URL}/v1/w3s/developer/wallets`, {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${API_KEY}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            entitySecretCiphertext: ciphertext,
+            idempotencyKey: crypto.randomUUID(),
+            walletSetId: WALLET_SET_ID,
+            blockchains: ["ARC-TESTNET"],
+            count: 1,
+            accountType: "SCA",
+            metadata: [{ name: `split-${splitId}`, refId: splitId }],
+        }),
+    });
+
+    const result = await res.json();
+    const wallet = result?.data?.wallets?.[0];
+
+    if (!wallet?.id || !wallet?.address) {
+        throw new Error(`Failed to create Circle split wallet: ${JSON.stringify(result)}`);
+    }
+
+    return {
+        walletId: wallet.id,
+        address: wallet.address.toLowerCase(),
+    };
+}

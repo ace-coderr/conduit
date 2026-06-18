@@ -35,6 +35,11 @@ const GROUPS = [
         desc: "Create & share payment links",
       },
       {
+        label: "Splits", href: "/splits",
+        icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><circle cx="4" cy="4" r="2.2" /><circle cx="12" cy="4" r="2.2" /><circle cx="8" cy="12" r="2.2" /><path d="M4 6.2v1.3h8V6.2M8 7.5v2.3" strokeLinecap="round" /></svg>,
+        desc: "Auto-split one payment to many wallets",
+      },
+      {
         label: "Transactions", href: "/transactions",
         icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><path d="M2 5h12M2 5l3-3M2 5l3 3M14 11H2m12 0l-3-3m3 3l-3 3" strokeLinecap="round" strokeLinejoin="round" /></svg>,
         desc: "View payment history",
