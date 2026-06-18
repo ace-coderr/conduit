@@ -80,8 +80,13 @@ export default function SplitsPage() {
         setRecipients(rs => rs.filter((_, idx) => idx !== i));
     };
     const splitEvenly = () => {
-        const even = (100 / recipients.length).toFixed(2);
-        setRecipients(rs => rs.map(r => ({ ...r, percentage: even })));
+        const n = recipients.length;
+        const base = Math.floor((100 / n) * 100) / 100; // 2dp floor, e.g. 33.33
+        const remainder = +(100 - base * (n - 1)).toFixed(2); // last gets the rest, e.g. 33.34
+        setRecipients(rs => rs.map((r, i) => ({
+            ...r,
+            percentage: (i === n - 1 ? remainder : base).toString(),
+        })));
     };
 
     const handleCopyLink = (id: string) => {
@@ -101,7 +106,7 @@ export default function SplitsPage() {
             const pct = parseFloat(r.percentage);
             if (isNaN(pct) || pct <= 0) { setFormError("All percentages must be greater than 0."); return; }
         }
-        if (Math.abs(pctSum - 100) > 0.01) { setFormError(`Percentages must sum to 100% (currently ${pctSum.toFixed(2)}%).`); return; }
+        if (Math.abs(pctSum - 100) > 0.05) { setFormError(`Percentages must sum to 100% (currently ${pctSum.toFixed(2)}%).`); return; }
 
         setFormLoading(true);
         try {
@@ -251,7 +256,7 @@ export default function SplitsPage() {
                                             <label className="form-label" style={{ marginBottom: 0 }}>Recipients ({recipients.length})</label>
                                             <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
                                                 <button onClick={splitEvenly} style={{ fontSize: 11, color: "var(--c)", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>Split evenly</button>
-                                                <span style={{ fontSize: 12, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: Math.abs(pctSum - 100) < 0.01 ? "var(--c)" : "var(--warning)" }}>
+                                                <span style={{ fontSize: 12, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: Math.abs(pctSum - 100) < 0.05 ? "var(--c)" : "var(--warning)" }}>
                                                     {pctSum.toFixed(1)}% / 100%
                                                 </span>
                                             </div>

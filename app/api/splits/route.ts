@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Percentages must sum to 100 (allow tiny float tolerance)
-    if (Math.abs(pctSum - 100) > 0.01)
+    if (Math.abs(pctSum - 100) > 0.05)
         return NextResponse.json({ error: `Percentages must sum to 100% (currently ${pctSum.toFixed(2)}%).` }, { status: 400 });
 
     // Rate limit: 20 splits/hour per creator

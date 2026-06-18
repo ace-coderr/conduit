@@ -27,12 +27,23 @@ async function distributeSplit(splitId: string): Promise<{ success: boolean; pay
     const fee = calculateFee(split.amount);
     const distributable = parseFloat(fee.recipientAmount); // total minus platform fee
 
-    // Build or resume payout ledger
+    // Build or resume payout ledger.
+    // Each leg = distributable * percentage, but the LAST recipient gets whatever
+    // remains, so rounding never leaves dust in the wallet or overshoots the balance.
     const existing = (split.payouts as unknown as Payout[]) ?? [];
-    const payouts: Payout[] = recipients.map(r => {
+    let allocated = 0;
+    const payouts: Payout[] = recipients.map((r, i) => {
         const prior = existing.find(p => p.address === r.address);
-        if (prior?.status === "SENT") return prior;
-        const legAmount = ((distributable * r.percentage) / 100).toFixed(4);
+        if (prior?.status === "SENT") {
+            allocated += parseFloat(prior.amount);
+            return prior;
+        }
+        const isLast = i === recipients.length - 1;
+        const legNum = isLast
+            ? Math.max(0, distributable - allocated)
+            : (distributable * r.percentage) / 100;
+        const legAmount = legNum.toFixed(4);
+        allocated += parseFloat(legAmount);
         return { address: r.address, amount: legAmount, status: "PENDING", label: r.label };
     });
 
