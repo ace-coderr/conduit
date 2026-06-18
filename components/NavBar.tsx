@@ -35,11 +35,6 @@ const GROUPS = [
         desc: "Create & share payment links",
       },
       {
-        label: "Requests", href: "/requests",
-        icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><rect x="1" y="3" width="14" height="10" rx="2" /><path d="M1 7h14" strokeLinecap="round" /></svg>,
-        desc: "Request USDC from any wallet",
-      },
-      {
         label: "Transactions", href: "/transactions",
         icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><path d="M2 5h12M2 5l3-3M2 5l3 3M14 11H2m12 0l-3-3m3 3l-3 3" strokeLinecap="round" strokeLinejoin="round" /></svg>,
         desc: "View payment history",
