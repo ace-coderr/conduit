@@ -1,0 +1,53 @@
+{
+    "name": "@ace_won/conduit-sdk",
+    "version": "1.0.0",
+    "description": "Official TypeScript SDK for Conduit — USDC payment infrastructure on Arc Network. Create payment links, escrow, splits, and webhooks programmatically.",
+    "main": "dist/index.js",
+    "module": "dist/index.mjs",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.js"
+        }
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "scripts": {
+        "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+        "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+        "prepublishOnly": "npm run build"
+    },
+    "keywords": [
+        "conduit",
+        "payment",
+        "sdk",
+        "usdc",
+        "arc",
+        "arc-network",
+        "circle",
+        "escrow",
+        "split-payments",
+        "webhooks",
+        "web3",
+        "stablecoin"
+    ],
+    "author": "ace_won",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ace-coderr/conduit.git"
+    },
+    "homepage": "https://conduit-pay.vercel.app/developers",
+    "bugs": {
+        "url": "https://github.com/ace-coderr/conduit/issues"
+    },
+    "devDependencies": {
+        "@types/node": "^20",
+        "tsup": "^8.0.0",
+        "typescript": "^5"
+    }
+}
