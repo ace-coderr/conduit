@@ -4,6 +4,7 @@ import { arcPublicClient } from "@/lib/arcClient";
 import { parseEther } from "viem";
 import { transferFromWallet } from "@/lib/circle";
 import { calculateFee } from "@/lib/fees";
+import { fireWebhook } from "@/lib/webhooks";
 
 interface RouteParams { params: { splitId: string } }
 
@@ -86,6 +87,14 @@ async function distributeSplit(splitId: string): Promise<{ success: boolean; pay
         },
     });
 
+    if (allSent) {
+        fireWebhook(split.creatorAddress, "split.distributed", {
+            id: split.id, title: split.title, amount: split.amount,
+            recipientCount: recipients.length,
+            payouts: payouts.map(p => ({ address: p.address, amount: p.amount, txHash: p.txHash })),
+        }).catch(() => { });
+    }
+
     return { success: allSent, payouts, error: anyFailed ? "One or more payout legs failed." : undefined };
 }
 
@@ -128,6 +137,11 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
             where: { id: params.splitId },
             data: { status: "HOLDING", txHash, paidBy: paidBy ? paidBy.toLowerCase() : null, paidAt: new Date() },
         });
+
+        fireWebhook(split.creatorAddress, "split.funded", {
+            id: split.id, title: split.title, amount: split.amount,
+            txHash, paidBy: paidBy ?? null,
+        }).catch(() => { });
 
         // Distribute immediately (await so the caller gets the result)
         const result = await distributeSplit(params.splitId);

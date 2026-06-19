@@ -113,6 +113,11 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       data: { status: "HOLDING", txHash, buyerAddress: paidBy ? paidBy.toLowerCase() : null, paidAt, deliveryDeadline, releaseDeadline },
     });
 
+    fireWebhook(escrow.sellerAddress, "escrow.funded", {
+      id: escrow.id, title: escrow.title, amount: escrow.amount,
+      txHash, sellerAddress: escrow.sellerAddress, buyerAddress: paidBy ?? null,
+    }).catch(() => { });
+
     // Email seller
     try {
       const profile = await db.userProfile.findUnique({
