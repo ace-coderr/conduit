@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { arcPublicClient } from "@/lib/arcClient";
 import { parseEther, formatEther } from "viem";
 import { sendPaymentReceivedEmail } from "@/lib/email";
+import { fireWebhook } from "@/lib/webhooks";
 
 interface RouteParams { params: { linkId: string } }
 
@@ -81,6 +82,16 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     where: { id: params.linkId },
     data: { status: "COMPLETED", txHash, paidBy: paidBy ? paidBy.toLowerCase() : null, paidAt: new Date() },
   });
+
+  // Fire webhook (fire-and-forget)
+  fireWebhook(link.recipientAddress, "payment.completed", {
+    id: link.id,
+    title: link.title,
+    amount: link.amount,
+    txHash,
+    paidBy: paidBy ?? null,
+    recipientAddress: link.recipientAddress,
+  }).catch(() => { });
 
   // Send email notification to seller if they have a profile with email
   try {

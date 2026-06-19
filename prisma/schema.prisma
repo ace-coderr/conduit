@@ -160,3 +160,33 @@ model SplitLink {
 
   @@index([creatorAddress])
 }
+model Webhook {
+  id           String            @id @default(cuid())
+  ownerAddress String
+  url          String
+  secret       String
+  events       String[]                          // e.g. ["payment.completed","escrow.released"]
+  active       Boolean           @default(true)
+  failureCount Int               @default(0)
+  lastFiredAt  DateTime?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  deliveries   WebhookDelivery[]
+
+  @@index([ownerAddress])
+}
+
+model WebhookDelivery {
+  id           String   @id @default(cuid())
+  webhookId    String
+  webhook      Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  event        String
+  payload      Json
+  statusCode   Int?
+  success      Boolean  @default(false)
+  errorMessage String?
+  attempts     Int      @default(1)
+  createdAt    DateTime @default(now())
+
+  @@index([webhookId])
+}

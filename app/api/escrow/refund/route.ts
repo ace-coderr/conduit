@@ -4,6 +4,7 @@ import { transferFromWallet } from "@/lib/circle";
 import { verifyAdminQuery } from "@/lib/adminAuth";
 import { sendEscrowRefundedEmail } from "@/lib/email";
 import { recordReputationEvent } from "@/lib/reputation";
+import { fireWebhook } from "@/lib/webhooks";
 
 export async function POST(req: NextRequest) {
   const { ok, error } = verifyAdminQuery(req);
@@ -49,6 +50,11 @@ export async function POST(req: NextRequest) {
     // Record reputation: a refund counts as a refunded escrow for the seller
     // (tracked, but does not lower trust score — a fair refund isn't the seller's fault)
     await recordReputationEvent(escrow.sellerAddress, "REFUNDED", escrow.amount);
+
+    fireWebhook(escrow.sellerAddress, "escrow.refunded", {
+      id: escrow.id, title: escrow.title, amount: escrow.amount,
+      txHash: result.txHash, sellerAddress: escrow.sellerAddress, buyerAddress: escrow.buyerAddress ?? null,
+    }).catch(() => { });
 
     // Email buyer
     try {

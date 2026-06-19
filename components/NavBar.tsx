@@ -65,6 +65,11 @@ const GROUPS = [
         icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><path d="M5 4l-3 4 3 4M11 4l3 4-3 4M9 2l-2 12" strokeLinecap="round" strokeLinejoin="round" /></svg>,
         desc: "x402 API & integration docs",
       },
+      {
+        label: "Webhooks", href: "/webhooks",
+        icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><path d="M3 8a5 5 0 015-5M8 13a5 5 0 005-5" strokeLinecap="round" /><circle cx="8" cy="8" r="2" /></svg>,
+        desc: "Notify your endpoint on events",
+      },
     ],
   },
   {

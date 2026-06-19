@@ -5,6 +5,7 @@ import { parseEther } from "viem";
 import { sendEscrowPaidEmail, sendDisputeRaisedEmail } from "@/lib/email";
 import { recordReputationEvent } from "@/lib/reputation";
 import { transferFromWallet } from "@/lib/circle";
+import { fireWebhook } from "@/lib/webhooks";
 
 const ADMIN_WALLET = "0x8557fabdc62f59a1ba7d6a74aaf0942cdcb68f69";
 interface RouteParams { params: { linkId: string } }
@@ -48,6 +49,10 @@ async function releaseEscrowFunds(escrowId: string): Promise<{ success: boolean;
       data: { status: "RELEASED", releaseTxHash: result.txHash },
     });
     await recordReputationEvent(escrow.sellerAddress, "COMPLETED", escrow.amount);
+    fireWebhook(escrow.sellerAddress, "escrow.released", {
+      id: escrow.id, title: escrow.title, amount: escrow.amount,
+      txHash: result.txHash, sellerAddress: escrow.sellerAddress, buyerAddress: escrow.buyerAddress ?? null,
+    }).catch(() => { });
     return { success: true, txHash: result.txHash };
   }
   return { success: false, error: result.error ?? "Transfer failed" };
@@ -160,6 +165,11 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       where: { id: params.linkId },
       data: { status: "DISPUTED", disputedAt: now, disputeDeadline, disputeReason: disputeReason?.trim() || "No reason provided" },
     });
+    fireWebhook(escrow.sellerAddress, "escrow.disputed", {
+      id: escrow.id, title: escrow.title, amount: escrow.amount,
+      reason: disputeReason?.trim() || "No reason provided",
+      sellerAddress: escrow.sellerAddress, buyerAddress: escrow.buyerAddress ?? null,
+    }).catch(() => { });
     await db.escrowMessage.create({
       data: { escrowId: params.linkId, sender: "SYSTEM", message: `Dispute opened by buyer. Reason: "${disputeReason?.trim() || "No reason provided"}". Both parties have 48 hours to submit their side. If the seller does not respond, funds will be automatically refunded to the buyer.` },
     });
