@@ -1,6 +1,6 @@
 {
     "name": "@ace_won/conduit-sdk",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Official TypeScript SDK for Conduit — USDC payment infrastructure on Arc Network. Create payment links, escrow, splits, and webhooks programmatically.",
     "main": "dist/index.js",
     "module": "dist/index.mjs",

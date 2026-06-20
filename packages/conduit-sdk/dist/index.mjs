@@ -1,5 +1,5 @@
 // src/client.ts
-var DEFAULT_BASE_URL = "https://conduitpay.xyz";
+var DEFAULT_BASE_URL = "https://www.conduitpay.xyz";
 var ConduitApiError = class extends Error {
   constructor(message, status) {
     super(message);

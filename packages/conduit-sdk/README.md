@@ -22,14 +22,14 @@ const link = await conduit.links.create({
 });
 
 console.log(conduit.links.payUrl(link.id));
-// → https://conduitpay.xyz/pay/<id>
+// → https://www.conduitpay.xyz/pay/<id>
 ```
 
 ## Configuration
 
 ```ts
 const conduit = new ConduitClient({
-  baseUrl: "https://conduitpay.xyz", // optional, this is the default
+  baseUrl: "https://www.conduitpay.xyz", // optional, this is the default
   address: "0xYourWallet",           // optional default owner address
   fetch: customFetch,                // optional, for Node <18
 });

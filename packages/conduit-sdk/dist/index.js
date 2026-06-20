@@ -38,7 +38,7 @@ __export(index_exports, {
 module.exports = __toCommonJS(index_exports);
 
 // src/client.ts
-var DEFAULT_BASE_URL = "https://conduitpay.xyz";
+var DEFAULT_BASE_URL = "https://www.conduitpay.xyz";
 var ConduitApiError = class extends Error {
   constructor(message, status) {
     super(message);

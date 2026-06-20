@@ -6,7 +6,7 @@ import type {
     Webhook, CreateWebhookInput, WebhookEvent,
 } from "./types";
 
-const DEFAULT_BASE_URL = "https://conduitpay.xyz";
+const DEFAULT_BASE_URL = "https://www.conduitpay.xyz";
 
 /** Thrown when the Conduit API returns a non-2xx response. */
 export class ConduitApiError extends Error {
