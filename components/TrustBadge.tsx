@@ -12,11 +12,7 @@ type Reputation = {
     isNew: boolean;
 };
 
-/**
- * TrustBadge — shows a wallet's escrow trust score.
- * Usage: <TrustBadge address={sellerAddress} />
- * Optional: size="sm" for compact (contacts list), default is full.
- */
+
 export function TrustBadge({ address, size = "full" }: { address: string; size?: "sm" | "full" }) {
     const [rep, setRep] = useState<Reputation | null>(null);
     const [loading, setLoading] = useState(true);

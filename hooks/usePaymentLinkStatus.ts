@@ -8,9 +8,9 @@ interface PaymentLinkStatus {
 
 interface UsePaymentLinkStatusOptions {
   linkId: string;
-  enabled?: boolean;          // Set to true after a payment is submitted
-  pollIntervalMs?: number;     // How often to poll (default 5 seconds)
-  maxAttempts?: number;        // Stop polling after N attempts (default 24 = 2 minutes)
+  enabled?: boolean;
+  pollIntervalMs?: number;
+  maxAttempts?: number;
 }
 
 export function usePaymentLinkStatus({
