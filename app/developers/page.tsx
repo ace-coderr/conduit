@@ -9,6 +9,7 @@ const NAV = [
     { id: "quickstart", label: "Quick Start" },
     { id: "how-it-works", label: "How It Works" },
     { id: "npm-package", label: "npm Package" },
+    { id: "conduit-sdk", label: "Conduit SDK" },
     { id: "endpoints", label: "API Endpoints" },
     { id: "verify", label: "Verify" },
     { id: "settle", label: "Settle" },
@@ -87,7 +88,7 @@ export default function DevelopersPage() {
                     </nav>
                     <div style={{ marginTop: 32, padding: "12px", background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 8 }}>
                         <p style={{ fontSize: 10, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, marginBottom: 6 }}>LIVE DEMO</p>
-                        <a href="https://conduitpay.xyz/api/arc-stats" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "var(--c)", textDecoration: "none", wordBreak: "break-all" }}>/api/arc-stats ↗</a>
+                        <a href="https://www.conduitpay.xyz/api/arc-stats" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: "var(--c)", textDecoration: "none", wordBreak: "break-all" }}>/api/arc-stats ↗</a>
                     </div>
                 </aside>
 
@@ -109,8 +110,8 @@ export default function DevelopersPage() {
                     {/* Quick links */}
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 56 }}>
                         {[
-                            { label: "Facilitator URL", value: "conduitpay.xyz/api/x402", href: "https://conduitpay.xyz/api/x402", color: "var(--c)" },
-                            { label: "Demo endpoint", value: "/api/arc-stats", href: "https://conduitpay.xyz/api/arc-stats", color: "var(--info)" },
+                            { label: "Facilitator URL", value: "www.conduitpay.xyz/api/x402", href: "https://www.conduitpay.xyz/api/x402", color: "var(--c)" },
+                            { label: "Demo endpoint", value: "/api/arc-stats", href: "https://www.conduitpay.xyz/api/arc-stats", color: "var(--info)" },
                             { label: "Network", value: "Arc Testnet · eip155:5042002", href: "https://testnet.arcscan.app", color: "#a78bfa" },
                         ].map(s => (
                             <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
@@ -167,7 +168,7 @@ HTTP/1.1 402 Payment Required
 Payment-Required: eyJhY2NlcHRzIjpbeyJzY2hlb...`}</Code>
                         <div style={{ background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 10, padding: "14px 18px" }}>
                             <p style={{ fontSize: 12, color: "var(--c)", fontWeight: 700, marginBottom: 4 }}>Live demo</p>
-                            <p style={{ fontSize: 12, color: "var(--ink-3)" }}>Hit <a href="https://conduitpay.xyz/api/arc-stats" target="_blank" rel="noopener noreferrer" style={{ color: "var(--c)" }}>conduitpay.xyz/api/arc-stats</a> in your browser. Pay 0.001 USDC. Get live Arc Network stats back in under a second.</p>
+                            <p style={{ fontSize: 12, color: "var(--ink-3)" }}>Hit <a href="https://www.conduitpay.xyz/api/arc-stats" target="_blank" rel="noopener noreferrer" style={{ color: "var(--c)" }}>conduitpay.xyz/api/arc-stats</a> in your browser. Pay 0.001 USDC. Get live Arc Network stats back in under a second.</p>
                         </div>
                     </Section>
 
@@ -229,6 +230,87 @@ Payment-Required: eyJhY2NlcHRzIjpbeyJzY2hlb...`}</Code>
                             ))}
                         </div>
                         <a href="https://npmjs.com/package/@ace_won/x402" target="_blank" rel="noopener noreferrer"
+                            style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 18px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, fontSize: 12, fontWeight: 700, color: "var(--ink-2)", textDecoration: "none" }}>
+                            View on npm ↗
+                        </a>
+                    </Section>
+
+                    <Section id="conduit-sdk" title="Conduit SDK">
+                        <p style={{ fontSize: 14, color: "var(--ink-3)", lineHeight: 1.8, marginBottom: 20 }}>
+                            <Mono>@ace_won/conduit-sdk</Mono> is the full TypeScript client — create payment links, escrow, splits, webhooks, and agent wallets in a few lines, with complete type safety.
+                        </p>
+                        <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>Install</p>
+                        <Code>{`npm install @ace_won/conduit-sdk`}</Code>
+
+                        <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>Quick start</p>
+                        <Code>{`import { ConduitClient } from "@ace_won/conduit-sdk";
+
+const conduit = new ConduitClient({ address: "0xYourWallet" });
+
+// Create a payment link
+const link = await conduit.links.create({
+  title: "Invoice #102",
+  amount: 50,
+});
+console.log(conduit.links.payUrl(link.id));`}</Code>
+
+                        <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>Split payments</p>
+                        <Code>{`// Percentages must sum to 100 — auto-distributes gaslessly
+const split = await conduit.splits.create({
+  title: "Team revenue split",
+  amount: 1000,
+  recipients: [
+    { address: "0xAlice...", percentage: 50 },
+    { address: "0xBob...",   percentage: 50 },
+  ],
+});`}</Code>
+
+                        <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>Webhooks + verification</p>
+                        <Code>{`import { constructWebhookEvent } from "@ace_won/conduit-sdk";
+
+export async function POST(req: Request) {
+  const raw = await req.text();
+  const sig = req.headers.get("x-conduit-signature") ?? "";
+  const event = constructWebhookEvent(raw, sig, process.env.CONDUIT_WEBHOOK_SECRET!);
+  // event.event, event.data — verified via HMAC-SHA256
+  return new Response("ok");
+}`}</Code>
+
+                        <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", marginBottom: 8 }}>Agent wallets</p>
+                        <p style={{ fontSize: 13, color: "var(--ink-3)", lineHeight: 1.7, marginBottom: 12 }}>
+                            Give an AI agent its own wallet with a spending limit and an allowlist. The agent spends with a Bearer key; guardrails are enforced on every call.
+                        </p>
+                        <Code>{`# The agent spends using its API key:
+curl -X POST https://www.conduitpay.xyz/api/agents/spend \\
+  -H "Authorization: Bearer cak_live_..." \\
+  -H "Content-Type: application/json" \\
+  -d '{"recipient":"0x...","amount":"1.50"}'
+
+# Blocked automatically if recipient isn't allowlisted
+# or the daily limit is exceeded.`}</Code>
+
+                        <div style={{ background: "rgba(245,166,35,.08)", border: "1px solid rgba(245,166,35,.25)", borderRadius: 10, padding: "12px 16px", marginBottom: 24 }}>
+                            <p style={{ fontSize: 12, color: "var(--warning)", fontWeight: 700, marginBottom: 4 }}>Use the www domain for API calls</p>
+                            <p style={{ fontSize: 12, color: "var(--ink-3)", lineHeight: 1.6 }}>
+                                Always call <Mono>www.conduitpay.xyz</Mono> for authenticated requests. The bare domain redirects, and browsers/curl drop the Authorization header on redirect. The SDK uses the correct domain by default.
+                            </p>
+                        </div>
+
+                        <div style={{ background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: 10, overflow: "hidden", marginBottom: 24 }}>
+                            {[
+                                { k: "Links", v: "create · list · get · payUrl" },
+                                { k: "Escrow", v: "create · list · get · payUrl" },
+                                { k: "Splits", v: "create · list · get · payUrl" },
+                                { k: "Webhooks", v: "create · list · update · test · delete" },
+                                { k: "Package", v: "@ace_won/conduit-sdk v1.0.1" },
+                            ].map((r, i, arr) => (
+                                <div key={r.k} style={{ display: "flex", justifyContent: "space-between", padding: "10px 18px", borderBottom: i < arr.length - 1 ? "1px solid var(--stroke)" : "none" }}>
+                                    <span style={{ fontSize: 12, color: "var(--ink-3)" }}>{r.k}</span>
+                                    <span style={{ fontSize: 12, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink-1)", fontWeight: 700 }}>{r.v}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <a href="https://npmjs.com/package/@ace_won/conduit-sdk" target="_blank" rel="noopener noreferrer"
                             style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 18px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, fontSize: 12, fontWeight: 700, color: "var(--ink-2)", textDecoration: "none" }}>
                             View on npm ↗
                         </a>
@@ -362,7 +444,7 @@ Payment-Required: eyJhY2NlcHRzIjpbeyJzY2hlb...`}</Code>
                                 { k: "USDC Decimals", v: "6" },
                                 { k: "RPC URL", v: "https://rpc.testnet.arc.network" },
                                 { k: "Explorer", v: "https://testnet.arcscan.app" },
-                                { k: "Facilitator", v: "https://conduitpay.xyz/api/x402" },
+                                { k: "Facilitator", v: "https://www.conduitpay.xyz/api/x402" },
                                 { k: "Gas token", v: "USDC (native)" },
                             ].map((r, i, arr) => (
                                 <div key={r.k} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 20px", borderBottom: i < arr.length - 1 ? "1px solid var(--stroke)" : "none" }}>
