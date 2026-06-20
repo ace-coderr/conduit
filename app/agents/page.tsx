@@ -128,7 +128,7 @@ export default function AgentsPage() {
                 body: JSON.stringify({ action: "spend", callerAddress: address, recipient: spendTo.trim(), amount: spendAmt }),
             });
             const data = await res.json();
-            if (!res.ok || !data.success) { setSpendErr(data.error || "Send failed."); return; }
+            if (!res.ok || !data.success) { setSpendErr(data.error || "Withdrawal failed."); return; }
             setSpendOk(data.txHash);
             setSpendTo(""); setSpendAmt("");
             fetchAgents();
@@ -288,7 +288,7 @@ export default function AgentsPage() {
                                                     </button>
                                                 </div>
                                                 <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                                                    <button className="table-copy-btn" onClick={() => { setSpendOpen(spendOpen === a.id ? null : a.id); setSpendErr(""); setSpendOk(null); }}>Send</button>
+                                                    <button className="table-copy-btn" onClick={() => { const opening = spendOpen !== a.id; setSpendOpen(opening ? a.id : null); setSpendErr(""); setSpendOk(null); if (opening && address) setSpendTo(address); }}>Withdraw</button>
                                                     <button className="table-copy-btn" onClick={() => handleToggle(a)}>{a.active ? "Disable" : "Enable"}</button>
                                                     <button className="table-cancel-btn" onClick={() => handleDelete(a.id)}>Delete</button>
                                                 </div>
@@ -314,24 +314,24 @@ export default function AgentsPage() {
                                                 </div>
                                             </div>
 
-                                            {/* Owner spend form */}
+                                            {/* Owner withdraw form */}
                                             {spendOpen === a.id && (
                                                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--stroke)" }}>
-                                                    <p style={{ fontSize: 11, color: "var(--ink-3)", marginBottom: 8 }}>Send USDC from this agent wallet (owner override — bypasses limits).</p>
+                                                    <p style={{ fontSize: 11, color: "var(--ink-3)", marginBottom: 8 }}>Withdraw funds from this agent wallet to any address. Defaults to your wallet — change it to send elsewhere.</p>
                                                     <div style={{ display: "grid", gridTemplateColumns: "1fr 110px auto", gap: 8, alignItems: "center" }}>
-                                                        <input className="input" placeholder="0x recipient address" value={spendTo} onChange={e => setSpendTo(e.target.value)} style={{ fontSize: 12 }} />
+                                                        <input className="input" placeholder="0x destination address" value={spendTo} onChange={e => setSpendTo(e.target.value)} style={{ fontSize: 12 }} />
                                                         <div className="input-wrap">
                                                             <input className="input mono" type="number" min="0" step="0.01" placeholder="0.00" value={spendAmt} onChange={e => setSpendAmt(e.target.value)} style={{ fontSize: 12, paddingRight: 46 }} />
                                                             <span className="input-suffix" style={{ fontSize: 10 }}>USDC</span>
                                                         </div>
                                                         <button className="form-submit-btn" style={{ width: "auto", padding: "9px 18px" }} onClick={() => handleSpend(a.id)} disabled={spendBusy}>
-                                                            {spendBusy ? "Sending…" : "Send"}
+                                                            {spendBusy ? "Withdrawing…" : "Withdraw"}
                                                         </button>
                                                     </div>
                                                     {spendErr && <p style={{ fontSize: 11, color: "var(--danger)", marginTop: 8 }}>{spendErr}</p>}
                                                     {spendOk && (
                                                         <p style={{ fontSize: 11, color: "var(--c)", marginTop: 8 }}>
-                                                            ✓ Sent — <a href={`https://testnet.arcscan.app/tx/${spendOk}`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--c)", fontWeight: 700 }}>view tx ↗</a>
+                                                            ✓ Withdrawn — <a href={`https://testnet.arcscan.app/tx/${spendOk}`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--c)", fontWeight: 700 }}>view tx ↗</a>
                                                         </p>
                                                     )}
                                                 </div>

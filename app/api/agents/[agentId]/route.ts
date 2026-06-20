@@ -48,7 +48,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
             return NextResponse.json({ error: "Valid amount required." }, { status: 400 });
 
         const spend = await db.agentTransaction.create({
-            data: { agentWalletId: agent.id, recipient: recipient.toLowerCase(), amount: String(amount), status: "PENDING", reason: "Owner-initiated" },
+            data: { agentWalletId: agent.id, recipient: recipient.toLowerCase(), amount: String(amount), status: "PENDING", reason: "Owner withdrawal" },
         });
 
         const result = await transferFromWallet(agent.circleWalletId, recipient, String(amount));
