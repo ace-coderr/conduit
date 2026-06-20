@@ -190,3 +190,40 @@ model WebhookDelivery {
 
   @@index([webhookId])
 }
+
+model AgentWallet {
+  id               String              @id @default(cuid())
+  ownerAddress     String                                // wallet that created/controls this agent
+  name             String
+  circleWalletId   String?                               // Circle SCA wallet for the agent
+  walletAddress    String   @default("pending")          // on-chain address funds sit in
+  apiKeyHash       String   @unique                       // sha256 of the agent's API key
+  apiKeyPreview    String                                 // e.g. "cak_live_...8f2a" for display
+  dailyLimit       String   @default("0")                 // max USDC/day, "0" = unlimited
+  allowedRecipients String[]                              // lowercased addresses; empty = any
+  spentToday       String   @default("0")
+  spendResetAt     DateTime @default(now())               // rolling 24h window start
+  active           Boolean  @default(true)
+  totalSpent       String   @default("0")
+  txCount          Int      @default(0)
+  lastUsedAt       DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  transactions     AgentTransaction[]
+
+  @@index([ownerAddress])
+}
+
+model AgentTransaction {
+  id            String      @id @default(cuid())
+  agentWalletId String
+  agentWallet   AgentWallet @relation(fields: [agentWalletId], references: [id], onDelete: Cascade)
+  recipient     String
+  amount        String
+  txHash        String?
+  status        String      @default("PENDING")          // PENDING | SENT | FAILED | BLOCKED
+  reason        String?                                    // for BLOCKED/FAILED
+  createdAt     DateTime    @default(now())
+
+  @@index([agentWalletId])
+}

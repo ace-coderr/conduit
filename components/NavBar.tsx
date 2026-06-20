@@ -70,6 +70,11 @@ const GROUPS = [
         icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><path d="M3 8a5 5 0 015-5M8 13a5 5 0 005-5" strokeLinecap="round" /><circle cx="8" cy="8" r="2" /></svg>,
         desc: "Notify your endpoint on events",
       },
+      {
+        label: "Agent Wallets", href: "/agents",
+        icon: <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><rect x="3" y="5" width="10" height="8" rx="1.5" /><path d="M8 5V3M6 2.5h4" strokeLinecap="round" /><circle cx="6" cy="9" r="0.8" fill="currentColor" /><circle cx="10" cy="9" r="0.8" fill="currentColor" /></svg>,
+        desc: "Wallets for AI agents with spend limits",
+      },
     ],
   },
   {
