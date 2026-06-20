@@ -38,6 +38,12 @@ export default function AgentsPage() {
     const [copiedKey, setCopiedKey] = useState(false);
     const [copiedAddr, setCopiedAddr] = useState<string | null>(null);
     const [expandedLog, setExpandedLog] = useState<string | null>(null);
+    const [spendOpen, setSpendOpen] = useState<string | null>(null);
+    const [spendTo, setSpendTo] = useState("");
+    const [spendAmt, setSpendAmt] = useState("");
+    const [spendErr, setSpendErr] = useState("");
+    const [spendBusy, setSpendBusy] = useState(false);
+    const [spendOk, setSpendOk] = useState<string | null>(null);
 
     useEffect(() => { setMounted(true); }, []);
 
@@ -107,6 +113,27 @@ export default function AgentsPage() {
         if (!confirm("Delete this agent wallet? Any USDC left in it will be inaccessible. This cannot be undone.")) return;
         await fetch(`/api/agents/${id}?address=${address}`, { method: "DELETE" });
         fetchAgents();
+    };
+
+    const handleSpend = async (agentId: string) => {
+        setSpendErr(""); setSpendOk(null);
+        if (!isValidAddress(spendTo.trim())) { setSpendErr("Enter a valid recipient address."); return; }
+        const amt = parseFloat(spendAmt);
+        if (isNaN(amt) || amt <= 0) { setSpendErr("Enter a valid amount."); return; }
+        setSpendBusy(true);
+        try {
+            const res = await fetch(`/api/agents/${agentId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "spend", callerAddress: address, recipient: spendTo.trim(), amount: spendAmt }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) { setSpendErr(data.error || "Send failed."); return; }
+            setSpendOk(data.txHash);
+            setSpendTo(""); setSpendAmt("");
+            fetchAgents();
+        } catch { setSpendErr("Network error."); }
+        finally { setSpendBusy(false); }
     };
 
     const copyKey = () => { if (newKey) { navigator.clipboard.writeText(newKey); setCopiedKey(true); setTimeout(() => setCopiedKey(false), 2000); } };
@@ -261,6 +288,7 @@ export default function AgentsPage() {
                                                     </button>
                                                 </div>
                                                 <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                                                    <button className="table-copy-btn" onClick={() => { setSpendOpen(spendOpen === a.id ? null : a.id); setSpendErr(""); setSpendOk(null); }}>Send</button>
                                                     <button className="table-copy-btn" onClick={() => handleToggle(a)}>{a.active ? "Disable" : "Enable"}</button>
                                                     <button className="table-cancel-btn" onClick={() => handleDelete(a.id)}>Delete</button>
                                                 </div>
@@ -285,6 +313,29 @@ export default function AgentsPage() {
                                                     <p style={{ fontSize: 13, color: "var(--ink-1)", fontWeight: 600 }}>{a.txCount}</p>
                                                 </div>
                                             </div>
+
+                                            {/* Owner spend form */}
+                                            {spendOpen === a.id && (
+                                                <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--stroke)" }}>
+                                                    <p style={{ fontSize: 11, color: "var(--ink-3)", marginBottom: 8 }}>Send USDC from this agent wallet (owner override — bypasses limits).</p>
+                                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 110px auto", gap: 8, alignItems: "center" }}>
+                                                        <input className="input" placeholder="0x recipient address" value={spendTo} onChange={e => setSpendTo(e.target.value)} style={{ fontSize: 12 }} />
+                                                        <div className="input-wrap">
+                                                            <input className="input mono" type="number" min="0" step="0.01" placeholder="0.00" value={spendAmt} onChange={e => setSpendAmt(e.target.value)} style={{ fontSize: 12, paddingRight: 46 }} />
+                                                            <span className="input-suffix" style={{ fontSize: 10 }}>USDC</span>
+                                                        </div>
+                                                        <button className="form-submit-btn" style={{ width: "auto", padding: "9px 18px" }} onClick={() => handleSpend(a.id)} disabled={spendBusy}>
+                                                            {spendBusy ? "Sending…" : "Send"}
+                                                        </button>
+                                                    </div>
+                                                    {spendErr && <p style={{ fontSize: 11, color: "var(--danger)", marginTop: 8 }}>{spendErr}</p>}
+                                                    {spendOk && (
+                                                        <p style={{ fontSize: 11, color: "var(--c)", marginTop: 8 }}>
+                                                            ✓ Sent — <a href={`https://testnet.arcscan.app/tx/${spendOk}`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--c)", fontWeight: 700 }}>view tx ↗</a>
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
 
                                             {/* Activity log */}
                                             {a.transactions.length > 0 && (

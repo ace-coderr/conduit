@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isValidAddress } from "@/lib/utils";
-import { getWalletBalance } from "@/lib/circle";
+import { getWalletBalance, transferFromWallet } from "@/lib/circle";
 
 interface Ctx { params: { agentId: string } }
 
@@ -29,12 +29,42 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
         return NextResponse.json({ error: "Invalid body." }, { status: 400 });
     }
 
-    const { callerAddress, name, dailyLimit, allowedRecipients, active } = body;
+    const { action, callerAddress, name, dailyLimit, allowedRecipients, active, recipient, amount } = body;
     const agent = await db.agentWallet.findUnique({ where: { id: params.agentId } });
     if (!agent) return NextResponse.json({ error: "Not found." }, { status: 404 });
 
     if (!callerAddress || callerAddress.toLowerCase() !== agent.ownerAddress)
         return NextResponse.json({ error: "Not authorized." }, { status: 403 });
+
+    // ── OWNER SPEND: owner manually sends from the agent wallet (no API key needed) ──
+    // The owner controls the funds, so allowlist/daily-limit don't apply here.
+    if (action === "spend") {
+        if (!agent.circleWalletId)
+            return NextResponse.json({ error: "Agent wallet not provisioned." }, { status: 400 });
+        if (!recipient || !isValidAddress(recipient))
+            return NextResponse.json({ error: "Valid recipient address required." }, { status: 400 });
+        const amt = parseFloat(amount);
+        if (isNaN(amt) || amt <= 0)
+            return NextResponse.json({ error: "Valid amount required." }, { status: 400 });
+
+        const spend = await db.agentTransaction.create({
+            data: { agentWalletId: agent.id, recipient: recipient.toLowerCase(), amount: String(amount), status: "PENDING", reason: "Owner-initiated" },
+        });
+
+        const result = await transferFromWallet(agent.circleWalletId, recipient, String(amount));
+
+        if (!result.success || !result.txHash) {
+            await db.agentTransaction.update({ where: { id: spend.id }, data: { status: "FAILED", reason: result.error ?? "Transfer failed" } });
+            return NextResponse.json({ success: false, error: result.error ?? "Transfer failed." }, { status: 400 });
+        }
+
+        await db.agentTransaction.update({ where: { id: spend.id }, data: { status: "SENT", txHash: result.txHash } });
+        await db.agentWallet.update({
+            where: { id: agent.id },
+            data: { totalSpent: (parseFloat(agent.totalSpent) + amt).toString(), txCount: { increment: 1 }, lastUsedAt: new Date() },
+        });
+        return NextResponse.json({ success: true, txHash: result.txHash });
+    }
 
     const data: any = {};
     if (typeof active === "boolean") data.active = active;
