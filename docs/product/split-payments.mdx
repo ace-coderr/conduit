@@ -1,0 +1,34 @@
+---
+title: "Split Payments"
+description: "One payment, automatically split to multiple wallets by percentage."
+---
+
+Split Payments let one incoming USDC payment automatically distribute to up to 10 wallets, by percentage. Perfect for revenue shares, team payouts, creator collaborations, and affiliate splits.
+
+## How it works
+
+1. **Create a split** — set a title, total amount, and the recipients with their percentages (must sum to 100%).
+2. **Share the pay link** — anyone can pay it in one transaction.
+3. **Funds settle into a Circle wallet** — Conduit provisions a dedicated wallet for the split.
+4. **Auto-distribution** — each recipient's share is sent to them automatically, gaslessly, on Arc.
+
+The payer pays once. Every recipient gets their exact cut, instantly.
+
+## Key details
+
+- Up to **10 recipients** per split
+- Percentages must total **100%**
+- Distribution is **gasless** (via Circle Gas Station)
+- Payouts are **resumable** — if a leg fails, retrying skips already-paid recipients
+- The last recipient absorbs any rounding remainder so totals always reconcile
+
+## Use cases
+
+- **Revenue sharing** — split income between partners automatically
+- **Team payroll** — pay your whole team from one payment
+- **Creator collabs** — a song, article, or project splits to every contributor
+- **Affiliate payouts** — split a sale between seller and referrer
+
+<Info>
+Splits appear in your Transactions page under the Splits tab, with full payout status per recipient.
+</Info>

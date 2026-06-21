@@ -1,0 +1,73 @@
+---
+title: "Webhooks"
+description: "Get notified at your endpoint when payments, escrows, and splits change."
+---
+
+Webhooks let your application react to events on Conduit in real time. Register an HTTPS endpoint, choose the events you care about, and Conduit POSTs a signed payload whenever they fire.
+
+## Events
+
+| Event | Fires when |
+|-------|-----------|
+| `payment.completed` | A payment link is paid |
+| `escrow.funded` | A buyer funds an escrow |
+| `escrow.released` | Escrow funds are released to the seller |
+| `escrow.disputed` | A buyer disputes an escrow |
+| `escrow.refunded` | An escrow is refunded to the buyer |
+| `split.funded` | A split link is paid into |
+| `split.distributed` | A split finishes distributing to all recipients |
+
+## Setting up a webhook
+
+1. Go to **Developers → Webhooks**
+2. Add your HTTPS endpoint URL
+3. Select the events to subscribe to
+4. Save your **signing secret** (shown once)
+
+## Payload format
+
+Every delivery is a POST with this body:
+
+```json
+{
+  "id": "evt_...",
+  "event": "payment.completed",
+  "createdAt": "2026-06-20T12:00:00.000Z",
+  "data": {
+    "id": "...",
+    "title": "Invoice #102",
+    "amount": "50",
+    "txHash": "0x...",
+    "recipientAddress": "0x..."
+  }
+}
+```
+
+Headers include `X-Conduit-Event`, `X-Conduit-Signature` (HMAC-SHA256), and `X-Conduit-Delivery`.
+
+## Verifying signatures
+
+Conduit signs each delivery with HMAC-SHA256 over the raw body using your secret. Always verify it. With the SDK:
+
+```ts
+import { constructWebhookEvent } from "@ace_won/conduit-sdk";
+
+export async function POST(req: Request) {
+  const raw = await req.text();
+  const sig = req.headers.get("x-conduit-signature") ?? "";
+  const event = constructWebhookEvent(raw, sig, process.env.CONDUIT_WEBHOOK_SECRET!);
+  // handle event.event / event.data
+  return new Response("ok");
+}
+```
+
+## Delivery & retries
+
+- **3 retry attempts** with exponential backoff
+- **10-second timeout** per attempt
+- Every attempt is logged in your delivery log
+- A webhook auto-disables after **15 consecutive failures**; re-enabling resets the counter
+
+<Info>
+Test any webhook from the dashboard with the **Test** button — it sends a sample event to your endpoint.
+</Info>

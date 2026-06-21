@@ -34,11 +34,13 @@
               "product/payment-links",
               "product/stealth-mode",
               "product/multi-chain",
+              "product/split-payments",
               "product/escrow",
               "product/ai-dispute",
               "product/seedless-wallets",
               "product/username-payments",
-              "product/notifications"
+              "product/notifications",
+              "product/agent-wallets"
             ]
           },
           {
@@ -64,6 +66,8 @@
           {
             "group": "Reference",
             "pages": [
+              "developers/conduit-sdk",
+              "developers/webhooks",
               "developers/npm-package",
               "developers/endpoints",
               "developers/verify",

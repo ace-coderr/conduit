@@ -1,0 +1,75 @@
+---
+title: "Conduit SDK"
+description: "Official TypeScript SDK — links, escrow, splits, and webhooks in a few lines."
+---
+
+The Conduit SDK is a typed TypeScript client for the full Conduit API. Create payment links, escrow, splits, and webhooks programmatically, with complete type safety.
+
+```bash
+npm install @ace_won/conduit-sdk
+```
+
+## Quick start
+
+```ts
+import { ConduitClient } from "@ace_won/conduit-sdk";
+
+const conduit = new ConduitClient({ address: "0xYourWallet" });
+
+const link = await conduit.links.create({
+  title: "Invoice #102",
+  amount: 50,
+});
+
+console.log(conduit.links.payUrl(link.id));
+```
+
+## Resources
+
+| Namespace | Methods |
+|-----------|---------|
+| `conduit.links` | `create` · `list` · `get` · `payUrl` |
+| `conduit.escrow` | `create` · `list` · `get` · `payUrl` |
+| `conduit.splits` | `create` · `list` · `get` · `payUrl` |
+| `conduit.webhooks` | `create` · `list` · `update` · `test` · `delete` |
+
+## Split payments
+
+```ts
+const split = await conduit.splits.create({
+  title: "Team revenue split",
+  amount: 1000,
+  recipients: [
+    { address: "0xAlice...", percentage: 50 },
+    { address: "0xBob...",   percentage: 50 },
+  ],
+});
+```
+
+## Webhook verification
+
+```ts
+import { verifyWebhookSignature, constructWebhookEvent } from "@ace_won/conduit-sdk";
+
+const valid = verifyWebhookSignature(rawBody, signature, secret);
+// or, verify + parse in one step:
+const event = constructWebhookEvent(rawBody, signature, secret);
+```
+
+## Error handling
+
+```ts
+import { ConduitApiError } from "@ace_won/conduit-sdk";
+
+try {
+  await conduit.links.create({ title: "Test", amount: 10 });
+} catch (err) {
+  if (err instanceof ConduitApiError) {
+    console.error(err.status, err.message);
+  }
+}
+```
+
+<Warning>
+The SDK calls `www.conduitpay.xyz` by default. Always use this domain for authenticated requests — the bare domain redirects and drops the Authorization header.
+</Warning>

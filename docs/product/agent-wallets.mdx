@@ -1,0 +1,46 @@
+---
+title: "Agent Wallets"
+description: "Wallets for AI agents to spend USDC autonomously, with guardrails."
+---
+
+Agent Wallets let an AI agent hold its own USDC wallet and spend autonomously — within limits you control. The agent pays for APIs, data, or services on its own, while guardrails ensure it can never spend beyond your rules.
+
+## The problem it solves
+
+AI agents need to pay for things on their own. But you can't safely hand an agent a wallet's private key — one bad instruction and it could be drained. Agent Wallets give the agent a constrained way to spend, so a leaked key can only do what you allowed.
+
+## How it works
+
+1. **Create an agent** — give it a name, a daily spending limit, and an allowlist of addresses it can pay.
+2. **Get an API key** — shown once. The agent uses this as a Bearer token to spend.
+3. **Fund the wallet** — send USDC to the agent's wallet address.
+4. **The agent spends** — it calls the spend endpoint with its key. Every transaction is checked against your rules before money moves.
+
+## Guardrails
+
+| Control | Effect |
+|---------|--------|
+| **Daily limit** | Caps total spend per rolling 24h window |
+| **Allowlist** | Restricts exactly which addresses the agent may pay |
+| **API key** | The agent spends with a key, never a seed phrase |
+
+If a spend would breach the allowlist or daily limit, it's **blocked and logged** — the transfer never happens.
+
+## Spending from an agent wallet
+
+```bash
+curl -X POST https://www.conduitpay.xyz/api/agents/spend \
+  -H "Authorization: Bearer cak_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{"recipient":"0x...","amount":"1.50"}'
+```
+
+A valid spend returns a transaction hash. A blocked spend returns an error explaining why.
+
+## Withdrawing funds
+
+As the owner, you can withdraw remaining funds from any agent wallet back to your own address at any time, directly from the dashboard — owner withdrawals bypass the agent's limits since they're authorized by your wallet.
+
+<Warning>
+Always call `www.conduitpay.xyz` for authenticated API requests. The bare domain redirects, and browsers/curl drop the Authorization header on redirect.
+</Warning>

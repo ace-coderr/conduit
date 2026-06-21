@@ -1,9 +1,9 @@
 ---
-title: "Email Notifications"
-description: "Automatic email alerts for every payment event."
+title: "Notifications"
+description: "Real-time alerts for every payment event — by email and Telegram."
 ---
 
-Conduit sends automatic email notifications for every payment event. Add your email in your profile settings to activate them.
+Conduit keeps you informed the moment money moves. Get notified by **email** and **Telegram** for every payment, escrow, and split event.
 
 ## Notification events
 
@@ -11,20 +11,27 @@ Conduit sends automatic email notifications for every payment event. Add your em
 |-------|------------------|
 | Payment link paid | Seller |
 | Escrow funded by buyer | Seller |
-| Escrow funds released | Buyer |
+| Escrow funds released | Seller |
 | Dispute raised | Seller |
 | Escrow refunded | Buyer |
-| Marketplace listing approved | Developer |
-| Marketplace listing rejected | Developer |
+| Split funded | Creator |
+| Split distributed | Creator |
+
+## Telegram notifications
+
+Get an instant message the moment you're paid — no refreshing a dashboard.
+
+**To connect:**
+1. Go to **Account → Profile**
+2. Tap **Connect Telegram**
+3. Press **Start** in the bot (`@ConduitPayAppBot`)
+
+Your wallet links automatically, and the page updates once connected. Each alert shows the amount and a link to the on-chain transaction. Disconnect anytime from your profile.
+
+## Email notifications
+
+Add your email in your profile to receive payment receipts and important alerts. Emails are sent from `noreply@conduitpay.xyz`.
 
 ## How to activate
 
-Go to **Account → Profile**, enter your email address, and save (you'll sign to verify ownership). Notifications are active immediately.
-
-## Sent from
-
-All emails are sent from `noreply@conduitpay.xyz` with reply-to `conduitpay@gmail.com`. If you reply to a notification email, your message goes to the Conduit team.
-
-<Info>
-Email is completely optional. Conduit works fully without it — adding your email only activates notifications.
-</Info>
+Go to **Account → Profile**, add your email and/or connect Telegram, and save (you'll sign to verify wallet ownership).
