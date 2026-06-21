@@ -109,20 +109,23 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
 
     return (
         <div className="pay-page">
-            <div style={{ textAlign: "center", marginBottom: 20 }}>
-                <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--c-dim)", border: "2px solid var(--c-border)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
-                    <span style={{ fontSize: 26, fontWeight: 900, color: "var(--c)" }}>{username[0].toUpperCase()}</span>
-                </div>
-                {profile.displayName && <p style={{ fontSize: 18, fontWeight: 800, color: "var(--ink-1)", marginBottom: 4 }}>{profile.displayName}</p>}
-                <p style={{ fontSize: 13, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700 }}>@{username}</p>
-                {profile.bio && <p style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 6, maxWidth: 300, margin: "6px auto 0", lineHeight: 1.5 }}>{profile.bio}</p>}
-            </div>
-
-            <div className="pay-card" style={{ maxWidth: 420 }}>
+            <div className="pay-card" style={{ maxWidth: 440 }}>
                 <div className="pay-card-bar" />
 
-                <div className="pay-amount-zone">
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 8 }}>
+                {/* Profile header — integrated into the card */}
+                <div style={{ padding: "28px 28px 22px", textAlign: "center", borderBottom: "1px solid var(--stroke)" }}>
+                    <div style={{ width: 56, height: 56, borderRadius: "50%", background: "var(--c-dim)", border: "2px solid var(--c-border)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
+                        <span style={{ fontSize: 22, fontWeight: 900, color: "var(--c)" }}>{username[0].toUpperCase()}</span>
+                    </div>
+                    <p style={{ fontSize: 17, fontWeight: 800, color: "var(--ink-1)", marginBottom: 2 }}>{profile.displayName || `@${username}`}</p>
+                    {profile.displayName && <p style={{ fontSize: 12, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 600 }}>@{username}</p>}
+                    {profile.bio && <p style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 8, maxWidth: 280, margin: "8px auto 0", lineHeight: 1.5 }}>{profile.bio}</p>}
+                </div>
+
+                {/* Amount */}
+                <div style={{ padding: "26px 28px 20px", textAlign: "center" }}>
+                    <p style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 14 }}>You're paying @{username}</p>
+                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 8, marginBottom: 16 }}>
                         <input
                             type="number"
                             value={amount}
@@ -131,47 +134,50 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
                             min="0"
                             step="any"
                             disabled={isBusy}
-                            style={{ background: "none", border: "none", outline: "none", fontSize: 40, fontWeight: 900, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", width: 160, textAlign: "center" as const }}
+                            style={{ background: "none", border: "none", outline: "none", fontSize: 44, fontWeight: 900, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", width: 180, textAlign: "right" as const, letterSpacing: "-.04em" }}
                         />
-                        <span style={{ fontSize: 18, color: "var(--c)", fontWeight: 700, fontFamily: "IBM Plex Mono, monospace" }}>USDC</span>
+                        <span style={{ fontSize: 16, color: "var(--c)", fontWeight: 700, fontFamily: "IBM Plex Mono, monospace" }}>USDC</span>
                     </div>
-                    <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 8 }}>
+                    <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
                         {["1", "5", "10", "50"].map(n => (
-                            <button key={n} onClick={() => setAmount(n)} disabled={isBusy} style={{ padding: "4px 12px", background: amount === n ? "var(--c)" : "var(--raised)", border: `1px solid ${amount === n ? "var(--c)" : "var(--stroke)"}`, borderRadius: 20, color: amount === n ? "#000" : "var(--ink-3)", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "IBM Plex Mono, monospace" }}>
+                            <button key={n} onClick={() => setAmount(n)} disabled={isBusy} style={{ minWidth: 44, padding: "6px 0", background: amount === n ? "var(--c)" : "var(--raised)", border: `1px solid ${amount === n ? "var(--c)" : "var(--stroke)"}`, borderRadius: 8, color: amount === n ? "#000" : "var(--ink-3)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "IBM Plex Mono, monospace", transition: "all .15s" }}>
                                 {n}
                             </button>
                         ))}
                     </div>
                 </div>
 
-                <div style={{ padding: "0 24px 16px" }}>
+                {/* Note */}
+                <div style={{ padding: "0 28px 18px" }}>
                     <input
                         value={note}
                         onChange={e => setNote(e.target.value)}
                         placeholder="Add a note (optional)"
                         maxLength={100}
                         disabled={isBusy}
-                        style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", boxSizing: "border-box" as const }}
+                        style={{ width: "100%", padding: "11px 13px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", boxSizing: "border-box" as const }}
                     />
                 </div>
 
+                {/* Fee breakdown */}
                 {isValidAmount && (
-                    <div style={{ margin: "0 24px 16px", padding: "12px 14px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                    <div style={{ margin: "0 28px 18px", padding: "13px 15px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 10 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 7 }}>
                             <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Amount</span>
                             <span style={{ fontSize: 12, color: "var(--ink-2)", fontFamily: "IBM Plex Mono, monospace" }}>{fmt(parsed)} USDC</span>
                         </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                            <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Fee (0.5%)</span>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 7 }}>
+                            <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Network fee (0.5%)</span>
                             <span style={{ fontSize: 12, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>+{fmt(fee)} USDC</span>
                         </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 6, borderTop: "1px solid var(--stroke)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 7, borderTop: "1px solid var(--stroke)" }}>
                             <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-1)" }}>Total</span>
-                            <span style={{ fontSize: 12, fontWeight: 800, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace" }}>{fmt(total)} USDC</span>
+                            <span style={{ fontSize: 13, fontWeight: 800, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace" }}>{fmt(total)} USDC</span>
                         </div>
                     </div>
                 )}
 
+                {/* Actions */}
                 <div className="pay-actions">
                     {!isLoggedIn ? (
                         <button className="pay-connect-btn" onClick={login}>
@@ -192,7 +198,7 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
                                 disabled={!isValidAmount || !hasEnough}
                                 style={{ opacity: !isValidAmount || !hasEnough ? .4 : 1, cursor: !isValidAmount || !hasEnough ? "not-allowed" : "pointer" }}
                             >
-                                {!isValidAmount ? "Enter amount" : `Pay ${fmt(parsed)} USDC to @${username}`}
+                                {!isValidAmount ? "Enter amount" : `Pay ${fmt(parsed)} USDC`}
                             </button>
                             {balance && (
                                 <p className={`pay-bal${!hasEnough && isValidAmount ? " low" : ""}`}>
