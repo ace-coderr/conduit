@@ -4,7 +4,7 @@ const nextConfig = {
     return [
       {
         source: "/developers",
-        destination: "https://conduitpay.mintlify.app",
+        destination: "https://conduitpay.mintlify.app/developers/overview",
         permanent: false,
       },
     ];
