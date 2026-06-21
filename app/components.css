@@ -3059,3 +3059,24 @@
     font-size: 28px;
   }
 }
+
+/* Profile two-column layout */
+.profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 28px;
+  align-items: start;
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-grid .profile-sidebar {
+    position: static !important;
+    order: -1;
+  }
+}

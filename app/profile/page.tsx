@@ -116,7 +116,7 @@ export default function ProfilePage() {
         <div className="app">
             <NavBar />
             <div className="page-wrap">
-                <div className="page-header" style={{ maxWidth: 560, margin: "0 auto", width: "100%" }}>
+                <div className="page-header" style={{ maxWidth: 920, margin: "0 auto", width: "100%" }}>
                     <h1 className="page-title">Profile</h1>
                     <p className="page-subtitle">Manage your public payment page, account details, and notifications</p>
                 </div>
@@ -128,21 +128,10 @@ export default function ProfilePage() {
                         {mounted && <button onClick={login} style={{ marginTop: 16, padding: "10px 24px", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Connect</button>}
                     </div>
                 ) : (
-                    <div style={{ maxWidth: 560, margin: "0 auto", display: "flex", flexDirection: "column", gap: 28 }}>
+                    <div className="profile-grid">
 
-                        {/* ── Payment page banner ── */}
-                        {payUrl && (
-                            <div style={{ background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 12, padding: "18px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                                <div>
-                                    <p style={{ fontSize: 10, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, letterSpacing: ".08em", marginBottom: 4 }}>YOUR PAYMENT PAGE</p>
-                                    <p style={{ fontSize: 14, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700 }}>conduitpay.xyz/u/{profile.username}</p>
-                                </div>
-                                <div style={{ display: "flex", gap: 8 }}>
-                                    <button onClick={() => navigator.clipboard.writeText(payUrl)} style={{ padding: "8px 16px", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Copy</button>
-                                    <a href={`/u/${profile.username}`} target="_blank" rel="noopener noreferrer" style={{ padding: "8px 16px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-2)", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>View ↗</a>
-                                </div>
-                            </div>
-                        )}
+                        {/* ══ LEFT: form ══ */}
+                        <div style={{ display: "flex", flexDirection: "column", gap: 28, minWidth: 0 }}>
 
                         {/* ── Section: Profile details ── */}
                         <div>
@@ -231,11 +220,26 @@ export default function ProfilePage() {
                             <button onClick={handleSave} disabled={saving || !username.trim() || !email.trim()} style={{ width: "100%", padding: "13px", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontSize: 14, fontWeight: 800, cursor: saving || !username.trim() || !email.trim() ? "not-allowed" : "pointer", fontFamily: "Sora, sans-serif", opacity: saving || !username.trim() || !email.trim() ? .5 : 1 }}>
                                 {saving ? "Saving..." : saved ? "✓ Saved!" : "Save Profile"}
                             </button>
+                        </div>
 
-                            {/* Connected wallet footer */}
-                            <div style={{ marginTop: 16, padding: "12px 16px", background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <span style={{ fontSize: 11, color: "var(--ink-3)" }}>Connected wallet</span>
-                                <span style={{ fontSize: 11, color: "var(--ink-2)", fontFamily: "IBM Plex Mono, monospace" }}>{address?.slice(0, 6)}...{address?.slice(-4)}</span>
+                        </div>{/* ══ end LEFT ══ */}
+
+                        {/* ══ RIGHT: sidebar ══ */}
+                        <div className="profile-sidebar" style={{ display: "flex", flexDirection: "column", gap: 16, position: "sticky", top: 24 }}>
+                            {payUrl && (
+                                <div style={{ background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 12, padding: "18px" }}>
+                                    <p style={{ fontSize: 10, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, letterSpacing: ".08em", marginBottom: 6 }}>YOUR PAYMENT PAGE</p>
+                                    <p style={{ fontSize: 13, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, marginBottom: 14, wordBreak: "break-all" }}>conduitpay.xyz/u/{profile.username}</p>
+                                    <div style={{ display: "flex", gap: 8 }}>
+                                        <button onClick={() => navigator.clipboard.writeText(payUrl)} style={{ flex: 1, padding: "8px 0", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Copy</button>
+                                        <a href={`/u/${profile.username}`} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: "8px 0", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-2)", fontSize: 12, fontWeight: 700, textDecoration: "none", textAlign: "center" }}>View ↗</a>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div style={{ padding: "14px 16px", background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: 12 }}>
+                                <p style={{ fontSize: 10, color: "var(--ink-3)", textTransform: "uppercase", fontFamily: "IBM Plex Mono, monospace", letterSpacing: ".06em", marginBottom: 8 }}>Connected wallet</p>
+                                <p style={{ fontSize: 12, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, wordBreak: "break-all" }}>{address?.slice(0, 10)}...{address?.slice(-8)}</p>
                             </div>
                         </div>
                     </div>
