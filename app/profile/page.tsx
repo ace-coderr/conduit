@@ -79,6 +79,11 @@ export default function ProfilePage() {
         setSaving(true);
         setError("");
         setSaved(false);
+        if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+            setError("A valid email is required.");
+            setSaving(false);
+            return;
+        }
         try {
             const message = `Conduit: Set username @${username} for ${address} at ${Date.now()}`;
             let signature: string;
@@ -111,7 +116,7 @@ export default function ProfilePage() {
         <div className="app">
             <NavBar />
             <div className="page-wrap">
-                <div className="page-header">
+                <div className="page-header" style={{ maxWidth: 560, margin: "0 auto", width: "100%" }}>
                     <h1 className="page-title">Profile</h1>
                     <p className="page-subtitle">Manage your public payment page, account details, and notifications</p>
                 </div>
@@ -123,7 +128,7 @@ export default function ProfilePage() {
                         {mounted && <button onClick={login} style={{ marginTop: 16, padding: "10px 24px", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Connect</button>}
                     </div>
                 ) : (
-                    <div style={{ maxWidth: 560, display: "flex", flexDirection: "column", gap: 28 }}>
+                    <div style={{ maxWidth: 560, margin: "0 auto", display: "flex", flexDirection: "column", gap: 28 }}>
 
                         {/* ── Payment page banner ── */}
                         {payUrl && (
@@ -183,9 +188,10 @@ export default function ProfilePage() {
                             <div className="card" style={{ padding: "24px" }}>
                                 {/* Email */}
                                 <div style={{ marginBottom: 22 }}>
-                                    <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Email <span style={{ color: "var(--ink-3)", fontWeight: 400 }}>(optional)</span></label>
+                                    <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Email <span style={{ color: "var(--c)" }}>*</span></label>
                                     <input value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" type="email"
                                         style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", boxSizing: "border-box" as const }} />
+                                    <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4 }}>Required — used for payment receipts and important alerts.</p>
                                 </div>
 
                                 {/* Telegram */}
@@ -222,7 +228,7 @@ export default function ProfilePage() {
                         {/* ── Save bar ── */}
                         <div>
                             {error && <p style={{ fontSize: 12, color: "var(--danger)", marginBottom: 12 }}>{error}</p>}
-                            <button onClick={handleSave} disabled={saving || !username.trim()} style={{ width: "100%", padding: "13px", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontSize: 14, fontWeight: 800, cursor: saving || !username.trim() ? "not-allowed" : "pointer", fontFamily: "Sora, sans-serif", opacity: saving || !username.trim() ? .5 : 1 }}>
+                            <button onClick={handleSave} disabled={saving || !username.trim() || !email.trim()} style={{ width: "100%", padding: "13px", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontSize: 14, fontWeight: 800, cursor: saving || !username.trim() || !email.trim() ? "not-allowed" : "pointer", fontFamily: "Sora, sans-serif", opacity: saving || !username.trim() || !email.trim() ? .5 : 1 }}>
                                 {saving ? "Saving..." : saved ? "✓ Saved!" : "Save Profile"}
                             </button>
 
