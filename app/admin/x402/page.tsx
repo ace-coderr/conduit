@@ -105,11 +105,11 @@ export default function X402Dashboard() {
                 <div style={{ background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: 12, padding: "16px 20px", marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
                     <div>
                         <p style={{ fontSize: 12, color: "var(--ink-3)", marginBottom: 4 }}>Facilitator endpoint</p>
-                        <p style={{ fontSize: 13, fontFamily: "IBM Plex Mono, monospace", color: "var(--c)", fontWeight: 700 }}>https://conduitpay.xyz/api/x402</p>
+                        <p style={{ fontSize: 13, fontFamily: "IBM Plex Mono, monospace", color: "var(--c)", fontWeight: 700 }}>https://www.conduitpay.xyz/api/x402</p>
                     </div>
                     <div style={{ display: "flex", gap: 8 }}>
-                        <a href="https://conduitpay.xyz/api/x402" target="_blank" rel="noopener noreferrer" style={{ padding: "7px 14px", background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 8, color: "var(--c)", fontSize: 11, fontWeight: 700, textDecoration: "none", fontFamily: "IBM Plex Mono, monospace" }}>Discovery ↗</a>
-                        <a href="https://conduitpay.xyz/api/arc-stats" target="_blank" rel="noopener noreferrer" style={{ padding: "7px 14px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-2)", fontSize: 11, fontWeight: 700, textDecoration: "none", fontFamily: "IBM Plex Mono, monospace" }}>Demo endpoint ↗</a>
+                        <a href="https://www.conduitpay.xyz/api/x402" target="_blank" rel="noopener noreferrer" style={{ padding: "7px 14px", background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 8, color: "var(--c)", fontSize: 11, fontWeight: 700, textDecoration: "none", fontFamily: "IBM Plex Mono, monospace" }}>Discovery ↗</a>
+                        <a href="https://www.conduitpay.xyz/api/arc-stats" target="_blank" rel="noopener noreferrer" style={{ padding: "7px 14px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-2)", fontSize: 11, fontWeight: 700, textDecoration: "none", fontFamily: "IBM Plex Mono, monospace" }}>Demo endpoint ↗</a>
                     </div>
                 </div>
 
@@ -137,7 +137,7 @@ export default function X402Dashboard() {
                             <div style={{ padding: 40, textAlign: "center" }}>
                                 <p style={{ fontSize: 14, color: "var(--ink-2)", fontWeight: 700, marginBottom: 8 }}>No x402 payments yet</p>
                                 <p style={{ fontSize: 12, color: "var(--ink-3)" }}>Payments will appear here once agents start using the facilitator</p>
-                                <a href="https://conduitpay.xyz/api/arc-stats" target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", marginTop: 12, fontSize: 12, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace" }}>Test with curl -i https://conduitpay.xyz/api/arc-stats ↗</a>
+                                <a href="https://www.conduitpay.xyz/api/arc-stats" target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", marginTop: 12, fontSize: 12, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace" }}>Test with curl -i https://www.conduitpay.xyz/api/arc-stats ↗</a>
                             </div>
                         ) : payments.map((p, i) => (
                             <div key={p.id}

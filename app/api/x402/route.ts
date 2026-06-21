@@ -4,32 +4,32 @@ import { arcTestnet } from "@/lib/arcChain";
 const USDC_ADDRESS = "0x3600000000000000000000000000000000000000";
 
 const facilitatorData = {
-    name: "Conduit x402 Facilitator",
-    description: "The first public x402 facilitator on Arc Network. Verify and settle USDC micropayments on Arc — the chain where USDC is the native gas token.",
-    url: "https://conduitpay.xyz",
-    version: "2",
-    supportedSchemes: ["exact"],
-    supportedNetworks: [
-        {
-            networkId: `eip155:${arcTestnet.id}`,
-            name: arcTestnet.name,
-            chainId: arcTestnet.id,
-            token: "USDC",
-            tokenAddress: USDC_ADDRESS,
-            decimals: 6,
-            rpcUrl: "https://rpc.testnet.arc.network",
-            explorer: "https://testnet.arcscan.app",
-        },
-    ],
-    endpoints: {
-        verify: "/api/x402/verify",
-        settle: "/api/x402/settle",
+  name: "Conduit x402 Facilitator",
+  description: "The first public x402 facilitator on Arc Network. Verify and settle USDC micropayments on Arc — the chain where USDC is the native gas token.",
+  url: "https://www.conduitpay.xyz",
+  version: "2",
+  supportedSchemes: ["exact"],
+  supportedNetworks: [
+    {
+      networkId: `eip155:${arcTestnet.id}`,
+      name: arcTestnet.name,
+      chainId: arcTestnet.id,
+      token: "USDC",
+      tokenAddress: USDC_ADDRESS,
+      decimals: 6,
+      rpcUrl: "https://rpc.testnet.arc.network",
+      explorer: "https://testnet.arcscan.app",
     },
-    contact: "@conduit_pay",
+  ],
+  endpoints: {
+    verify: "/api/x402/verify",
+    settle: "/api/x402/settle",
+  },
+  contact: "@conduit_pay",
 };
 
 function buildHumanPage() {
-    const html = `<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -153,16 +153,16 @@ curl https://conduitpay.xyz/api/x402 \
 </body>
 </html>`;
 
-    return new NextResponse(html, {
-        headers: { "Content-Type": "text/html" },
-    });
+  return new NextResponse(html, {
+    headers: { "Content-Type": "text/html" },
+  });
 }
 
 export async function GET(req: NextRequest) {
-    const acceptHeader = req.headers.get("accept") ?? "";
-    const isHuman = acceptHeader.includes("text/html");
+  const acceptHeader = req.headers.get("accept") ?? "";
+  const isHuman = acceptHeader.includes("text/html");
 
-    if (isHuman) return buildHumanPage();
+  if (isHuman) return buildHumanPage();
 
-    return NextResponse.json(facilitatorData);
+  return NextResponse.json(facilitatorData);
 }
