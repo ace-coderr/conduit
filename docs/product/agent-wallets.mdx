@@ -37,6 +37,48 @@ curl -X POST https://www.conduitpay.xyz/api/agents/spend \
 
 A valid spend returns a transaction hash. A blocked spend returns an error explaining why.
 
+## Autonomous x402 payments
+
+This is where Agent Wallets and Conduit's x402 facilitator come together. An agent can autonomously discover a paid API, pay for it from its own wallet — within its guardrails — and receive the data back, with no human in the loop.
+
+Conduit handles the entire loop in a single call:
+
+```bash
+curl -X POST https://www.conduitpay.xyz/api/agents/x402-fetch \
+  -H "Authorization: Bearer cak_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://www.conduitpay.xyz/api/arc-stats"}'
+```
+
+You can also target a marketplace listing directly:
+
+```bash
+  -d '{"listingId":"<marketplace-listing-id>"}'
+```
+
+Behind that one request, Conduit:
+
+1. Authenticates the agent with its API key
+2. Reads the target endpoint's x402 paywall (price + payment address)
+3. Pays that price from the agent's wallet — **enforcing the allowlist and daily limit**
+4. Re-requests the endpoint with the on-chain payment proof
+5. Returns the data plus a receipt
+
+A successful response includes the data and the payment record:
+
+```json
+{
+  "paid": true,
+  "amountPaid": "0.001",
+  "txHash": "0x...",
+  "data": { "...": "live API response" }
+}
+```
+
+<Info>
+The guardrails still apply. For an agent to pay an x402 endpoint, that endpoint's payment address must be in the agent's allowlist — so even autonomous API payments stay within the rules you set.
+</Info>
+
 ## Withdrawing funds
 
 As the owner, you can withdraw remaining funds from any agent wallet back to your own address at any time, directly from the dashboard — owner withdrawals bypass the agent's limits since they're authorized by your wallet.
