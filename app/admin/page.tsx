@@ -55,6 +55,7 @@ export default function AdminPage() {
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [resolveMsg, setResolveMsg] = useState<Record<string, string>>({});
   const [aiLoading, setAiLoading] = useState<string | null>(null);
+  const [pstats, setPstats] = useState<any>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -71,6 +72,12 @@ export default function AdminPage() {
       const data = await res.json();
       setLinks(data.links ?? []);
       setEscrows(data.escrows ?? []);
+
+      // Platform feature stats
+      try {
+        const sres = await fetch(`/api/admin/stats`, { headers: { "x-wallet-address": address.toLowerCase() } });
+        if (sres.ok) setPstats(await sres.json());
+      } catch { }
     } catch { }
     finally { setIsLoading(false); }
   }, [address]);
@@ -290,6 +297,55 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+
+            {/* ── Platform Features overview ── */}
+            {pstats && (
+              <div style={{ marginBottom: 24 }}>
+                <p style={{ fontSize: 13, fontWeight: 800, color: "var(--ink-1)", marginBottom: 12, fontFamily: "Sora, sans-serif" }}>Platform Features</p>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+                  {/* Splits */}
+                  <div style={{ background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: "var(--r-lg)", padding: "16px 18px", boxShadow: "var(--elev-1)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: "#a78bfa" }} />
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-1)" }}>Split Payments</span>
+                    </div>
+                    <p style={{ fontSize: 22, fontWeight: 800, color: "#a78bfa", fontFamily: "IBM Plex Mono, monospace", marginBottom: 2 }}>{pstats.splits.total}</p>
+                    <p style={{ fontSize: 11, color: "var(--ink-3)" }}>{fmt(pstats.splits.volume)} USDC · {pstats.splits.distributed} distributed</p>
+                  </div>
+
+                  {/* Agent Wallets */}
+                  <div style={{ background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: "var(--r-lg)", padding: "16px 18px", boxShadow: "var(--elev-1)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: "var(--c)" }} />
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-1)" }}>Agent Wallets</span>
+                    </div>
+                    <p style={{ fontSize: 22, fontWeight: 800, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", marginBottom: 2 }}>{pstats.agents.total}</p>
+                    <p style={{ fontSize: 11, color: "var(--ink-3)" }}>{pstats.agents.active} active · {fmt(pstats.agents.volume)} USDC spent</p>
+                    <p style={{ fontSize: 10, color: "var(--ink-3)", marginTop: 4 }}>{pstats.agents.txSent} sent · {pstats.agents.txBlocked} blocked</p>
+                  </div>
+
+                  {/* Webhooks */}
+                  <div style={{ background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: "var(--r-lg)", padding: "16px 18px", boxShadow: "var(--elev-1)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: "#5b8ff9" }} />
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-1)" }}>Webhooks</span>
+                    </div>
+                    <p style={{ fontSize: 22, fontWeight: 800, color: "#5b8ff9", fontFamily: "IBM Plex Mono, monospace", marginBottom: 2 }}>{pstats.webhooks.active}<span style={{ fontSize: 13, color: "var(--ink-3)" }}>/{pstats.webhooks.total}</span></p>
+                    <p style={{ fontSize: 11, color: "var(--ink-3)" }}>{pstats.webhooks.deliveries} deliveries{pstats.webhooks.successRate !== null ? ` · ${pstats.webhooks.successRate}% ok` : ""}</p>
+                  </div>
+
+                  {/* Telegram */}
+                  <div style={{ background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: "var(--r-lg)", padding: "16px 18px", boxShadow: "var(--elev-1)" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 2, background: "#229ED9" }} />
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-1)" }}>Telegram</span>
+                    </div>
+                    <p style={{ fontSize: 22, fontWeight: 800, color: "#229ED9", fontFamily: "IBM Plex Mono, monospace", marginBottom: 2 }}>{pstats.telegram.linked}</p>
+                    <p style={{ fontSize: 11, color: "var(--ink-3)" }}>linked accounts</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 10 }}>
               <h2 style={{ fontSize: 16, fontWeight: 800, color: "var(--ink-1)", letterSpacing: "-.02em" }}>Escrow Overview</h2>
