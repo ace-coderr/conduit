@@ -113,7 +113,7 @@ export default function ProfilePage() {
             <div className="page-wrap">
                 <div className="page-header">
                     <h1 className="page-title">Profile</h1>
-                    <p className="page-subtitle">Set your username and get a personal payment page</p>
+                    <p className="page-subtitle">Manage your public payment page, account details, and notifications</p>
                 </div>
 
                 {!mounted || !authenticated ? (
@@ -123,93 +123,114 @@ export default function ProfilePage() {
                         {mounted && <button onClick={login} style={{ marginTop: 16, padding: "10px 24px", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Connect</button>}
                     </div>
                 ) : (
-                    <div style={{ maxWidth: 520 }}>
+                    <div style={{ maxWidth: 560, display: "flex", flexDirection: "column", gap: 28 }}>
+
+                        {/* ── Payment page banner ── */}
                         {payUrl && (
-                            <div style={{ background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 12, padding: "16px 20px", marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                            <div style={{ background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 12, padding: "18px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                                 <div>
                                     <p style={{ fontSize: 10, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, letterSpacing: ".08em", marginBottom: 4 }}>YOUR PAYMENT PAGE</p>
-                                    <p style={{ fontSize: 13, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700 }}>conduitpay.xyz/u/{profile.username}</p>
+                                    <p style={{ fontSize: 14, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700 }}>conduitpay.xyz/u/{profile.username}</p>
                                 </div>
                                 <div style={{ display: "flex", gap: 8 }}>
-                                    <button onClick={() => navigator.clipboard.writeText(payUrl)} style={{ padding: "7px 14px", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Copy</button>
-                                    <a href={`/u/${profile.username}`} target="_blank" rel="noopener noreferrer" style={{ padding: "7px 14px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-2)", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>View ↗</a>
+                                    <button onClick={() => navigator.clipboard.writeText(payUrl)} style={{ padding: "8px 16px", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Copy</button>
+                                    <a href={`/u/${profile.username}`} target="_blank" rel="noopener noreferrer" style={{ padding: "8px 16px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-2)", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>View ↗</a>
                                 </div>
                             </div>
                         )}
 
-                        <div className="card" style={{ padding: "24px" }}>
-                            {/* Username */}
-                            <div style={{ marginBottom: 20 }}>
-                                <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Username <span style={{ color: "var(--c)" }}>*</span></label>
-                                <div style={{ position: "relative" }}>
-                                    <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, fontSize: 14 }}>@</span>
-                                    <input value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))} placeholder="yourname" maxLength={20}
-                                        style={{ width: "100%", padding: "10px 12px 10px 28px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 14, fontFamily: "IBM Plex Mono, monospace", outline: "none", boxSizing: "border-box" as const }} />
+                        {/* ── Section: Profile details ── */}
+                        <div>
+                            <div style={{ marginBottom: 12 }}>
+                                <h2 style={{ fontSize: 14, fontWeight: 800, color: "var(--ink-1)", fontFamily: "Sora, sans-serif" }}>Account details</h2>
+                                <p style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>Your username and public info, shown on your payment page.</p>
+                            </div>
+                            <div className="card" style={{ padding: "24px" }}>
+                                {/* Username */}
+                                <div style={{ marginBottom: 20 }}>
+                                    <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Username <span style={{ color: "var(--c)" }}>*</span></label>
+                                    <div style={{ position: "relative" }}>
+                                        <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, fontSize: 14 }}>@</span>
+                                        <input value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))} placeholder="yourname" maxLength={20}
+                                            style={{ width: "100%", padding: "10px 12px 10px 28px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 14, fontFamily: "IBM Plex Mono, monospace", outline: "none", boxSizing: "border-box" as const }} />
+                                    </div>
+                                    <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4 }}>Letters, numbers, underscores only. 3-20 characters.</p>
                                 </div>
-                                <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4 }}>Letters, numbers, underscores only. 3-20 characters.</p>
-                            </div>
 
-                            {/* Display Name */}
-                            <div style={{ marginBottom: 20 }}>
-                                <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Display Name</label>
-                                <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your Name" maxLength={50}
-                                    style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", boxSizing: "border-box" as const }} />
-                            </div>
+                                {/* Display Name */}
+                                <div style={{ marginBottom: 20 }}>
+                                    <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Display Name</label>
+                                    <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your Name" maxLength={50}
+                                        style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", boxSizing: "border-box" as const }} />
+                                </div>
 
-                            {/* Bio */}
-                            <div style={{ marginBottom: 20 }}>
-                                <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Bio</label>
-                                <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Freelancer, builder, creator..." maxLength={160} rows={3}
-                                    style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", resize: "none", boxSizing: "border-box" as const }} />
-                                <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 2 }}>{bio.length}/160</p>
+                                {/* Bio */}
+                                <div style={{ marginBottom: 0 }}>
+                                    <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Bio</label>
+                                    <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Freelancer, builder, creator..." maxLength={160} rows={3}
+                                        style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", resize: "none", boxSizing: "border-box" as const }} />
+                                    <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4, textAlign: "right" }}>{bio.length}/160</p>
+                                </div>
                             </div>
+                        </div>
 
-                            {/* Email */}
-                            <div style={{ marginBottom: 24 }}>
-                                <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>
-                                    Email <span style={{ color: "var(--ink-3)", fontWeight: 400 }}>(optional — for payment notifications)</span>
-                                </label>
-                                <input value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" type="email"
-                                    style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", boxSizing: "border-box" as const }} />
-                                <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4 }}>Get notified when you receive payments, escrow updates, and dispute alerts.</p>
+                        {/* ── Section: Notifications ── */}
+                        <div>
+                            <div style={{ marginBottom: 12 }}>
+                                <h2 style={{ fontSize: 14, fontWeight: 800, color: "var(--ink-1)", fontFamily: "Sora, sans-serif" }}>Notifications</h2>
+                                <p style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>Get alerted when you receive payments, escrow updates, and disputes.</p>
                             </div>
+                            <div className="card" style={{ padding: "24px" }}>
+                                {/* Email */}
+                                <div style={{ marginBottom: 22 }}>
+                                    <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Email <span style={{ color: "var(--ink-3)", fontWeight: 400 }}>(optional)</span></label>
+                                    <input value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" type="email"
+                                        style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", boxSizing: "border-box" as const }} />
+                                </div>
 
+                                {/* Telegram */}
+                                <div style={{ paddingTop: 22, borderTop: "1px solid var(--stroke)" }}>
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                            <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(34,158,217,.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                                <svg viewBox="0 0 24 24" width="20" height="20" fill="#229ED9"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.667l-2.94-.918c-.64-.203-.654-.64.136-.954l11.49-4.43c.532-.194.998.131.838.856z" /></svg>
+                                            </div>
+                                            <div>
+                                                <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-1)" }}>Telegram</p>
+                                                <p style={{ fontSize: 11, color: tgLinked ? "var(--c)" : "var(--ink-3)" }}>
+                                                    {tgLinked ? <>Connected{tgUsername ? ` · ${tgUsername}` : ""}</> : "Instant alerts on every payment"}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {tgLinked ? (
+                                            <button onClick={disconnectTelegram} style={{ padding: "8px 16px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--danger)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Disconnect</button>
+                                        ) : (
+                                            <button onClick={connectTelegram} disabled={tgChecking} style={{ padding: "8px 16px", background: "#229ED9", border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>
+                                                {tgChecking ? "Opening…" : "Connect"}
+                                            </button>
+                                        )}
+                                    </div>
+                                    {!tgLinked && (
+                                        <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 12, lineHeight: 1.5, paddingLeft: 50 }}>
+                                            Opens our bot in Telegram — press Start and you're linked. This page updates automatically.
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ── Save bar ── */}
+                        <div>
                             {error && <p style={{ fontSize: 12, color: "var(--danger)", marginBottom: 12 }}>{error}</p>}
-
-                            <button onClick={handleSave} disabled={saving || !username.trim()} style={{ width: "100%", padding: "12px", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontSize: 14, fontWeight: 800, cursor: saving || !username.trim() ? "not-allowed" : "pointer", fontFamily: "Sora, sans-serif", opacity: saving || !username.trim() ? .5 : 1 }}>
+                            <button onClick={handleSave} disabled={saving || !username.trim()} style={{ width: "100%", padding: "13px", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontSize: 14, fontWeight: 800, cursor: saving || !username.trim() ? "not-allowed" : "pointer", fontFamily: "Sora, sans-serif", opacity: saving || !username.trim() ? .5 : 1 }}>
                                 {saving ? "Saving..." : saved ? "✓ Saved!" : "Save Profile"}
                             </button>
-                        </div>
 
-                        <div style={{ marginTop: 16, padding: "12px 16px", background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <span style={{ fontSize: 11, color: "var(--ink-3)" }}>Connected wallet</span>
-                            <span style={{ fontSize: 11, color: "var(--ink-2)", fontFamily: "IBM Plex Mono, monospace" }}>{address?.slice(0, 6)}...{address?.slice(-4)}</span>
-                        </div>
-
-                        <div style={{ marginTop: 16, padding: "16px", background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: 8 }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="#229ED9"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.667l-2.94-.918c-.64-.203-.654-.64.136-.954l11.49-4.43c.532-.194.998.131.838.856z" /></svg>
-                                    <div>
-                                        <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-1)" }}>Telegram notifications</p>
-                                        <p style={{ fontSize: 11, color: "var(--ink-3)" }}>
-                                            {tgLinked ? <>Connected{tgUsername ? ` as ${tgUsername}` : ""} — you'll get pinged on every payment.</> : "Get a message the moment you're paid, plus escrow & split alerts."}
-                                        </p>
-                                    </div>
-                                </div>
-                                {tgLinked ? (
-                                    <button onClick={disconnectTelegram} style={{ padding: "8px 16px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--danger)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Disconnect</button>
-                                ) : (
-                                    <button onClick={connectTelegram} disabled={tgChecking} style={{ padding: "8px 16px", background: "#229ED9", border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>
-                                        {tgChecking ? "Opening…" : "Connect Telegram"}
-                                    </button>
-                                )}
+                            {/* Connected wallet footer */}
+                            <div style={{ marginTop: 16, padding: "12px 16px", background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <span style={{ fontSize: 11, color: "var(--ink-3)" }}>Connected wallet</span>
+                                <span style={{ fontSize: 11, color: "var(--ink-2)", fontFamily: "IBM Plex Mono, monospace" }}>{address?.slice(0, 6)}...{address?.slice(-4)}</span>
                             </div>
-                            {!tgLinked && (
-                                <p style={{ fontSize: 10, color: "var(--ink-3)", marginTop: 10, lineHeight: 1.5 }}>
-                                    Tap connect → it opens our bot in Telegram → press Start. This page updates automatically once linked.
-                                </p>
-                            )}
                         </div>
                     </div>
                 )}
