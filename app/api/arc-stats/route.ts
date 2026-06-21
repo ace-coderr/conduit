@@ -4,7 +4,7 @@ import { arcPublicClient } from "@/lib/arcClient";
 import { decodeAbiParameters, parseAbiParameters, getAddress } from "viem";
 
 const PAYMENT_ADDRESS = "0x2d2eba8c0da5879ab25b5bd37e211d230aabbb5c";
-const PRICE = "1000"; // 0.001 USDC in atomic units (6 decimals)
+const PRICE = "1000";
 const NETWORK = "eip155:5042002";
 const FACILITATOR = "https://www.conduitpay.xyz/api/x402";
 const USDC = "0x3600000000000000000000000000000000000000";
@@ -250,49 +250,62 @@ async function verifyTxPayment(txHash: string): Promise<{ valid: boolean; payer?
       return { valid: false, error: "Transaction failed or not found" };
     }
 
-    // Check it was sent to USDC contract
-    if (receipt.to?.toLowerCase() !== USDC.toLowerCase()) {
-      return { valid: false, error: "Wrong contract" };
+    // ── Path A: direct transfer() call where receipt.to is the USDC contract (EOA wallets) ──
+    if (receipt.to?.toLowerCase() === USDC.toLowerCase()) {
+      const tx = await arcPublicClient.getTransaction({ hash: txHash as `0x${string}` });
+      if (tx?.input && tx.input.length >= 10 && tx.input.slice(0, 10).toLowerCase() === "0xa9059cbb") {
+        const [recipient, amount] = decodeAbiParameters(
+          parseAbiParameters("address, uint256"),
+          `0x${tx.input.slice(10)}` as `0x${string}`
+        );
+        if (getAddress(recipient).toLowerCase() !== PAYMENT_ADDRESS.toLowerCase()) {
+          return { valid: false, error: `Wrong recipient: ${recipient}` };
+        }
+        if (amount < BigInt(PRICE)) {
+          return { valid: false, error: `Insufficient amount: ${amount} < ${PRICE}` };
+        }
+        if (await isTxTooOld(receipt.blockNumber)) return { valid: false, error: "Transaction too old" };
+        usedTxHashes.add(txHash.toLowerCase());
+        return { valid: true, payer: tx.from };
+      }
     }
 
-    // Get tx to decode input data
-    const tx = await arcPublicClient.getTransaction({ hash: txHash as `0x${string}` });
-    if (!tx?.input || tx.input.length < 10) {
-      return { valid: false, error: "No input data" };
+    // ── Path B: USDC Transfer event in logs (SCA / ERC-4337 / agent wallets) ──
+    // ERC-20 Transfer(address indexed from, address indexed to, uint256 value)
+    const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+    const pad = (a: string) => "0x" + a.toLowerCase().replace(/^0x/, "").padStart(64, "0");
+    const payToTopic = pad(PAYMENT_ADDRESS);
+
+    for (const log of receipt.logs) {
+      if (log.address.toLowerCase() !== USDC.toLowerCase()) continue;
+      if ((log.topics[0] ?? "").toLowerCase() !== TRANSFER_TOPIC) continue;
+      const toTopic = (log.topics[2] ?? "").toLowerCase();
+      if (toTopic !== payToTopic) continue;
+      const value = BigInt(log.data);
+      if (value < BigInt(PRICE)) {
+        return { valid: false, error: `Insufficient amount: ${value} < ${PRICE}` };
+      }
+      if (await isTxTooOld(receipt.blockNumber)) return { valid: false, error: "Transaction too old" };
+      // payer = the `from` topic of the transfer
+      const fromTopic = log.topics[1] ?? "";
+      const payer = "0x" + fromTopic.slice(-40);
+      usedTxHashes.add(txHash.toLowerCase());
+      return { valid: true, payer };
     }
 
-    // Check transfer(address,uint256) selector: 0xa9059cbb
-    const selector = tx.input.slice(0, 10).toLowerCase();
-    if (selector !== "0xa9059cbb") {
-      return { valid: false, error: "Not a transfer call" };
-    }
-
-    // Decode (address to, uint256 amount)
-    const [recipient, amount] = decodeAbiParameters(
-      parseAbiParameters("address, uint256"),
-      `0x${tx.input.slice(10)}` as `0x${string}`
-    );
-
-    // Check recipient and amount
-    if (getAddress(recipient).toLowerCase() !== PAYMENT_ADDRESS.toLowerCase()) {
-      return { valid: false, error: `Wrong recipient: ${recipient}` };
-    }
-    if (amount < BigInt(PRICE)) {
-      return { valid: false, error: `Insufficient amount: ${amount} < ${PRICE}` };
-    }
-
-    // Check tx age
-    const block = await arcPublicClient.getBlock({ blockNumber: receipt.blockNumber });
-    const now = Math.floor(Date.now() / 1000);
-    const txAge = now - Number(block.timestamp);
-    if (txAge > MAX_TX_AGE_SECONDS) {
-      return { valid: false, error: `Transaction too old: ${txAge}s` };
-    }
-
-    usedTxHashes.add(txHash.toLowerCase());
-    return { valid: true, payer: tx.from };
+    return { valid: false, error: "No matching USDC payment to facilitator found in transaction" };
   } catch (err: any) {
     return { valid: false, error: err.message };
+  }
+}
+
+async function isTxTooOld(blockNumber: bigint): Promise<boolean> {
+  try {
+    const block = await arcPublicClient.getBlock({ blockNumber });
+    const txAge = Math.floor(Date.now() / 1000) - Number(block.timestamp);
+    return txAge > MAX_TX_AGE_SECONDS;
+  } catch {
+    return false;
   }
 }
 
