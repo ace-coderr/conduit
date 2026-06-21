@@ -128,119 +128,119 @@ export default function ProfilePage() {
                         {mounted && <button onClick={login} style={{ marginTop: 16, padding: "10px 24px", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Connect</button>}
                     </div>
                 ) : (
-                    <div className="profile-grid">
+                    <div style={{ maxWidth: 920, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
 
-                        {/* ══ LEFT: form ══ */}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 28, minWidth: 0 }}>
-
-                        {/* ── Section: Profile details ── */}
-                        <div>
-                            <div style={{ marginBottom: 12 }}>
-                                <h2 style={{ fontSize: 14, fontWeight: 800, color: "var(--ink-1)", fontFamily: "Sora, sans-serif" }}>Account details</h2>
-                                <p style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>Your username and public info, shown on your payment page.</p>
-                            </div>
-                            <div className="card" style={{ padding: "24px" }}>
-                                {/* Username */}
-                                <div style={{ marginBottom: 20 }}>
-                                    <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Username <span style={{ color: "var(--c)" }}>*</span></label>
-                                    <div style={{ position: "relative" }}>
-                                        <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, fontSize: 14 }}>@</span>
-                                        <input value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))} placeholder="yourname" maxLength={20}
-                                            style={{ width: "100%", padding: "10px 12px 10px 28px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 14, fontFamily: "IBM Plex Mono, monospace", outline: "none", boxSizing: "border-box" as const }} />
+                        {/* ── Top bar: payment page + wallet ── */}
+                        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                            {payUrl && (
+                                <div style={{ flex: "1 1 340px", background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 12, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                                    <div>
+                                        <p style={{ fontSize: 10, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, letterSpacing: ".08em", marginBottom: 4 }}>YOUR PAYMENT PAGE</p>
+                                        <p style={{ fontSize: 14, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700 }}>conduitpay.xyz/u/{profile.username}</p>
                                     </div>
-                                    <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4 }}>Letters, numbers, underscores only. 3-20 characters.</p>
+                                    <div style={{ display: "flex", gap: 8 }}>
+                                        <button onClick={() => navigator.clipboard.writeText(payUrl)} style={{ padding: "8px 16px", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Copy</button>
+                                        <a href={`/u/${profile.username}`} target="_blank" rel="noopener noreferrer" style={{ padding: "8px 16px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-2)", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>View ↗</a>
+                                    </div>
                                 </div>
-
-                                {/* Display Name */}
-                                <div style={{ marginBottom: 20 }}>
-                                    <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Display Name</label>
-                                    <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your Name" maxLength={50}
-                                        style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", boxSizing: "border-box" as const }} />
-                                </div>
-
-                                {/* Bio */}
-                                <div style={{ marginBottom: 0 }}>
-                                    <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Bio</label>
-                                    <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Freelancer, builder, creator..." maxLength={160} rows={3}
-                                        style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", resize: "none", boxSizing: "border-box" as const }} />
-                                    <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4, textAlign: "right" }}>{bio.length}/160</p>
-                                </div>
+                            )}
+                            <div style={{ flex: "0 1 260px", background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: 12, padding: "16px 20px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                                <p style={{ fontSize: 10, color: "var(--ink-3)", textTransform: "uppercase", fontFamily: "IBM Plex Mono, monospace", letterSpacing: ".06em", marginBottom: 4 }}>Connected wallet</p>
+                                <p style={{ fontSize: 13, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700 }}>{address?.slice(0, 6)}...{address?.slice(-4)}</p>
                             </div>
                         </div>
 
-                        {/* ── Section: Notifications ── */}
-                        <div>
-                            <div style={{ marginBottom: 12 }}>
-                                <h2 style={{ fontSize: 14, fontWeight: 800, color: "var(--ink-1)", fontFamily: "Sora, sans-serif" }}>Notifications</h2>
-                                <p style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>Get alerted when you receive payments, escrow updates, and disputes.</p>
-                            </div>
-                            <div className="card" style={{ padding: "24px" }}>
-                                {/* Email */}
-                                <div style={{ marginBottom: 22 }}>
-                                    <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Email <span style={{ color: "var(--c)" }}>*</span></label>
-                                    <input value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" type="email"
-                                        style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", boxSizing: "border-box" as const }} />
-                                    <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4 }}>Required — used for payment receipts and important alerts.</p>
-                                </div>
+                        {/* ── Two columns: Account details | Notifications ── */}
+                        <div className="profile-grid">
 
-                                {/* Telegram */}
-                                <div style={{ paddingTop: 22, borderTop: "1px solid var(--stroke)" }}>
-                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                                            <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(34,158,217,.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                                                <svg viewBox="0 0 24 24" width="20" height="20" fill="#229ED9"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.667l-2.94-.918c-.64-.203-.654-.64.136-.954l11.49-4.43c.532-.194.998.131.838.856z" /></svg>
-                                            </div>
-                                            <div>
-                                                <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-1)" }}>Telegram</p>
-                                                <p style={{ fontSize: 11, color: tgLinked ? "var(--c)" : "var(--ink-3)" }}>
-                                                    {tgLinked ? <>Connected{tgUsername ? ` · ${tgUsername}` : ""}</> : "Instant alerts on every payment"}
-                                                </p>
-                                            </div>
+                            {/* Account details */}
+                            <div>
+                                <div style={{ marginBottom: 12 }}>
+                                    <h2 style={{ fontSize: 14, fontWeight: 800, color: "var(--ink-1)", fontFamily: "Sora, sans-serif" }}>Account details</h2>
+                                    <p style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>Your username and public info.</p>
+                                </div>
+                                <div className="card" style={{ padding: "24px" }}>
+                                    {/* Username */}
+                                    <div style={{ marginBottom: 20 }}>
+                                        <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Username <span style={{ color: "var(--c)" }}>*</span></label>
+                                        <div style={{ position: "relative" }}>
+                                            <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, fontSize: 14 }}>@</span>
+                                            <input value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))} placeholder="yourname" maxLength={20}
+                                                style={{ width: "100%", padding: "10px 12px 10px 28px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 14, fontFamily: "IBM Plex Mono, monospace", outline: "none", boxSizing: "border-box" as const }} />
                                         </div>
-                                        {tgLinked ? (
-                                            <button onClick={disconnectTelegram} style={{ padding: "8px 16px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--danger)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Disconnect</button>
-                                        ) : (
-                                            <button onClick={connectTelegram} disabled={tgChecking} style={{ padding: "8px 16px", background: "#229ED9", border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>
-                                                {tgChecking ? "Opening…" : "Connect"}
-                                            </button>
+                                        <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4 }}>Letters, numbers, underscores only. 3-20 characters.</p>
+                                    </div>
+
+                                    {/* Display Name */}
+                                    <div style={{ marginBottom: 20 }}>
+                                        <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Display Name</label>
+                                        <input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your Name" maxLength={50}
+                                            style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", boxSizing: "border-box" as const }} />
+                                    </div>
+
+                                    {/* Bio */}
+                                    <div style={{ marginBottom: 0 }}>
+                                        <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Bio</label>
+                                        <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Freelancer, builder, creator..." maxLength={160} rows={3}
+                                            style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", resize: "none", boxSizing: "border-box" as const }} />
+                                        <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4, textAlign: "right" }}>{bio.length}/160</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Notifications */}
+                            <div>
+                                <div style={{ marginBottom: 12 }}>
+                                    <h2 style={{ fontSize: 14, fontWeight: 800, color: "var(--ink-1)", fontFamily: "Sora, sans-serif" }}>Notifications</h2>
+                                    <p style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>Alerts on payments, escrow, and disputes.</p>
+                                </div>
+                                <div className="card" style={{ padding: "24px" }}>
+                                    {/* Email */}
+                                    <div style={{ marginBottom: 22 }}>
+                                        <label style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-2)", display: "block", marginBottom: 6 }}>Email <span style={{ color: "var(--c)" }}>*</span></label>
+                                        <input value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" type="email"
+                                            style={{ width: "100%", padding: "10px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", boxSizing: "border-box" as const }} />
+                                        <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4 }}>Required — used for receipts and important alerts.</p>
+                                    </div>
+
+                                    {/* Telegram */}
+                                    <div style={{ paddingTop: 22, borderTop: "1px solid var(--stroke)" }}>
+                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                                <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(34,158,217,.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                                    <svg viewBox="0 0 24 24" width="20" height="20" fill="#229ED9"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.667l-2.94-.918c-.64-.203-.654-.64.136-.954l11.49-4.43c.532-.194.998.131.838.856z" /></svg>
+                                                </div>
+                                                <div>
+                                                    <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-1)" }}>Telegram</p>
+                                                    <p style={{ fontSize: 11, color: tgLinked ? "var(--c)" : "var(--ink-3)" }}>
+                                                        {tgLinked ? <>Connected{tgUsername ? ` · ${tgUsername}` : ""}</> : "Instant alerts on every payment"}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {tgLinked ? (
+                                                <button onClick={disconnectTelegram} style={{ padding: "8px 16px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--danger)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Disconnect</button>
+                                            ) : (
+                                                <button onClick={connectTelegram} disabled={tgChecking} style={{ padding: "8px 16px", background: "#229ED9", border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>
+                                                    {tgChecking ? "Opening…" : "Connect"}
+                                                </button>
+                                            )}
+                                        </div>
+                                        {!tgLinked && (
+                                            <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 12, lineHeight: 1.5, paddingLeft: 50 }}>
+                                                Opens our bot in Telegram — press Start and you're linked. This page updates automatically.
+                                            </p>
                                         )}
                                     </div>
-                                    {!tgLinked && (
-                                        <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 12, lineHeight: 1.5, paddingLeft: 50 }}>
-                                            Opens our bot in Telegram — press Start and you're linked. This page updates automatically.
-                                        </p>
-                                    )}
                                 </div>
                             </div>
                         </div>
 
-                        {/* ── Save bar ── */}
-                        <div>
+                        {/* ── Save ── */}
+                        <div style={{ maxWidth: 400 }}>
                             {error && <p style={{ fontSize: 12, color: "var(--danger)", marginBottom: 12 }}>{error}</p>}
                             <button onClick={handleSave} disabled={saving || !username.trim() || !email.trim()} style={{ width: "100%", padding: "13px", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontSize: 14, fontWeight: 800, cursor: saving || !username.trim() || !email.trim() ? "not-allowed" : "pointer", fontFamily: "Sora, sans-serif", opacity: saving || !username.trim() || !email.trim() ? .5 : 1 }}>
                                 {saving ? "Saving..." : saved ? "✓ Saved!" : "Save Profile"}
                             </button>
-                        </div>
-
-                        </div>{/* ══ end LEFT ══ */}
-
-                        {/* ══ RIGHT: sidebar ══ */}
-                        <div className="profile-sidebar" style={{ display: "flex", flexDirection: "column", gap: 16, position: "sticky", top: 24 }}>
-                            {payUrl && (
-                                <div style={{ background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 12, padding: "18px" }}>
-                                    <p style={{ fontSize: 10, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, letterSpacing: ".08em", marginBottom: 6 }}>YOUR PAYMENT PAGE</p>
-                                    <p style={{ fontSize: 13, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, marginBottom: 14, wordBreak: "break-all" }}>conduitpay.xyz/u/{profile.username}</p>
-                                    <div style={{ display: "flex", gap: 8 }}>
-                                        <button onClick={() => navigator.clipboard.writeText(payUrl)} style={{ flex: 1, padding: "8px 0", background: "var(--c)", border: "none", borderRadius: 8, color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Copy</button>
-                                        <a href={`/u/${profile.username}`} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: "8px 0", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-2)", fontSize: 12, fontWeight: 700, textDecoration: "none", textAlign: "center" }}>View ↗</a>
-                                    </div>
-                                </div>
-                            )}
-
-                            <div style={{ padding: "14px 16px", background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: 12 }}>
-                                <p style={{ fontSize: 10, color: "var(--ink-3)", textTransform: "uppercase", fontFamily: "IBM Plex Mono, monospace", letterSpacing: ".06em", marginBottom: 8 }}>Connected wallet</p>
-                                <p style={{ fontSize: 12, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, wordBreak: "break-all" }}>{address?.slice(0, 10)}...{address?.slice(-8)}</p>
-                            </div>
                         </div>
                     </div>
                 )}
