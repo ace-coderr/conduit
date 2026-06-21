@@ -17,11 +17,50 @@ export default function ProfilePage() {
     const [saved, setSaved] = useState(false);
     const [error, setError] = useState("");
     const [profile, setProfile] = useState<any>(null);
+    const [tgLinked, setTgLinked] = useState(false);
+    const [tgUsername, setTgUsername] = useState<string | null>(null);
+    const [tgChecking, setTgChecking] = useState(false);
+
+    const checkTelegram = async (addr: string) => {
+        try {
+            const r = await fetch(`/api/telegram/status?address=${addr}`);
+            const d = await r.json();
+            setTgLinked(d.linked); setTgUsername(d.username);
+        } catch { }
+    };
+
+    const connectTelegram = async () => {
+        if (!address) return;
+        setTgChecking(true);
+        try {
+            const r = await fetch("/api/telegram/connect", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ownerAddress: address }),
+            });
+            const d = await r.json();
+            if (d.deepLink) {
+                window.open(d.deepLink, "_blank");
+                // poll for link completion
+                const start = Date.now();
+                const poll = setInterval(async () => {
+                    await checkTelegram(address);
+                    if (Date.now() - start > 120000) clearInterval(poll);
+                }, 3000);
+            }
+        } catch { } finally { setTgChecking(false); }
+    };
+
+    const disconnectTelegram = async () => {
+        if (!address) return;
+        await fetch(`/api/telegram/status?address=${address}`, { method: "DELETE" });
+        setTgLinked(false); setTgUsername(null);
+    };
 
     useEffect(() => { setMounted(true); }, []);
 
     useEffect(() => {
         if (!address) return;
+        checkTelegram(address);
         fetch(`/api/profile?address=${address}`)
             .then(r => r.json())
             .then(d => {
@@ -145,6 +184,32 @@ export default function ProfilePage() {
                         <div style={{ marginTop: 16, padding: "12px 16px", background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <span style={{ fontSize: 11, color: "var(--ink-3)" }}>Connected wallet</span>
                             <span style={{ fontSize: 11, color: "var(--ink-2)", fontFamily: "IBM Plex Mono, monospace" }}>{address?.slice(0, 6)}...{address?.slice(-4)}</span>
+                        </div>
+
+                        <div style={{ marginTop: 16, padding: "16px", background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: 8 }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="#229ED9"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.667l-2.94-.918c-.64-.203-.654-.64.136-.954l11.49-4.43c.532-.194.998.131.838.856z" /></svg>
+                                    <div>
+                                        <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-1)" }}>Telegram notifications</p>
+                                        <p style={{ fontSize: 11, color: "var(--ink-3)" }}>
+                                            {tgLinked ? <>Connected{tgUsername ? ` as ${tgUsername}` : ""} — you'll get pinged on every payment.</> : "Get a message the moment you're paid, plus escrow & split alerts."}
+                                        </p>
+                                    </div>
+                                </div>
+                                {tgLinked ? (
+                                    <button onClick={disconnectTelegram} style={{ padding: "8px 16px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--danger)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Disconnect</button>
+                                ) : (
+                                    <button onClick={connectTelegram} disabled={tgChecking} style={{ padding: "8px 16px", background: "#229ED9", border: "none", borderRadius: 8, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>
+                                        {tgChecking ? "Opening…" : "Connect Telegram"}
+                                    </button>
+                                )}
+                            </div>
+                            {!tgLinked && (
+                                <p style={{ fontSize: 10, color: "var(--ink-3)", marginTop: 10, lineHeight: 1.5 }}>
+                                    Tap connect → it opens our bot in Telegram → press Start. This page updates automatically once linked.
+                                </p>
+                            )}
                         </div>
                     </div>
                 )}

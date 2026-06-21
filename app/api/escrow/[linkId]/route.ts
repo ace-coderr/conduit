@@ -6,6 +6,7 @@ import { sendEscrowPaidEmail, sendDisputeRaisedEmail } from "@/lib/email";
 import { recordReputationEvent } from "@/lib/reputation";
 import { transferFromWallet } from "@/lib/circle";
 import { fireWebhook } from "@/lib/webhooks";
+import { notifyTelegram } from "@/lib/telegram";
 
 const ADMIN_WALLET = "0x8557fabdc62f59a1ba7d6a74aaf0942cdcb68f69";
 interface RouteParams { params: { linkId: string } }
@@ -53,6 +54,7 @@ async function releaseEscrowFunds(escrowId: string): Promise<{ success: boolean;
       id: escrow.id, title: escrow.title, amount: escrow.amount,
       txHash: result.txHash, sellerAddress: escrow.sellerAddress, buyerAddress: escrow.buyerAddress ?? null,
     }).catch(() => { });
+    notifyTelegram(escrow.sellerAddress, "escrow.released", { title: escrow.title, amount: escrow.amount, txHash: result.txHash }).catch(() => { });
     return { success: true, txHash: result.txHash };
   }
   return { success: false, error: result.error ?? "Transfer failed" };
@@ -117,6 +119,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       id: escrow.id, title: escrow.title, amount: escrow.amount,
       txHash, sellerAddress: escrow.sellerAddress, buyerAddress: paidBy ?? null,
     }).catch(() => { });
+    notifyTelegram(escrow.sellerAddress, "escrow.funded", { title: escrow.title, amount: escrow.amount, txHash }).catch(() => { });
 
     // Email seller
     try {
@@ -175,6 +178,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       reason: disputeReason?.trim() || "No reason provided",
       sellerAddress: escrow.sellerAddress, buyerAddress: escrow.buyerAddress ?? null,
     }).catch(() => { });
+    notifyTelegram(escrow.sellerAddress, "escrow.disputed", { title: escrow.title, amount: escrow.amount }).catch(() => { });
     await db.escrowMessage.create({
       data: { escrowId: params.linkId, sender: "SYSTEM", message: `Dispute opened by buyer. Reason: "${disputeReason?.trim() || "No reason provided"}". Both parties have 48 hours to submit their side. If the seller does not respond, funds will be automatically refunded to the buyer.` },
     });

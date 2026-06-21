@@ -227,3 +227,15 @@ model AgentTransaction {
 
   @@index([agentWalletId])
 }
+model TelegramConnection {
+  id           String   @id @default(cuid())
+  ownerAddress String   @unique
+  chatId       String                               // Telegram chat id to send to
+  username     String?                              // @handle, for display
+  linkCode     String?  @unique                     // one-time code to link wallet ↔ chat
+  linked       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([chatId])
+}

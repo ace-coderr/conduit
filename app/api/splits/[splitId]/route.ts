@@ -5,6 +5,7 @@ import { parseEther } from "viem";
 import { transferFromWallet } from "@/lib/circle";
 import { calculateFee } from "@/lib/fees";
 import { fireWebhook } from "@/lib/webhooks";
+import { notifyTelegram } from "@/lib/telegram";
 
 interface RouteParams { params: { splitId: string } }
 
@@ -93,6 +94,7 @@ async function distributeSplit(splitId: string): Promise<{ success: boolean; pay
             recipientCount: recipients.length,
             payouts: payouts.map(p => ({ address: p.address, amount: p.amount, txHash: p.txHash })),
         }).catch(() => { });
+        notifyTelegram(split.creatorAddress, "split.distributed", { title: split.title, amount: split.amount }).catch(() => { });
     }
 
     return { success: allSent, payouts, error: anyFailed ? "One or more payout legs failed." : undefined };
@@ -142,6 +144,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
             id: split.id, title: split.title, amount: split.amount,
             txHash, paidBy: paidBy ?? null,
         }).catch(() => { });
+        notifyTelegram(split.creatorAddress, "split.funded", { title: split.title, amount: split.amount, txHash }).catch(() => { });
 
         // Distribute immediately (await so the caller gets the result)
         const result = await distributeSplit(params.splitId);

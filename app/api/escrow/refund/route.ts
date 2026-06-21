@@ -5,6 +5,7 @@ import { verifyAdminQuery } from "@/lib/adminAuth";
 import { sendEscrowRefundedEmail } from "@/lib/email";
 import { recordReputationEvent } from "@/lib/reputation";
 import { fireWebhook } from "@/lib/webhooks";
+import { notifyTelegram } from "@/lib/telegram";
 
 export async function POST(req: NextRequest) {
   const { ok, error } = verifyAdminQuery(req);
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
       id: escrow.id, title: escrow.title, amount: escrow.amount,
       txHash: result.txHash, sellerAddress: escrow.sellerAddress, buyerAddress: escrow.buyerAddress ?? null,
     }).catch(() => { });
+    notifyTelegram(escrow.sellerAddress, "escrow.refunded", { title: escrow.title, amount: escrow.amount, txHash: result.txHash }).catch(() => { });
 
     // Email buyer
     try {

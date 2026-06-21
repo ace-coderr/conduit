@@ -4,6 +4,7 @@ import { arcPublicClient } from "@/lib/arcClient";
 import { parseEther, formatEther } from "viem";
 import { sendPaymentReceivedEmail } from "@/lib/email";
 import { fireWebhook } from "@/lib/webhooks";
+import { notifyTelegram } from "@/lib/telegram";
 
 interface RouteParams { params: { linkId: string } }
 
@@ -92,6 +93,8 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     paidBy: paidBy ?? null,
     recipientAddress: link.recipientAddress,
   }).catch(() => { });
+
+  notifyTelegram(link.recipientAddress, "payment.completed", { title: link.title, amount: link.amount, txHash }).catch(() => { });
 
   // Send email notification to seller if they have a profile with email
   try {
