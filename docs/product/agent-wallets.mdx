@@ -28,12 +28,20 @@ If a spend would breach the allowlist or daily limit, it's **blocked and logged*
 
 ## Spending from an agent wallet
 
-```bash
+<CodeGroup>
+
+```bash macOS / Linux
 curl -X POST https://www.conduitpay.xyz/api/agents/spend \
   -H "Authorization: Bearer cak_live_..." \
   -H "Content-Type: application/json" \
   -d '{"recipient":"0x...","amount":"1.50"}'
 ```
+
+```bash Windows (cmd)
+curl -X POST https://www.conduitpay.xyz/api/agents/spend -H "Authorization: Bearer cak_live_..." -H "Content-Type: application/json" -d "{\"recipient\":\"0x...\",\"amount\":\"1.50\"}"
+```
+
+</CodeGroup>
 
 A valid spend returns a transaction hash. A blocked spend returns an error explaining why.
 
@@ -43,18 +51,22 @@ This is where Agent Wallets and Conduit's x402 facilitator come together. An age
 
 Conduit handles the entire loop in a single call:
 
-```bash
+<CodeGroup>
+
+```bash macOS / Linux
 curl -X POST https://www.conduitpay.xyz/api/agents/x402-fetch \
   -H "Authorization: Bearer cak_live_..." \
   -H "Content-Type: application/json" \
   -d '{"url":"https://www.conduitpay.xyz/api/arc-stats"}'
 ```
 
-You can also target a marketplace listing directly:
-
-```bash
-  -d '{"listingId":"<marketplace-listing-id>"}'
+```bash Windows (cmd)
+curl -X POST https://www.conduitpay.xyz/api/agents/x402-fetch -H "Authorization: Bearer cak_live_..." -H "Content-Type: application/json" -d "{\"url\":\"https://www.conduitpay.xyz/api/arc-stats\"}"
 ```
+
+</CodeGroup>
+
+You can also target a marketplace listing directly by sending `{"listingId":"<marketplace-listing-id>"}` as the body instead of a URL.
 
 Behind that one request, Conduit:
 
