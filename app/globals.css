@@ -20,42 +20,79 @@ input {
    CONDUIT  ·  Design Tokens
    ════════════════════════════════════════ */
 :root {
-  --c: #00E5A0;
-  --c-dim: rgba(0, 229, 160, .10);
-  --c-glow: rgba(0, 229, 160, .18);
-  --c-border: rgba(0, 229, 160, .22);
+  /* ── Brand green (signature) ── */
+  --c: #00E5A0;                        /* primary accent */
+  --c-hover: #00FFB2;                  /* brighter green for hover states */
+  --c-dim: rgba(0, 229, 160, .10);     /* faint green fill */
+  --c-glow: rgba(0, 229, 160, .22);    /* glow (raised from .18) */
+  --c-border: rgba(0, 229, 160, .28);  /* green border (raised from .22) */
+  --c-grad: linear-gradient(135deg, #00E5A0 0%, #00B894 100%); /* button/hero gradient */
 
-  --bg: #08090e;
-  --surface: #0f111a;
-  --raised: #141720;
-  --hover: #1a1e2c;
-  --stroke: rgba(255, 255, 255, .07);
-  --stroke2: rgba(255, 255, 255, .12);
+  /* ── Refined darks (deeper, richer, more layered) ── */
+  --bg: #05060a;                       /* near-black base */
+  --bg-2: #080a10;                     /* subtle alt background for banding */
+  --surface: #0d0f17;                  /* cards / panels */
+  --raised: #12141e;                   /* inputs, raised elements */
+  --hover: #171a26;                    /* hover surface */
+  --overlay: rgba(5, 6, 10, .72);      /* modal/backdrop */
+  --nav-bg: rgba(13, 15, 23, .72);     /* glassy navbar */
 
-  --ink-1: #f8fafc;
-  --ink-2: #8892a4;
-  --ink-3: #424d5e;
+  /* ── Strokes ── */
+  --stroke: rgba(255, 255, 255, .06);
+  --stroke2: rgba(255, 255, 255, .11);
+  --stroke-glow: rgba(0, 229, 160, .35); /* green stroke on focus/active */
 
-  --danger: #f03e5f;
-  --warning: #f5a623;
+  /* ── Ink (text) ── */
+  --ink-1: #f7fafc;                    /* primary */
+  --ink-2: #98a2b3;                    /* secondary (lifted for readability) */
+  --ink-3: #55607a;                    /* tertiary (lifted from #424d5e) */
+
+  /* ── Status ── */
+  --danger: #ff4d6a;
+  --danger-dim: rgba(255, 77, 106, .12);
+  --warning: #ffb02e;
+  --warning-dim: rgba(255, 176, 46, .12);
   --info: #5b8ff9;
+  --purple: #a78bfa;
 
-  --r-sm: 8px;
-  --r-md: 12px;
-  --r-lg: 16px;
-  --r-xl: 20px;
+  /* ── Spacing scale (4px base) ── */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+  --sp-24: 96px;
 
-  --elev-1: 0 1px 0 rgba(255, 255, 255, .05), 0 4px 24px rgba(0, 0, 0, .45);
-  --elev-2: 0 1px 0 rgba(255, 255, 255, .06), 0 12px 48px rgba(0, 0, 0, .55);
+  /* ── Radii ── */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-full: 999px;
+
+  /* ── Elevation (tactile — soft shadows for dark) ── */
+  --elev-1: 0 1px 0 rgba(255, 255, 255, .04), 0 2px 8px rgba(0, 0, 0, .4);
+  --elev-2: 0 1px 0 rgba(255, 255, 255, .05), 0 8px 28px rgba(0, 0, 0, .5);
+  --elev-3: 0 1px 0 rgba(255, 255, 255, .06), 0 16px 48px rgba(0, 0, 0, .6);
+  --elev-glow: 0 0 0 1px var(--c-border), 0 8px 32px rgba(0, 229, 160, .14); /* green glow lift */
 
   color-scheme: dark;
 }
 
 [data-theme="light"] {
   --bg: #f0f2f7;
+  --bg-2: #e9ecf3;
   --surface: #ffffff;
   --raised: #f4f6fb;
   --hover: #eaecf5;
+  --overlay: rgba(15, 18, 28, .38);
+  --nav-bg: rgba(255, 255, 255, .72);
   --stroke: rgba(0, 0, 0, .07);
   --stroke2: rgba(0, 0, 0, .13);
 
@@ -65,6 +102,7 @@ input {
 
   --elev-1: 0 1px 0 rgba(255, 255, 255, .9), 0 4px 16px rgba(0, 0, 0, .07);
   --elev-2: 0 1px 0 rgba(255, 255, 255, .9), 0 8px 32px rgba(0, 0, 0, .1);
+  --elev-3: 0 1px 0 rgba(255, 255, 255, .9), 0 16px 48px rgba(0, 0, 0, .12);
 
   color-scheme: light;
 }
@@ -112,9 +150,9 @@ body {
 
 /* ── Input ────────────────────────────────────────────────────── */
 .input {
-  background: var(--bg);
-  border: 1.5px solid var(--stroke);
-  border-radius: var(--r-md);
+  background: var(--raised);
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-sm);
   color: var(--ink-1);
   padding: 11px 14px;
   width: 100%;
@@ -130,7 +168,7 @@ body {
 }
 
 .input:focus {
-  border-color: var(--c);
+  border-color: var(--stroke-glow);
   box-shadow: 0 0 0 3px var(--c-dim);
 }
 
