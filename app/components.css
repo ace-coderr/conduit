@@ -305,8 +305,8 @@
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 28px;
+  gap: 16px;
+  margin-bottom: 32px;
 }
 
 .stat-card {
@@ -344,6 +344,15 @@
   margin-bottom: 14px;
   border: 1px solid var(--stroke);
   background: var(--raised);
+}
+
+.stat-icon-wrap-hero {
+  background: var(--c-dim);
+  border-color: var(--c-border);
+}
+
+.stat-card-hero {
+  border-color: var(--c-border);
 }
 
 .stat-value {
@@ -942,7 +951,8 @@
 }
 
 .table-row:hover {
-  background: var(--raised);
+  background: var(--hover);
+  box-shadow: inset 2px 0 0 var(--c);
 }
 
 .skel-row {
@@ -1335,126 +1345,108 @@
   color: var(--c);
 }
 
-.hero-card {
-  background: var(--surface);
-  border: 1px solid var(--stroke);
-  border-radius: var(--r-xl);
-  overflow: hidden;
-  box-shadow: var(--elev-2);
-  position: relative;
+/* ── Hero: payment-flow visual + floating stat pills ─────────────── */
+.landing-inner-v2 {
+  max-width: 1160px;
+  grid-template-columns: 1fr 540px;
 }
 
-.hero-card-bar {
-  height: 2px;
-  background: var(--c);
-}
-
-.hero-card-head {
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid var(--stroke);
-}
-
-.hero-card-label {
-  font-size: 11px;
-  color: var(--ink-3);
-  font-family: 'IBM Plex Mono', monospace;
-  letter-spacing: .1em;
-  margin-bottom: 4px;
-}
-
-.hero-card-amount {
-  font-size: 42px;
-  font-weight: 900;
-  color: var(--ink-1);
-  font-family: 'IBM Plex Mono', monospace;
-  letter-spacing: -.05em;
-  line-height: 1;
-}
-
-.hero-card-unit {
-  font-size: 18px;
-  color: var(--c);
-  margin-left: 6px;
-}
-
-.hero-card-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--ink-1);
-  margin-top: 10px;
-}
-
-.hero-card-body {
-  padding: 18px 24px;
-}
-
-.hero-detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.hero-detail-row:last-child {
-  margin-bottom: 0;
-}
-
-.hero-detail-key {
-  font-size: 12px;
-  color: var(--ink-3);
-  font-weight: 600;
-}
-
-.hero-detail-val {
-  font-size: 12px;
-  color: var(--ink-1);
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-family: 'IBM Plex Mono', monospace;
-}
-
-.hero-card-foot {
-  padding: 16px 24px;
-  border-top: 1px solid var(--stroke);
-}
-
-.btn-pay-demo {
-  width: 100%;
-  padding: 13px;
-  background: var(--c);
-  border: none;
-  border-radius: var(--r-md);
-  color: #000;
-  font-size: 14px;
+.hero-title-v2 {
+  font-size: 60px;
   font-weight: 800;
-  cursor: default;
-  font-family: 'Sora', sans-serif;
-  box-shadow: 0 4px 16px rgba(0, 229, 160, .3);
-  letter-spacing: -.01em;
-  opacity: .9;
+  letter-spacing: -.03em;
 }
 
-.demo-net {
+.flow-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.flow-visual {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 10px;
   justify-content: center;
 }
 
-.demo-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--c);
+.flow-node-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: flowNodePulse 2.4s ease-out infinite;
 }
 
-.demo-text {
-  font-size: 11px;
-  color: var(--ink-3);
+@keyframes flowNodePulse {
+  0% {
+    opacity: .6;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
+.hero-stat-pill {
+  position: absolute;
+  background: rgba(13, 15, 23, .72);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-md);
+  padding: 12px 16px;
+  box-shadow: var(--elev-2);
+  min-width: 118px;
+}
+
+.hero-stat-pill-tl {
+  top: 2%;
+  left: 0;
+}
+
+.hero-stat-pill-tr {
+  top: 2%;
+  right: 0;
+}
+
+.hero-stat-pill-bl {
+  bottom: -8%;
+  left: 0;
+}
+
+.hero-stat-pill-br {
+  bottom: -8%;
+  right: 0;
+}
+
+.hero-stat-pill-value {
   font-family: 'IBM Plex Mono', monospace;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--c);
+  letter-spacing: -.02em;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.hero-stat-pill-suffix {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin-left: 3px;
+}
+
+.hero-stat-pill-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-top: 5px;
 }
 
 .steps {
@@ -2419,7 +2411,8 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 3px;
+  background: var(--c-grad);
 }
 
 .stat-value {
@@ -2469,7 +2462,7 @@
 .quick-actions-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 12px;
 }
 
 .quick-action-card {
@@ -2487,7 +2480,7 @@
 
 .quick-action-card:hover {
   border-color: var(--c-border);
-  background: var(--raised);
+  background: var(--hover);
   transform: translateY(-1px);
 }
 
@@ -2519,14 +2512,14 @@
 .dashboard-grid {
   display: grid;
   grid-template-columns: 360px 1fr;
-  gap: 18px;
+  gap: 24px;
   align-items: stretch;
 }
 
 .dashboard-left {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
   height: 100%;
 }
 
@@ -2681,7 +2674,8 @@
 }
 
 .table-row:hover {
-  background: var(--raised);
+  background: var(--hover);
+  box-shadow: inset 2px 0 0 var(--c);
 }
 
 .table-skeleton-row {
@@ -2947,8 +2941,8 @@
     font-size: 40px;
   }
 
-  .hero-card {
-    max-width: 420px;
+  .flow-stage {
+    max-width: 380px;
   }
 
   .steps-grid {
@@ -3058,6 +3052,23 @@
 
   .hero-cta {
     flex-direction: column;
+  }
+
+  .flow-stage {
+    max-width: 300px;
+  }
+
+  .hero-stat-pill {
+    padding: 9px 12px;
+    min-width: 92px;
+  }
+
+  .hero-stat-pill-value {
+    font-size: 15px;
+  }
+
+  .hero-stat-pill-label {
+    font-size: 9px;
   }
 
   .btn-hero,

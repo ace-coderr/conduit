@@ -7,6 +7,8 @@ import { NavBar } from "@/components/NavBar";
 import { StatsRow } from "@/components/StatsRow";
 import { CreateLinkForm } from "@/components/CreateLinkForm";
 import { PaymentLinksTable } from "@/components/PaymentLinksTable";
+import { PaymentFlowVisual } from "@/components/PaymentFlowVisual";
+import { HeroStats } from "@/components/HeroStats";
 
 export default function HomePage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -63,23 +65,21 @@ export default function HomePage() {
         {mounted && !authenticated && (
           <>
             <div className="landing fade-in">
-              <div className="landing-inner">
+              <div className="landing-inner landing-inner-v2">
                 <div>
                   <div className="hero-eyebrow">
                     <span className="hero-eyebrow-dot pulse-dot" />
                     <span className="hero-eyebrow-text">LIVE ON ARC TESTNET</span>
                   </div>
 
-                  <h1 className="hero-title">
-                    Send USDC.<br />
-                    <em>No friction.</em><br />
-                    Any chain.
+                  <h1 className="hero-title hero-title-v2">
+                    The payment rail for the<br />
+                    <em>agentic economy</em>
                   </h1>
 
                   <p className="hero-desc">
-                    Conduit turns your wallet into a payment page.
-                    Create a link, share it, and receive USDC from anyone —
-                    no accounts, no KYC, no waiting.
+                    USDC payments for humans and AI agents on Arc — escrow, x402,
+                    and autonomous wallets. No gas, no custody, no complexity.
                   </p>
 
                   <div className="hero-cta">
@@ -88,9 +88,6 @@ export default function HomePage() {
                     </button>
                     <a href="https://faucet.circle.com" target="_blank" rel="noopener noreferrer" className="btn-hero-ghost">
                       Get Testnet USDC ↗
-                    </a>
-                    <a href="/developers" className="btn-hero-ghost">
-                      For Developers ↗
                     </a>
                   </div>
 
@@ -104,48 +101,10 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Hero card */}
-                <div className="hero-card fade-up" style={{ animationDelay: ".1s" }}>
-                  <div className="hero-card-bar" />
-                  <div className="hero-card-head">
-                    <div className="hero-card-label">PAYMENT REQUEST</div>
-                    <div>
-                      <span className="hero-card-amount">50.00</span>
-                      <span className="hero-card-unit">USDC</span>
-                    </div>
-                    <div className="hero-card-title">Freelance Design Invoice</div>
-                  </div>
-                  <div className="hero-card-body">
-                    <div className="hero-detail-row">
-                      <span className="hero-detail-key">Pay to</span>
-                      <span className="hero-detail-val">0xF51f••••••••6253</span>
-                    </div>
-                    <div className="hero-detail-row">
-                      <span className="hero-detail-key">Network</span>
-                      <span className="hero-detail-val">
-                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--c)", display: "inline-block" }} />
-                        Arc Testnet
-                      </span>
-                    </div>
-                    <div className="hero-detail-row">
-                      <span className="hero-detail-key">Privacy</span>
-                      <span className="hero-detail-val" style={{ color: "var(--c)", fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}>
-                        <svg viewBox="0 0 14 14" fill="none" width="11" height="11"><rect x="2.5" y="6" width="9" height="7" rx="1.5" stroke="var(--c)" strokeWidth="1.2" /><path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" stroke="var(--c)" strokeWidth="1.2" strokeLinecap="round" /></svg>
-                        Stealth mode
-                      </span>
-                    </div>
-                    <div className="hero-detail-row" style={{ marginTop: 4 }}>
-                      <span className="hero-detail-key">Type</span>
-                      <span className="hero-detail-val" style={{ color: "var(--warning)", fontSize: 11 }}>One-time use</span>
-                    </div>
-                  </div>
-                  <div className="hero-card-foot">
-                    <button className="btn-pay-demo">Pay 50.00 USDC</button>
-                    <div className="demo-net">
-                      <span className="demo-dot pulse-dot" />
-                      <span className="demo-text">Arc Testnet · Chain 5042002</span>
-                    </div>
-                  </div>
+                {/* Live payment flow visual + stat pills */}
+                <div className="flow-stage fade-up" style={{ animationDelay: ".1s" }}>
+                  <PaymentFlowVisual />
+                  <HeroStats />
                 </div>
               </div>
             </div>

@@ -81,7 +81,7 @@ export function CreateLinkForm({ onLinkCreated }: CreateLinkFormProps) {
 
       <div className="form-card-body">
         {createdLink ? (
-          <div className="animate-fade-up">
+          <div className="fade-up">
             <div className="success-box">
               <div className="success-box-header">
                 <div className="success-check-icon">
@@ -175,7 +175,7 @@ export function CreateLinkForm({ onLinkCreated }: CreateLinkFormProps) {
             </div>
 
             {stealthMode && (
-              <div className="stealth-info-box animate-fade-up">
+              <div className="stealth-info-box fade-up">
                 <svg viewBox="0 0 16 16" fill="none" width="14" height="14" style={{ flexShrink: 0, marginTop: 1 }}>
                   <rect x="3" y="7" width="10" height="8" rx="1.5" stroke="#a78bfa" strokeWidth="1.3" />
                   <path d="M5 7V5a3 3 0 016 0v2" stroke="#a78bfa" strokeWidth="1.3" strokeLinecap="round" />
