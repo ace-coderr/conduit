@@ -15,6 +15,14 @@ interface Profile {
     bio?: string | null;
 }
 
+function Logo() {
+    return (
+        <div className="pay-logo">
+            <img src="/conduit-logo-white.png" alt="Conduit" style={{ height: 58, width: "auto", objectFit: "contain" }} />
+        </div>
+    );
+}
+
 export function UserPayClient({ profile, username }: { profile: Profile; username: string }) {
     const [amount, setAmount] = useState("");
     const [note, setNote] = useState("");
@@ -87,45 +95,54 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
 
     if (step === "done" || isSuccess) return (
         <div className="pay-page">
-            <div className="pay-card" style={{ maxWidth: 420 }}>
+            <Logo />
+            <p className="pay-tagline">PAYMENT SENT</p>
+            <div className="pay-card">
                 <div className="pay-card-bar" />
                 <div className="pay-actions" style={{ textAlign: "center" }}>
                     <div className="pay-success-icon">
                         <svg viewBox="0 0 24 24" fill="none" width="28" height="28"><path d="M5 12l4.5 4.5L19 7" stroke="var(--c)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </div>
                     <p className="pay-success-title">Payment Sent!</p>
-                    <p className="pay-success-desc">You sent {fmt(parsed)} USDC to @{username}</p>
+                    <p className="pay-success-desc">You sent <strong style={{ color: "var(--ink-1)" }}>{fmt(parsed)} USDC</strong> to @{username}</p>
                     {txHash && (
-                        <a href={`https://testnet.arcscan.app/tx/${txHash}`} target="_blank" rel="noopener noreferrer" className="pay-tx-link" style={{ display: "block", marginTop: 12 }}>View on ArcScan ↗</a>
+                        <a href={`https://testnet.arcscan.app/tx/${txHash}`} target="_blank" rel="noopener noreferrer" className="pay-tx-link">View on ArcScan ↗</a>
                     )}
-                    <a href="/" style={{ display: "inline-flex", alignItems: "center", gap: 8, marginTop: 16, padding: "11px 22px", background: "var(--c)", borderRadius: "var(--r-md)", fontSize: 13, fontWeight: 700, color: "#000", textDecoration: "none" }}>
-                        Go to Dashboard
-                    </a>
                 </div>
             </div>
+
+            <div className="pay-cta-box">
+                <p className="pay-cta-text">Want to receive USDC payments like this?</p>
+                <a href="/" className="pay-cta-btn">
+                    <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>
+                    Create your own payment link
+                </a>
+                <p className="pay-cta-sub">Free · No sign-up · Any chain</p>
+            </div>
+
             <p className="pay-powered">Powered by Arc Network & Circle</p>
         </div>
     );
 
     return (
         <div className="pay-page">
-            <div className="pay-card" style={{ maxWidth: 440 }}>
+            <Logo />
+            <p className="pay-tagline">PAYMENT REQUEST</p>
+            <div className="pay-card">
                 <div className="pay-card-bar" />
 
-                {/* Profile header — integrated into the card */}
-                <div style={{ padding: "28px 28px 22px", textAlign: "center", borderBottom: "1px solid var(--stroke)" }}>
-                    <div style={{ width: 56, height: 56, borderRadius: "50%", background: "var(--c-dim)", border: "2px solid var(--c-border)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
-                        <span style={{ fontSize: 22, fontWeight: 900, color: "var(--c)" }}>{username[0].toUpperCase()}</span>
-                    </div>
-                    <p style={{ fontSize: 17, fontWeight: 800, color: "var(--ink-1)", marginBottom: 2 }}>{profile.displayName || `@${username}`}</p>
-                    {profile.displayName && <p style={{ fontSize: 12, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 600 }}>@{username}</p>}
-                    {profile.bio && <p style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 8, maxWidth: 280, margin: "8px auto 0", lineHeight: 1.5 }}>{profile.bio}</p>}
+                {/* Profile — who you're paying, builds trust */}
+                <div className="pay-profile-zone">
+                    <div className="pay-avatar">{username[0].toUpperCase()}</div>
+                    <p className="pay-profile-name">{profile.displayName || `@${username}`}</p>
+                    {profile.displayName && <p className="pay-profile-username">@{username}</p>}
+                    {profile.bio && <p className="pay-profile-bio">{profile.bio}</p>}
                 </div>
 
                 {/* Amount */}
-                <div style={{ padding: "26px 28px 20px", textAlign: "center" }}>
-                    <p style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace", letterSpacing: ".1em", textTransform: "uppercase", marginBottom: 14 }}>You're paying @{username}</p>
-                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 8, marginBottom: 16 }}>
+                <div className="pay-amount-entry">
+                    <p className="pay-amount-eyebrow">You&apos;re paying @{username}</p>
+                    <div className="pay-amount-input-row">
                         <input
                             type="number"
                             value={amount}
@@ -134,13 +151,13 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
                             min="0"
                             step="any"
                             disabled={isBusy}
-                            style={{ background: "none", border: "none", outline: "none", fontSize: 44, fontWeight: 900, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace", width: 180, textAlign: "right" as const, letterSpacing: "-.04em" }}
+                            className="pay-amount-input"
                         />
-                        <span style={{ fontSize: 16, color: "var(--c)", fontWeight: 700, fontFamily: "IBM Plex Mono, monospace" }}>USDC</span>
+                        <span className="pay-currency">USDC</span>
                     </div>
-                    <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+                    <div className="pay-quick-amounts">
                         {["1", "5", "10", "50"].map(n => (
-                            <button key={n} onClick={() => setAmount(n)} disabled={isBusy} style={{ minWidth: 44, padding: "6px 0", background: amount === n ? "var(--c)" : "var(--raised)", border: `1px solid ${amount === n ? "var(--c)" : "var(--stroke)"}`, borderRadius: 8, color: amount === n ? "#000" : "var(--ink-3)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "IBM Plex Mono, monospace", transition: "all .15s" }}>
+                            <button key={n} onClick={() => setAmount(n)} disabled={isBusy} className={`pay-quick-btn${amount === n ? " on" : ""}`}>
                                 {n}
                             </button>
                         ))}
@@ -148,34 +165,44 @@ export function UserPayClient({ profile, username }: { profile: Profile; usernam
                 </div>
 
                 {/* Note */}
-                <div style={{ padding: "0 28px 18px" }}>
+                <div className="pay-note-zone">
                     <input
                         value={note}
                         onChange={e => setNote(e.target.value)}
                         placeholder="Add a note (optional)"
                         maxLength={100}
                         disabled={isBusy}
-                        style={{ width: "100%", padding: "11px 13px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 8, color: "var(--ink-1)", fontSize: 13, fontFamily: "Sora, sans-serif", outline: "none", boxSizing: "border-box" as const }}
+                        className="pay-note-input"
                     />
                 </div>
 
-                {/* Fee breakdown */}
-                {isValidAmount && (
-                    <div style={{ margin: "0 28px 18px", padding: "13px 15px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: 10 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 7 }}>
-                            <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Amount</span>
-                            <span style={{ fontSize: 12, color: "var(--ink-2)", fontFamily: "IBM Plex Mono, monospace" }}>{fmt(parsed)} USDC</span>
-                        </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 7 }}>
-                            <span style={{ fontSize: 12, color: "var(--ink-3)" }}>Network fee (0.5%)</span>
-                            <span style={{ fontSize: 12, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>+{fmt(fee)} USDC</span>
-                        </div>
-                        <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 7, borderTop: "1px solid var(--stroke)" }}>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-1)" }}>Total</span>
-                            <span style={{ fontSize: 13, fontWeight: 800, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace" }}>{fmt(total)} USDC</span>
-                        </div>
+                {/* Recipient + fee breakdown */}
+                <div className="pay-details">
+                    <div className="pay-detail">
+                        <span className="pay-detail-k">Pay to</span>
+                        <span className="pay-detail-v">{profile.address.slice(0, 6)}...{profile.address.slice(-4)}</span>
                     </div>
-                )}
+                    <div className="pay-detail">
+                        <span className="pay-detail-k">Network</span>
+                        <span className="pay-detail-v"><span className="pay-net-dot" />Arc Testnet</span>
+                    </div>
+                    {isValidAmount && (
+                        <div style={{ marginTop: 4, paddingTop: 10, borderTop: "1px dashed var(--stroke)", display: "flex", flexDirection: "column", gap: 10 }}>
+                            <div className="pay-detail">
+                                <span className="pay-detail-k">Amount</span>
+                                <span className="pay-detail-v">{fmt(parsed)} USDC</span>
+                            </div>
+                            <div className="pay-detail">
+                                <span className="pay-detail-k" style={{ color: "var(--ink-3)" }}>Network fee ({FEE_PERCENT}%)</span>
+                                <span className="pay-detail-v" style={{ color: "var(--ink-3)", fontSize: 11 }}>+{fmt(fee)} USDC</span>
+                            </div>
+                            <div className="pay-detail" style={{ paddingTop: 6, borderTop: "1px solid var(--stroke)" }}>
+                                <span className="pay-detail-k" style={{ fontWeight: 700, color: "var(--ink-1)" }}>Total</span>
+                                <span className="pay-detail-v" style={{ fontWeight: 800, color: "var(--c)" }}>{fmt(total)} USDC</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
 
                 {/* Actions */}
                 <div className="pay-actions">
