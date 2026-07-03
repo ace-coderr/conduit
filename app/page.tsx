@@ -9,6 +9,9 @@ import { CreateLinkForm } from "@/components/CreateLinkForm";
 import { PaymentLinksTable } from "@/components/PaymentLinksTable";
 import { PaymentFlowVisual } from "@/components/PaymentFlowVisual";
 import { HeroStats } from "@/components/HeroStats";
+import { VolumeChart } from "@/components/VolumeChart";
+import { StatusDonut } from "@/components/StatusDonut";
+import { ActivityFeed } from "@/components/ActivityFeed";
 
 export default function HomePage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -147,55 +150,38 @@ export default function HomePage() {
               <p className="page-subtitle">Manage your USDC payment links · Powered by Circle & Arc Network</p>
             </div>
 
-            <StatsRow totalLinks={stats.totalLinks} completedLinks={stats.completedLinks} totalEarned={stats.totalEarned} />
+            <div className="bento-grid">
+              {/* Overview: balance hero + 3 stat tiles */}
+              <StatsRow
+                totalLinks={stats.totalLinks}
+                completedLinks={stats.completedLinks}
+                totalEarned={stats.totalEarned}
+              />
 
-            <div className="dashboard-grid">
-              <div className="dashboard-left">
-                <CreateLinkForm onLinkCreated={() => setRefreshTrigger(n => n + 1)} />
-                <div className="quick-actions-grid">
-                  <a href="https://faucet.circle.com" target="_blank" rel="noopener noreferrer" className="quick-action-card">
-                    <div className="quick-action-icon">
-                      <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><circle cx="8" cy="8" r="6" stroke="var(--c)" strokeWidth="1.4" /><path d="M8 5v6M5.5 7.5C5.5 6.12 6.62 5 8 5s2.5 1.12 2.5 2.5S9.38 10 8 10s-2.5 1.12-2.5 2.5S6.62 15 8 15" stroke="var(--c)" strokeWidth="1.2" strokeLinecap="round" /></svg>
-                    </div>
-                    <div>
-                      <div className="quick-action-label">Get USDC</div>
-                      <div className="quick-action-sub">Circle Testnet Faucet</div>
-                    </div>
-                  </a>
-                  <a href="https://testnet.arcscan.app" target="_blank" rel="noopener noreferrer" className="quick-action-card">
-                    <div className="quick-action-icon">
-                      <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M11 3l2 2-7 7-3-3 1.5-1.5 1.5 1.5L11 3z" stroke="var(--ink-3)" strokeWidth="1.3" strokeLinejoin="round" /><path d="M2 14h12" stroke="var(--ink-3)" strokeWidth="1.3" strokeLinecap="round" /></svg>
-                    </div>
-                    <div>
-                      <div className="quick-action-label">Explorer</div>
-                      <div className="quick-action-sub">ArcScan Testnet</div>
-                    </div>
-                  </a>
-                </div>
+              {/* Volume chart (hero) + status donut */}
+              <div className="bento-cell bento-8 bento-tall">
+                <VolumeChart refreshTrigger={refreshTrigger} />
               </div>
-              <PaymentLinksTable refreshTrigger={refreshTrigger} />
+              <div className="bento-cell bento-4 bento-tall">
+                <StatusDonut refreshTrigger={refreshTrigger} />
+              </div>
+
+              {/* Create link form + activity feed — two even columns, no mismatched third neighbor */}
+              <div className="bento-cell bento-6">
+                <CreateLinkForm onLinkCreated={() => setRefreshTrigger(n => n + 1)} />
+              </div>
+              <div className="bento-cell bento-6">
+                <ActivityFeed refreshTrigger={refreshTrigger} />
+              </div>
+
+              {/* Full-width payment links table */}
+              <div id="payment-links-table" className="bento-cell bento-12">
+                <PaymentLinksTable refreshTrigger={refreshTrigger} />
+              </div>
             </div>
           </div>
         )}
       </div>
-
-      <footer className="app-footer">
-        <span>Conduit v0.1.0</span>
-        <div className="footer-links">
-          <a href="https://x.com/conduit_pay" target="_blank" rel="noopener noreferrer" className="footer-link">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.845L1.255 2.25H8.08l4.253 5.622 5.912-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
-          </a>
-          <a href="https://t.me/conduit_app" target="_blank" rel="noopener noreferrer" className="footer-link">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.17 13.667l-2.94-.918c-.64-.203-.654-.64.136-.954l11.49-4.43c.532-.194.998.131.838.856z" /></svg>
-          </a>
-          <a href="/developers" className="footer-link" title="Developers">
-            <svg viewBox="0 0 24 24" fill="none" width="13" height="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M16 18l6-6-6-6M8 6L2 12l6 6" />
-            </svg>
-          </a>
-        </div>
-        <span>Built on Arc Network · Powered by Circle</span>
-      </footer>
     </div>
   );
 }

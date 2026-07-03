@@ -434,10 +434,6 @@ export default function AnalyticsPage() {
         )}
       </div>
 
-      <footer className="app-footer">
-        <span>Conduit v0.1.0</span>
-        <span>Built on Arc Network · Powered by Circle</span>
-      </footer>
     </div>
   );
 }
