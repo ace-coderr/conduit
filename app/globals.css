@@ -53,6 +53,8 @@ input {
   --warning: #ffb02e;
   --warning-dim: rgba(255, 176, 46, .12);
   --info: #5b8ff9;
+  --info-dim: rgba(91, 143, 249, .12);
+  --info-border: rgba(91, 143, 249, .28);
   --purple: #a78bfa;
 
   /* ── Spacing scale (4px base) ── */
@@ -152,16 +154,19 @@ body {
 
 /* ── Input ────────────────────────────────────────────────────── */
 .input {
-  background: var(--raised);
-  border: 1px solid var(--stroke);
-  border-radius: var(--r-sm);
+  background:
+    linear-gradient(var(--raised), var(--raised)) padding-box,
+    linear-gradient(155deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, .02) 55%) border-box;
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
   color: var(--ink-1);
-  padding: 11px 14px;
+  padding: 13px 16px;
   width: 100%;
   font-family: 'Sora', sans-serif;
   font-size: 14px;
   font-weight: 500;
-  transition: border-color .2s, box-shadow .2s;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .28);
+  transition: box-shadow .25s cubic-bezier(.16, 1, .3, 1), background .25s ease;
   outline: none;
 }
 
@@ -169,14 +174,64 @@ body {
   color: var(--ink-3);
 }
 
+.input:hover:not(:focus):not(:disabled) {
+  background:
+    linear-gradient(var(--raised), var(--raised)) padding-box,
+    linear-gradient(155deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, .03) 55%) border-box;
+}
+
 .input:focus {
-  border-color: var(--stroke-glow);
-  box-shadow: 0 0 0 3px var(--c-dim);
+  background:
+    linear-gradient(var(--raised), var(--raised)) padding-box,
+    linear-gradient(155deg, var(--stroke-glow), var(--c-border) 70%) border-box;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .22), 0 0 0 4px var(--c-dim), 0 0 18px rgba(0, 229, 160, .12);
+}
+
+.input:disabled {
+  opacity: .5;
+  cursor: not-allowed;
 }
 
 .input.mono {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 13px;
+}
+
+/* Hero variant — for the one key field on a form (e.g. an amount input) */
+.input-hero {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  padding: 20px 74px 20px 20px;
+  border-radius: var(--r-lg);
+  background:
+    linear-gradient(var(--raised), var(--raised)) padding-box,
+    linear-gradient(155deg, var(--c-border), rgba(255, 255, 255, .04) 60%) border-box;
+}
+
+.input-hero:hover:not(:focus):not(:disabled) {
+  background:
+    linear-gradient(var(--raised), var(--raised)) padding-box,
+    linear-gradient(155deg, var(--c-border), rgba(255, 255, 255, .06) 60%) border-box;
+}
+
+.input-hero:focus {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .22), 0 0 0 5px var(--c-dim), 0 0 26px rgba(0, 229, 160, .18);
+}
+
+.input-wrap-hero .input-suffix {
+  right: 20px;
+  font-size: 15px;
+}
+
+.input-hero[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.input-hero[type="number"]::-webkit-inner-spin-button,
+.input-hero[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 /* ── Skeleton ─────────────────────────────────────────────────── */

@@ -525,7 +525,7 @@
 
 /* ── Form ─────────────────────────────────────────────────────── */
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .form-label {
@@ -537,7 +537,7 @@
   font-family: 'IBM Plex Mono', monospace;
   letter-spacing: .1em;
   text-transform: uppercase;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .form-label-opt {
@@ -3502,6 +3502,421 @@
   align-items: center;
   justify-content: center;
   height: 60vh;
+}
+
+/* ── Escrow ───────────────────────────────────────────────────── */
+.escrow-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.escrow-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.escrow-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--c-dim);
+  border: 1px solid var(--c-border);
+  color: var(--c);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.escrow-step-text {
+  font-size: 12.5px;
+  color: var(--ink-2);
+  line-height: 1.55;
+  padding-top: 2px;
+}
+
+.escrow-fee-note {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--stroke);
+  font-size: 11px;
+  color: var(--ink-3);
+  line-height: 1.6;
+  display: flex;
+  gap: 8px;
+}
+
+.escrow-party-role {
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.escrow-party-role.buyer {
+  background: var(--info-dim);
+  color: var(--info);
+  border: 1px solid var(--info-border);
+}
+
+.escrow-party-role.seller {
+  background: var(--warning-dim);
+  color: var(--warning);
+  border: 1px solid rgba(255, 176, 46, .25);
+}
+
+.table-row-accent {
+  position: relative;
+}
+
+.table-row-accent::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+}
+
+/* Escrow buyer-orders list (reuses feed-row rhythm) */
+.escrow-order-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--stroke);
+  transition: background .12s;
+}
+
+.escrow-order-row:last-child {
+  border-bottom: none;
+}
+
+.escrow-order-row:hover {
+  background: var(--hover);
+}
+
+/* ── Escrow pay/receipt page (buyer-facing) ─────────────────────── */
+.escrow-protected-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--stroke);
+  font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+  letter-spacing: .1em;
+  color: var(--info);
+}
+
+.escrow-rep-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--raised);
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin: 0 24px 16px;
+}
+
+.escrow-rep-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.escrow-rep-label-title {
+  font-size: 10px;
+  color: var(--ink-3);
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+.escrow-rep-label-sub {
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.escrow-info-box {
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  margin: 0 24px 16px;
+}
+
+.escrow-info-box.blue {
+  background: var(--info-dim);
+  border: 1px solid var(--info-border);
+}
+
+.escrow-info-box.green {
+  background: var(--c-dim);
+  border: 1px solid var(--c-border);
+}
+
+.escrow-info-box-title {
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.escrow-info-step {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.escrow-info-step:last-child {
+  margin-bottom: 0;
+}
+
+.escrow-info-step-num {
+  font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.escrow-info-step-text {
+  font-size: 11px;
+  color: var(--ink-3);
+  line-height: 1.5;
+}
+
+.escrow-status-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  border: 1.5px solid;
+}
+
+.escrow-status-icon.sm {
+  width: 52px;
+  height: 52px;
+}
+
+.escrow-contact-box {
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  text-align: left;
+  background: var(--info-dim);
+  border: 1px solid var(--info-border);
+}
+
+.escrow-contact-label {
+  font-size: 10px;
+  color: var(--info);
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: .08em;
+}
+
+.escrow-bookmark-box {
+  background: var(--raised);
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-sm);
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  text-align: left;
+  display: flex;
+  gap: 8px;
+}
+
+.escrow-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  background: var(--raised);
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-md);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-2);
+  text-decoration: none;
+  transition: all .15s;
+}
+
+.escrow-back-link:hover {
+  border-color: var(--stroke2);
+  color: var(--ink-1);
+  background: var(--hover);
+}
+
+/* Mediation / dispute thread */
+.escrow-dispute-banner {
+  background: var(--danger-dim);
+  border: 1px solid rgba(240, 62, 95, .25);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.escrow-dispute-progress {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(240, 62, 95, .15);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.escrow-dispute-progress-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.escrow-dispute-progress-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.escrow-thread {
+  background: var(--raised);
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.escrow-thread-head {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--stroke);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.escrow-thread-head-label {
+  font-size: 11px;
+  color: var(--ink-3);
+  font-weight: 600;
+}
+
+.escrow-thread-body {
+  padding: 14px;
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.escrow-msg-meta {
+  font-size: 9px;
+  color: var(--ink-3);
+  font-family: 'IBM Plex Mono', monospace;
+  margin-bottom: 3px;
+  display: flex;
+}
+
+.escrow-msg-bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-1);
+}
+
+.escrow-msg-bubble.mine {
+  align-self: flex-end;
+  background: var(--c-dim);
+  border: 1px solid var(--c-border);
+}
+
+.escrow-msg-bubble.theirs {
+  align-self: flex-start;
+  background: var(--bg);
+  border: 1px solid var(--stroke);
+}
+
+.escrow-msg-bubble.system {
+  align-self: center;
+  background: var(--info-dim);
+  border: 1px solid var(--info-border);
+  color: var(--info);
+  font-family: 'IBM Plex Mono', monospace;
+  text-align: center;
+}
+
+.escrow-thread-input-row {
+  padding: 10px 14px;
+  border-top: 1px solid var(--stroke);
+}
+
+.escrow-thread-textarea {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-sm);
+  color: var(--ink-1);
+  font-size: 12px;
+  font-family: 'Sora', sans-serif;
+  resize: none;
+  min-height: 60px;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.escrow-thread-textarea:focus {
+  border-color: var(--stroke-glow);
+  box-shadow: 0 0 0 3px var(--c-dim);
+}
+
+.escrow-thread-send {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--r-sm);
+  color: #04140d;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Sora', sans-serif;
+  align-self: flex-end;
+  transition: filter .15s, opacity .15s;
+}
+
+.escrow-thread-send:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.escrow-thread-send:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .escrow-rep-row,
+  .escrow-info-box,
+  .escrow-contact-box {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
 }
 
 /* ── Mobile ───────────────────────────────────────────────────── */
