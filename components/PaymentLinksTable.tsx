@@ -65,6 +65,7 @@ export function PaymentLinksTable({ refreshTrigger }: Props) {
   const [mounted, setMounted] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -123,7 +124,8 @@ export function PaymentLinksTable({ refreshTrigger }: Props) {
     URL.revokeObjectURL(url);
   };
 
-  const filtered = filter === "ALL" ? links : links.filter((l) => l.status === filter);
+  const filtered = (filter === "ALL" ? links : links.filter((l) => l.status === filter))
+    .filter((l) => l.title.toLowerCase().includes(search.trim().toLowerCase()));
   const counts = {
     ALL: links.length,
     ACTIVE: links.filter((l) => l.status === "ACTIVE").length,
@@ -142,6 +144,10 @@ export function PaymentLinksTable({ refreshTrigger }: Props) {
           <span className="table-count-badge">{counts[filter]}</span>
         </div>
         <div className="table-header-right">
+          <div className="table-search">
+            <svg viewBox="0 0 16 16" fill="none" width="12" height="12"><circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.3" /><path d="M11 11l3.5 3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /></svg>
+            <input type="text" className="input" placeholder="Search links..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
           {(["ALL", "ACTIVE", "COMPLETED", "EXPIRED"] as Filter[]).map((f) => (
             <button key={f} className={`filter-pill${filter === f ? " active" : ""}`} onClick={() => setFilter(f)}>{f}</button>
           ))}
@@ -178,8 +184,8 @@ export function PaymentLinksTable({ refreshTrigger }: Props) {
             <div className="table-empty-icon">
               <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" stroke="var(--ink-3)" strokeWidth="1.5" strokeLinecap="round" /><path d="M10.172 13.828a4 4 0 015.656 0l4 4a4 4 0 01-5.656 5.656l-1.1-1.1" stroke="var(--ink-3)" strokeWidth="1.5" strokeLinecap="round" /></svg>
             </div>
-            <p className="table-empty-title">{filter === "ALL" ? "No payment links yet" : `No ${filter.toLowerCase()} links`}</p>
-            <p className="table-empty-sub">{filter === "ALL" ? "Create your first payment link above" : "Try a different filter"}</p>
+            <p className="table-empty-title">{search.trim() ? "No links match your search" : filter === "ALL" ? "No payment links yet" : `No ${filter.toLowerCase()} links`}</p>
+            <p className="table-empty-sub">{search.trim() ? "Try a different search term" : filter === "ALL" ? "Create your first payment link above" : "Try a different filter"}</p>
           </div>
         )}
 
@@ -196,7 +202,7 @@ export function PaymentLinksTable({ refreshTrigger }: Props) {
         )}
 
         {mounted && !isLoading && filtered.map((link) => (
-          <div key={link.id} className="table-row">
+          <div key={link.id} className="table-row" style={{ borderLeft: `3px solid ${statusColor(link.status)}` }}>
             <div className="table-cell-title">
               <div className="table-cell-title-name">
                 <span className="table-cell-status-dot" style={{ background: statusColor(link.status) }} />

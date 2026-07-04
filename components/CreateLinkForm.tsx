@@ -112,8 +112,8 @@ export function CreateLinkForm({ onLinkCreated }: CreateLinkFormProps) {
 
             <div className="form-group">
               <label className="form-label">Amount</label>
-              <div className="input-wrap">
-                <input type="number" className="input mono" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} min="0.000001" step="any" required disabled={!isConnected} style={{ paddingRight: 52 }} />
+              <div className="input-wrap input-wrap-hero">
+                <input type="number" className="input input-hero mono" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} min="0.000001" step="any" required disabled={!isConnected} />
                 <span className="input-suffix">USDC</span>
               </div>
             </div>
