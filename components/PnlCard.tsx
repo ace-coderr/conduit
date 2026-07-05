@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useId } from "react";
 
 interface PnlCardProps {
   address: string;
@@ -9,7 +9,12 @@ interface PnlCardProps {
   completionRate: number;
   avgPayment: number;
   biggestPayment: number;
+  /** Earnings-over-time series (same values feeding the page's volume chart) for the sparkline backdrop */
+  series?: number[];
 }
+
+const SPARK_W = 400;
+const SPARK_H = 60;
 
 export function PnlCard({
   address,
@@ -18,12 +23,22 @@ export function PnlCard({
   completionRate,
   avgPayment,
   biggestPayment,
+  series = [],
 }: PnlCardProps) {
   const [downloading, setDownloading] = useState(false);
+  const gradientId = `pnlSparkline-${useId()}`;
 
   const fmt = (n: number) => n.toFixed(2);
   const shortAddr = `${address.slice(0, 6)}...${address.slice(-4)}`;
   const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+
+  const sparkMax = Math.max(...series, 1);
+  const sparkStepX = SPARK_W / Math.max(series.length - 1, 1);
+  const sparkPoints = series.map((v, i) => ({ x: i * sparkStepX, y: SPARK_H * (1 - v / sparkMax) }));
+  const sparkLine = sparkPoints.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const sparkArea = sparkPoints.length > 1
+    ? `${sparkLine} L${sparkPoints[sparkPoints.length - 1].x.toFixed(1)},${SPARK_H} L0,${SPARK_H} Z`
+    : "";
 
   const downloadCard = async () => {
     setDownloading(true);
@@ -44,7 +59,7 @@ export function PnlCard({
   };
 
   return (
-    <div style={{ marginTop: 18 }}>
+    <div>
       {/* Preview card */}
       <div style={{
         background: "#08090e",
@@ -87,11 +102,14 @@ export function PnlCard({
         {/* Top bar */}
         <div style={{ height: 3, background: "var(--c)", position: "relative" }} />
 
-        <div style={{ padding: "24px 28px", display: "flex", flexDirection: "column", gap: 18, position: "relative" }}>
+        <div style={{ padding: "22px 26px", display: "flex", flexDirection: "column", gap: 14, position: "relative" }}>
 
-          {/* Header */}
+          {/* Header — icon mark + wordmark */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <img src="/conduit-logo-white.png" alt="Conduit" style={{ height: 28, width: "auto", objectFit: "contain" }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <img src="/favicon.png" alt="" style={{ height: 22, width: 22, borderRadius: 6, objectFit: "contain" }} />
+              <img src="/conduit-logo-white.png" alt="Conduit" style={{ height: 20, width: "auto", objectFit: "contain" }} />
+            </div>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(0,229,160,.1)", border: "1px solid rgba(0,229,160,.22)", borderRadius: 20, padding: "3px 10px" }}>
                 <div style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--c)" }} />
@@ -101,26 +119,41 @@ export function PnlCard({
             </div>
           </div>
 
-          {/* Main number */}
+          {/* Main number + earnings sparkline */}
           <div>
-            <p style={{ fontSize: 11, color: "#8892a4", letterSpacing: ".08em", fontFamily: "IBM Plex Mono, monospace", marginBottom: 6, textTransform: "uppercase" }}>Total Earned</p>
+            <p style={{ fontSize: 11, color: "#8892a4", letterSpacing: ".08em", fontFamily: "IBM Plex Mono, monospace", marginBottom: 6, textTransform: "uppercase" }}>Lifetime Earnings</p>
             <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
               <span style={{ fontSize: 52, fontWeight: 900, color: "var(--c)", lineHeight: 1, letterSpacing: "-.04em", fontFamily: "IBM Plex Mono, monospace" }}>{fmt(totalEarned)}</span>
               <span style={{ fontSize: 18, color: "var(--c)", fontWeight: 700, marginBottom: 6, fontFamily: "IBM Plex Mono, monospace" }}>USDC</span>
             </div>
+
+            {sparkArea && (
+              <svg viewBox={`0 0 ${SPARK_W} ${SPARK_H}`} preserveAspectRatio="none" style={{ width: "100%", height: 44, display: "block", marginTop: 8 }}>
+                <defs>
+                  <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--c)" stopOpacity="0.18" />
+                    <stop offset="100%" stopColor="var(--c)" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <path d={sparkArea} fill={`url(#${gradientId})`} stroke="none" />
+                <path d={sparkLine} fill="none" stroke="var(--c)" strokeOpacity="0.5" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+              </svg>
+            )}
           </div>
 
           {/* Stats */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 0, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,.06)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 0, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,.06)" }}>
             {[
-              { label: "PAYMENTS", value: completedCount.toString() },
-              { label: "COMPLETION", value: `${completionRate}%` },
-              { label: "AVG PAYMENT", value: `${fmt(avgPayment)} USDC` },
-              { label: "BIGGEST", value: `${fmt(biggestPayment)} USDC` },
+              { label: "PAYMENTS", value: completedCount.toString(), unit: "" },
+              { label: "COMPLETION", value: `${completionRate}`, unit: "%" },
+              { label: "AVG PAYMENT", value: fmt(avgPayment), unit: "USDC" },
+              { label: "BIGGEST", value: fmt(biggestPayment), unit: "USDC" },
             ].map((s, i) => (
               <div key={s.label} style={{ paddingLeft: i === 0 ? 0 : 16, borderLeft: i === 0 ? "none" : "1px solid rgba(255,255,255,.06)" }}>
                 <p style={{ fontSize: 8, color: "#424d5e", letterSpacing: ".14em", fontFamily: "IBM Plex Mono, monospace", marginBottom: 4, textTransform: "uppercase" }}>{s.label}</p>
-                <p style={{ fontSize: 15, color: "#f8fafc", fontWeight: 800, fontFamily: "IBM Plex Mono, monospace", letterSpacing: "-.02em" }}>{s.value}</p>
+                <p style={{ fontSize: 15, color: "var(--c)", fontWeight: 800, fontFamily: "IBM Plex Mono, monospace", letterSpacing: "-.02em" }}>
+                  {s.value}{s.unit && <span style={{ fontSize: 10, color: "#424d5e", fontWeight: 700, marginLeft: 3 }}>{s.unit}</span>}
+                </p>
               </div>
             ))}
           </div>

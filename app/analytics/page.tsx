@@ -11,6 +11,7 @@ interface PaymentLink {
   amount: string;
   status: string;
   txHash?: string;
+  paidBy?: string;
   paidAt?: string;
   createdAt: string;
   stealthAddress?: string;
@@ -22,6 +23,7 @@ interface EscrowLink {
   title: string;
   amount: string;
   status: string;
+  buyerAddress?: string;
   paidAt?: string;
   confirmedAt?: string;
   createdAt: string;
@@ -29,19 +31,35 @@ interface EscrowLink {
   disputeReason?: string;
 }
 
-type Range = "7d" | "30d" | "all";
+interface SplitLink {
+  id: string;
+  title: string;
+  amount: string;
+  status: string;
+  paidBy?: string;
+  paidAt?: string;
+  createdAt: string;
+}
+
+type Range = "7d" | "30d" | "90d" | "all";
+const RANGES: { value: Range; label: string }[] = [
+  { value: "7d", label: "7D" },
+  { value: "30d", label: "30D" },
+  { value: "90d", label: "90D" },
+  { value: "all", label: "All" },
+];
 
 const MilestoneIcons: Record<string, JSX.Element> = {
-  first_payment: <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="#00E5A0" strokeWidth="1.5" strokeLinejoin="round"/></svg>,
-  five_payments: <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 3c3.87 2.93 9 3.1 9 3.1S21 15 12 21C3 15 3 6.1 3 6.1S8.13 5.93 12 3z" stroke="#f5a623" strokeWidth="1.5" strokeLinejoin="round"/></svg>,
-  ten_payments: <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="#00E5A0" strokeWidth="1.5" strokeLinejoin="round"/></svg>,
-  fifty_payments: <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="#f5a623" strokeWidth="1.5" strokeLinecap="round"/></svg>,
-  earn_10: <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><circle cx="12" cy="12" r="9" stroke="#00E5A0" strokeWidth="1.5"/><path d="M12 7v10M9 9.5C9 8.12 10.34 7 12 7s3 1.12 3 2.5S13.66 12 12 12s-3 1.12-3 2.5S9.34 17 12 17s3-1.12 3-2.5" stroke="#00E5A0" strokeWidth="1.3" strokeLinecap="round"/></svg>,
-  earn_100: <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" stroke="#00E5A0" strokeWidth="1.5" strokeLinecap="round"/></svg>,
-  earn_1000: <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 2l2.4 4.8 5.6.8-4 3.9.9 5.5L12 14.5l-4.9 2.5.9-5.5L4 7.6l5.6-.8L12 2z" stroke="#f5a623" strokeWidth="1.5" strokeLinejoin="round"/></svg>,
-  stealth_5: <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 5C7 5 2.73 7.11 1 10.5c1.73 3.39 6 5.5 11 5.5s9.27-2.11 11-5.5C21.27 7.11 17 5 12 5z" stroke="#a78bfa" strokeWidth="1.5"/><circle cx="12" cy="10.5" r="3" stroke="#a78bfa" strokeWidth="1.5"/><path d="M3 20l18-18" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round"/></svg>,
-  first_escrow: <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><rect x="3" y="11" width="18" height="11" rx="2" stroke="#5b8ff9" strokeWidth="1.5"/><path d="M7 11V7a5 5 0 0110 0v4" stroke="#5b8ff9" strokeWidth="1.5" strokeLinecap="round"/></svg>,
-  perfect: <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M12 3l1.5 4.5H18l-3.75 2.73 1.43 4.4L12 12.1l-3.68 2.53 1.43-4.4L6 7.5h4.5L12 3z" stroke="#5b8ff9" strokeWidth="1.5" strokeLinejoin="round"/><path d="M8 21l4-3 4 3" stroke="#5b8ff9" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  first_payment: <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="#00E5A0" strokeWidth="1.5" strokeLinejoin="round"/></svg>,
+  five_payments: <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M12 3c3.87 2.93 9 3.1 9 3.1S21 15 12 21C3 15 3 6.1 3 6.1S8.13 5.93 12 3z" stroke="#f5a623" strokeWidth="1.5" strokeLinejoin="round"/></svg>,
+  ten_payments: <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="#00E5A0" strokeWidth="1.5" strokeLinejoin="round"/></svg>,
+  fifty_payments: <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="#f5a623" strokeWidth="1.5" strokeLinecap="round"/></svg>,
+  earn_10: <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><circle cx="12" cy="12" r="9" stroke="#00E5A0" strokeWidth="1.5"/><path d="M12 7v10M9 9.5C9 8.12 10.34 7 12 7s3 1.12 3 2.5S13.66 12 12 12s-3 1.12-3 2.5S9.34 17 12 17s3-1.12 3-2.5" stroke="#00E5A0" strokeWidth="1.3" strokeLinecap="round"/></svg>,
+  earn_100: <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" stroke="#00E5A0" strokeWidth="1.5" strokeLinecap="round"/></svg>,
+  earn_1000: <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M12 2l2.4 4.8 5.6.8-4 3.9.9 5.5L12 14.5l-4.9 2.5.9-5.5L4 7.6l5.6-.8L12 2z" stroke="#f5a623" strokeWidth="1.5" strokeLinejoin="round"/></svg>,
+  stealth_5: <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M12 5C7 5 2.73 7.11 1 10.5c1.73 3.39 6 5.5 11 5.5s9.27-2.11 11-5.5C21.27 7.11 17 5 12 5z" stroke="#a78bfa" strokeWidth="1.5"/><circle cx="12" cy="10.5" r="3" stroke="#a78bfa" strokeWidth="1.5"/><path d="M3 20l18-18" stroke="#a78bfa" strokeWidth="1.5" strokeLinecap="round"/></svg>,
+  first_escrow: <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><rect x="3" y="11" width="18" height="11" rx="2" stroke="#5b8ff9" strokeWidth="1.5"/><path d="M7 11V7a5 5 0 0110 0v4" stroke="#5b8ff9" strokeWidth="1.5" strokeLinecap="round"/></svg>,
+  perfect: <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M12 3l1.5 4.5H18l-3.75 2.73 1.43 4.4L12 12.1l-3.68 2.53 1.43-4.4L6 7.5h4.5L12 3z" stroke="#5b8ff9" strokeWidth="1.5" strokeLinejoin="round"/><path d="M8 21l4-3 4 3" stroke="#5b8ff9" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
 };
 
 const MILESTONES = [
@@ -57,10 +75,15 @@ const MILESTONES = [
   { id: "perfect", label: "Perfect Record", desc: "100% completion rate", req: (_: number, __: number, ___: number, rate: number, total: number) => rate === 100 && total >= 3 },
 ];
 
+const CHART_W = 600;
+const CHART_H = 170;
+const CHART_PAD_TOP = 14;
+
 export default function AnalyticsPage() {
   const { address, isConnected } = useAccount();
   const [links, setLinks] = useState<PaymentLink[]>([]);
   const [escrows, setEscrows] = useState<EscrowLink[]>([]);
+  const [splits, setSplits] = useState<SplitLink[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [range, setRange] = useState<Range>("30d");
@@ -71,9 +94,10 @@ export default function AnalyticsPage() {
     if (!address) return;
     setIsLoading(true);
     try {
-      const [linksRes, escrowsRes] = await Promise.all([
+      const [linksRes, escrowsRes, splitsRes] = await Promise.all([
         fetch(`/api/links?address=${address}`),
         fetch(`/api/escrow?address=${address}`),
+        fetch(`/api/splits?address=${address}`),
       ]);
       if (linksRes.ok) {
         const data = await linksRes.json();
@@ -83,73 +107,36 @@ export default function AnalyticsPage() {
         const data = await escrowsRes.json();
         setEscrows(data.escrows ?? []);
       }
+      if (splitsRes.ok) {
+        const data = await splitsRes.json();
+        setSplits(data.splits ?? []);
+      }
     } catch {}
     finally { setIsLoading(false); }
   }, [address]);
 
   useEffect(() => { if (isConnected && address) fetchData(); }, [isConnected, address, fetchData]);
 
-  // Payment link stats
+  // Payment link stats (unchanged — feeds Milestones/PnL/Top Links below)
   const completed = links.filter(l => l.status === "COMPLETED" && !l.isEscrow);
-  const escrowCompleted = links.filter(l => l.status === "COMPLETED" && l.isEscrow);
   const allCompleted = links.filter(l => l.status === "COMPLETED");
   const active = links.filter(l => l.status === "ACTIVE");
   const expired = links.filter(l => l.status === "EXPIRED");
 
-  // Escrow stats
+  // Escrow stats (unchanged)
   const releasedEscrows = escrows.filter(e => ["RELEASED", "CONFIRMED"].includes(e.status));
   const holdingEscrows = escrows.filter(e => e.status === "HOLDING");
   const disputedEscrows = escrows.filter(e => e.status === "DISPUTED");
-  const totalEscrowEarned = releasedEscrows.reduce((s, e) => s + parseFloat(e.amount), 0);
   const totalHeld = holdingEscrows.reduce((s, e) => s + parseFloat(e.amount), 0);
+
+  // Splits stats (new — same COMPLETED filter pattern as links/escrow)
+  const completedSplits = splits.filter(s => s.status === "COMPLETED");
 
   const totalEarned = allCompleted.reduce((s, l) => s + parseFloat(l.amount), 0);
   const completionRate = links.length > 0 ? Math.round((allCompleted.length / links.length) * 100) : 0;
   const avgPayment = allCompleted.length > 0 ? totalEarned / allCompleted.length : 0;
   const biggestPayment = allCompleted.length > 0 ? Math.max(...allCompleted.map(l => parseFloat(l.amount))) : 0;
   const stealthCompleted = completed.filter(l => l.stealthAddress).length;
-  const stealthPct = links.length > 0 ? Math.round((links.filter(l => l.stealthAddress).length / links.length) * 100) : 0;
-
-  const dayCount = [0, 0, 0, 0, 0, 0, 0];
-  allCompleted.forEach(l => { dayCount[new Date(l.paidAt ?? l.createdAt).getDay()]++; });
-  const busyDayIdx = dayCount.indexOf(Math.max(...dayCount));
-  const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const busyDay = allCompleted.length > 0 ? DAY_NAMES[busyDayIdx] : "—";
-
-  const avgHours = (() => {
-    const withPaid = allCompleted.filter(l => l.paidAt);
-    if (!withPaid.length) return null;
-    const total = withPaid.reduce((s, l) => s + (new Date(l.paidAt!).getTime() - new Date(l.createdAt).getTime()) / 3600000, 0);
-    return total / withPaid.length;
-  })();
-
-  const chartDays = range === "7d" ? 7 : range === "30d" ? 30 : 90;
-  const chartData = (() => {
-    const days = [];
-    const now = new Date();
-    for (let i = chartDays - 1; i >= 0; i--) {
-      const d = new Date(now);
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split("T")[0];
-      const dayLinks = allCompleted.filter(l => (l.paidAt ?? l.createdAt)?.startsWith(dateStr));
-      const dayEscrows = releasedEscrows.filter(e => (e.confirmedAt ?? e.paidAt ?? e.createdAt)?.startsWith(dateStr));
-      const dayAmount = dayLinks.reduce((s, l) => s + parseFloat(l.amount), 0)
-        + dayEscrows.reduce((s, e) => s + parseFloat(e.amount), 0);
-      days.push({
-        date: dateStr,
-        label: d.toLocaleDateString("en", { month: "short", day: "numeric" }),
-        amount: dayAmount,
-        count: dayLinks.length + dayEscrows.length,
-      });
-    }
-    return days;
-  })();
-
-  const rangeStart = new Date();
-  if (range !== "all") rangeStart.setDate(rangeStart.getDate() - chartDays);
-  const rangeCompleted = range === "all" ? allCompleted : allCompleted.filter(l => new Date(l.paidAt ?? l.createdAt) >= rangeStart);
-  const rangeEarned = rangeCompleted.reduce((s, l) => s + parseFloat(l.amount), 0);
-  const maxAmount = Math.max(...chartData.map(d => d.amount), 1);
 
   const earnedMilestones = MILESTONES.filter(m => m.req(allCompleted.length, totalEarned, stealthCompleted, completionRate, links.length, releasedEscrows.length));
   const lockedMilestones = MILESTONES.filter(m => !m.req(allCompleted.length, totalEarned, stealthCompleted, completionRate, links.length, releasedEscrows.length));
@@ -168,19 +155,150 @@ export default function AnalyticsPage() {
   })();
 
   const topLinks = [...allCompleted].sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount)).slice(0, 5);
-  const recent = [...allCompleted].sort((a, b) => new Date(b.paidAt ?? b.createdAt).getTime() - new Date(a.paidAt ?? a.createdAt).getTime()).slice(0, 8);
+  const topTxAmount = Math.max(...topLinks.map(l => parseFloat(l.amount)), 1);
+
+  // Link status mix — orthogonal to the payment-type donut (type vs status)
+  const linkStatusTotal = links.length + escrows.length;
+  const LINK_STATUS = [
+    { label: "Completed", count: allCompleted.length, color: "var(--c)" },
+    { label: "Active", count: active.length, color: "var(--warning)" },
+    { label: "Expired", count: expired.length, color: "var(--danger)" },
+    { label: "Escrow Released", count: releasedEscrows.length, color: "var(--info)" },
+  ];
 
   const fmt = (n: number) => n % 1 === 0 ? n.toString() : n.toFixed(2);
   const fmtDate = (d: string) => new Date(d).toLocaleDateString("en", { month: "short", day: "numeric" });
+
+  // ── Period-aware aggregates (new — power the bento stat row/donut/charts) ──
+  const chartDays = range === "7d" ? 7 : range === "30d" ? 30 : 90;
+
+  const rangeStart = new Date();
+  if (range !== "all") rangeStart.setDate(rangeStart.getDate() - chartDays);
+
+  const rangeCompleted = range === "all" ? allCompleted : allCompleted.filter(l => new Date(l.paidAt ?? l.createdAt) >= rangeStart);
+  const rangeEarned = rangeCompleted.reduce((s, l) => s + parseFloat(l.amount), 0);
+
+  const rangeEscrowCompleted = range === "all" ? releasedEscrows : releasedEscrows.filter(e => new Date(e.confirmedAt ?? e.paidAt ?? e.createdAt) >= rangeStart);
+  const rangeEscrowEarned = rangeEscrowCompleted.reduce((s, e) => s + parseFloat(e.amount), 0);
+
+  const rangeSplitsCompleted = range === "all" ? completedSplits : completedSplits.filter(sp => new Date(sp.paidAt ?? sp.createdAt) >= rangeStart);
+  const rangeSplitsEarned = rangeSplitsCompleted.reduce((s, sp) => s + parseFloat(sp.amount), 0);
+
+  const periodVolume = rangeEarned + rangeEscrowEarned + rangeSplitsEarned;
+  const periodTxCount = rangeCompleted.length + rangeEscrowCompleted.length + rangeSplitsCompleted.length;
+  const periodAvgTx = periodTxCount > 0 ? periodVolume / periodTxCount : 0;
+  const uniquePayers = new Set([
+    ...rangeCompleted.map(l => l.paidBy?.toLowerCase()),
+    ...rangeEscrowCompleted.map(e => e.buyerAddress?.toLowerCase()),
+    ...rangeSplitsCompleted.map(sp => sp.paidBy?.toLowerCase()),
+  ].filter((a): a is string => !!a)).size;
+
+  const STAT_CARDS = [
+    { label: "Total Volume", value: fmt(periodVolume), unit: "USDC", sub: `${periodTxCount} transaction${periodTxCount === 1 ? "" : "s"}`, color: "var(--c)" },
+    { label: "Unique Payers", value: uniquePayers.toString(), unit: "", sub: "this period", color: "var(--c)" },
+    { label: "Transactions", value: periodTxCount.toString(), unit: "", sub: "payments + escrow + splits", color: "var(--warning)" },
+    { label: "Avg Transaction", value: fmt(periodAvgTx), unit: "USDC", sub: "per transaction", color: "var(--purple)" },
+  ];
+
+  const donutTotal = rangeEarned + rangeEscrowEarned + rangeSplitsEarned;
+  const donutSegments = [
+    { label: "Payments", value: rangeEarned, color: "var(--c)" },
+    { label: "Escrow", value: rangeEscrowEarned, color: "var(--info)" },
+    { label: "Splits", value: rangeSplitsEarned, color: "var(--warning)" },
+  ];
+
+  // Volume/transaction time series. 7D/30D/90D bucket by day; All buckets by
+  // week across full history so it reads as genuinely all-time, not a 90-day alias.
+  const chartData = (() => {
+    if (range === "all") {
+      const allDates = [
+        ...allCompleted.map(l => l.paidAt ?? l.createdAt),
+        ...releasedEscrows.map(e => e.confirmedAt ?? e.paidAt ?? e.createdAt),
+        ...completedSplits.map(sp => sp.paidAt ?? sp.createdAt),
+      ].filter(Boolean).map(d => new Date(d as string));
+
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const start = allDates.length ? new Date(Math.min(...allDates.map(d => d.getTime()))) : new Date(today);
+      start.setHours(0, 0, 0, 0);
+      start.setDate(start.getDate() - start.getDay()); // align to week start
+
+      const weeks: { date: string; label: string; amount: number; count: number }[] = [];
+      for (let d = new Date(start); d <= today; d.setDate(d.getDate() + 7)) {
+        const weekStart = new Date(d);
+        const weekEnd = new Date(d); weekEnd.setDate(weekEnd.getDate() + 7);
+        const inWeek = (dateStr?: string) => { if (!dateStr) return false; const dt = new Date(dateStr); return dt >= weekStart && dt < weekEnd; };
+        const weekLinks = allCompleted.filter(l => inWeek(l.paidAt ?? l.createdAt));
+        const weekEscrows = releasedEscrows.filter(e => inWeek(e.confirmedAt ?? e.paidAt ?? e.createdAt));
+        const weekSplits = completedSplits.filter(sp => inWeek(sp.paidAt ?? sp.createdAt));
+        const amount = weekLinks.reduce((s, l) => s + parseFloat(l.amount), 0)
+          + weekEscrows.reduce((s, e) => s + parseFloat(e.amount), 0)
+          + weekSplits.reduce((s, sp) => s + parseFloat(sp.amount), 0);
+        weeks.push({
+          date: weekStart.toISOString().split("T")[0],
+          label: weekStart.toLocaleDateString("en", { month: "short", day: "numeric" }),
+          amount,
+          count: weekLinks.length + weekEscrows.length + weekSplits.length,
+        });
+      }
+      return weeks.length ? weeks : [{ date: today.toISOString().split("T")[0], label: "—", amount: 0, count: 0 }];
+    }
+
+    const days = [];
+    const now = new Date();
+    for (let i = chartDays - 1; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split("T")[0];
+      const dayLinks = allCompleted.filter(l => (l.paidAt ?? l.createdAt)?.startsWith(dateStr));
+      const dayEscrows = releasedEscrows.filter(e => (e.confirmedAt ?? e.paidAt ?? e.createdAt)?.startsWith(dateStr));
+      const daySplits = completedSplits.filter(sp => (sp.paidAt ?? sp.createdAt)?.startsWith(dateStr));
+      const dayAmount = dayLinks.reduce((s, l) => s + parseFloat(l.amount), 0)
+        + dayEscrows.reduce((s, e) => s + parseFloat(e.amount), 0)
+        + daySplits.reduce((s, sp) => s + parseFloat(sp.amount), 0);
+      days.push({
+        date: dateStr,
+        label: d.toLocaleDateString("en", { month: "short", day: "numeric" }),
+        amount: dayAmount,
+        count: dayLinks.length + dayEscrows.length + daySplits.length,
+      });
+    }
+    return days;
+  })();
+
+  const maxAmount = Math.max(...chartData.map(d => d.amount), 1);
+  const maxCount = Math.max(...chartData.map(d => d.count), 1);
+  const chartStepX = CHART_W / Math.max(chartData.length - 1, 1);
+  const chartPoints = chartData.map((d, i) => ({
+    ...d,
+    x: i * chartStepX,
+    y: CHART_PAD_TOP + (CHART_H - CHART_PAD_TOP) * (1 - d.amount / maxAmount),
+  }));
+  const volumeLinePath = chartPoints.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const volumeAreaPath = chartData.length > 1
+    ? `${volumeLinePath} L${chartPoints[chartPoints.length - 1].x.toFixed(1)},${CHART_H} L0,${CHART_H} Z`
+    : "";
+  const axisStep = chartData.length <= 7 ? 1 : chartData.length <= 30 ? 5 : chartData.length <= 90 ? 10 : Math.ceil(chartData.length / 8);
+
+  const R = 52, CIRC = 2 * Math.PI * R;
+  let donutCumulative = 0;
 
   return (
     <div className="app">
       <NavBar/>
       <div className="page-wrap">
 
-        <div className="page-header">
-          <h1 className="page-title">Analytics</h1>
-          <p className="page-subtitle">Your payment performance</p>
+        <div className="page-header" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+          <div>
+            <h1 className="page-title">Analytics</h1>
+            <p className="page-subtitle">Your payment performance</p>
+          </div>
+          {mounted && isConnected && (
+            <div style={{ display: "flex", gap: 6 }}>
+              {RANGES.map(r => (
+                <button key={r.value} className={`filter-pill${range === r.value ? " active" : ""}`} onClick={() => setRange(r.value)}>{r.label}</button>
+              ))}
+            </div>
+          )}
         </div>
 
         {mounted && !isConnected && (
@@ -196,157 +314,207 @@ export default function AnalyticsPage() {
         {mounted && isConnected && isLoading && <div className="loading-wrap"><div className="page-spinner"/></div>}
 
         {mounted && isConnected && !isLoading && (
-          <>
-            {/* Streak banner */}
+          <div className="bento-grid">
+
+            {/* Streak strip */}
             {streak > 1 && (
-              <div style={{ background: "linear-gradient(135deg, rgba(0,229,160,.12), rgba(0,229,160,.04))", border: "1px solid var(--c-border)", borderRadius: "var(--r-lg)", padding: "14px 20px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(0,229,160,.15)", border: "1px solid var(--c-border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                  <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
-                    <path d="M12 2c0 6-6 8-6 14a6 6 0 0012 0c0-6-6-8-6-14z" stroke="#00E5A0" strokeWidth="1.5" strokeLinejoin="round"/>
-                    <path d="M12 12c0 3-2 4-2 6a2 2 0 004 0c0-2-2-3-2-6z" fill="#00E5A0" opacity=".3"/>
-                  </svg>
-                </div>
-                <div>
-                  <p style={{ fontSize: 14, fontWeight: 800, color: "var(--c)" }}>{streak}-day payment streak!</p>
-                  <p style={{ fontSize: 12, color: "var(--ink-3)" }}>You've received payments {streak} days in a row</p>
+              <div className="bento-cell bento-12">
+                <div style={{ background: "linear-gradient(135deg, rgba(0,229,160,.12), rgba(0,229,160,.04))", border: "1px solid var(--c-border)", borderRadius: "var(--r-lg)", padding: "14px 20px", display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(0,229,160,.15)", border: "1px solid var(--c-border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                      <path d="M12 2c0 6-6 8-6 14a6 6 0 0012 0c0-6-6-8-6-14z" stroke="#00E5A0" strokeWidth="1.5" strokeLinejoin="round"/>
+                      <path d="M12 12c0 3-2 4-2 6a2 2 0 004 0c0-2-2-3-2-6z" fill="#00E5A0" opacity=".3"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 14, fontWeight: 800, color: "var(--c)" }}>{streak}-day payment streak!</p>
+                    <p style={{ fontSize: 12, color: "var(--ink-3)" }}>You've received payments {streak} days in a row</p>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Main stats */}
-            <div className="stats-grid" style={{ marginBottom: 24 }}>
-              {[
-                { label: "Total Earned", value: fmt(totalEarned), unit: "USDC", sub: `${allCompleted.length} payments`, color: "var(--c)" },
-                { label: "Completion Rate", value: `${completionRate}`, unit: "%", sub: `${links.length} total links`, color: completionRate >= 70 ? "var(--c)" : completionRate >= 40 ? "var(--warning)" : "var(--danger)" },
-                { label: "Biggest Payment", value: fmt(biggestPayment), unit: "USDC", sub: "single payment", color: "var(--info)" },
-                { label: "Avg Payment", value: fmt(avgPayment), unit: "USDC", sub: "per completed link", color: "var(--warning)" },
-              ].map((s) => (
-                <div key={s.label} className="stat-card">
+            {/* Row 1 — accent-bar stat cards */}
+            {STAT_CARDS.map(s => (
+              <div key={s.label} className="bento-cell bento-3">
+                <div className="stat-card">
                   <div className="stat-card-line" style={{ background: s.color }}/>
-                  <div className="stat-value">{s.value}<span style={{ fontSize: 13, color: s.color, marginLeft: 4, fontFamily: "IBM Plex Mono, monospace" }}>{s.unit}</span></div>
-                  <div className="stat-label">{s.label}</div>
-                  <div className="stat-sub">{s.sub}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Escrow stats */}
-            {(escrows.length > 0) && (
-              <>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                  <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><rect x="2" y="6" width="12" height="9" rx="1.5" stroke="#5b8ff9" strokeWidth="1.3"/><path d="M5 6V4.5a3 3 0 016 0V6" stroke="#5b8ff9" strokeWidth="1.3" strokeLinecap="round"/></svg>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "#5b8ff9", letterSpacing: ".06em", fontFamily: "IBM Plex Mono, monospace" }}>ESCROW</span>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
-                  {[
-                    { label: "Escrow Earned", value: fmt(totalEscrowEarned), unit: "USDC", color: "#5b8ff9" },
-                    { label: "Currently Held", value: fmt(totalHeld), unit: "USDC", color: "var(--warning)" },
-                    { label: "Completed", value: releasedEscrows.length.toString(), unit: "", color: "var(--c)" },
-                    { label: "Disputed", value: disputedEscrows.length.toString(), unit: "", color: disputedEscrows.length > 0 ? "var(--danger)" : "var(--ink-3)" },
-                  ].map(s => (
-                    <div key={s.label} style={{ background: "var(--surface)", border: `1px solid ${s.label === "Disputed" && disputedEscrows.length > 0 ? "rgba(240,62,95,.3)" : "var(--stroke)"}`, borderRadius: "var(--r-lg)", padding: "14px 18px", boxShadow: "var(--elev-1)" }}>
-                      <p style={{ fontSize: 18, fontWeight: 800, color: s.color, fontFamily: "IBM Plex Mono, monospace", marginBottom: 4 }}>
-                        {s.value}{s.unit && <span style={{ fontSize: 11, marginLeft: 4 }}>{s.unit}</span>}
-                      </p>
-                      <p style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 600 }}>{s.label}</p>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {/* Extra stats */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 20 }}>
-              {[
-                { label: "Most Active Day", value: busyDay, icon: <svg viewBox="0 0 20 20" fill="none" width="20" height="20"><rect x="3" y="4" width="14" height="13" rx="2" stroke="var(--c)" strokeWidth="1.3"/><path d="M7 2v4M13 2v4M3 9h14" stroke="var(--c)" strokeWidth="1.3" strokeLinecap="round"/></svg> },
-                { label: "Avg Time to Pay", value: avgHours !== null ? (avgHours < 1 ? `${Math.round(avgHours * 60)}m` : `${Math.round(avgHours)}h`) : "—", icon: <svg viewBox="0 0 20 20" fill="none" width="20" height="20"><circle cx="10" cy="11" r="7" stroke="var(--c)" strokeWidth="1.3"/><path d="M10 8v3l2 1.5" stroke="var(--c)" strokeWidth="1.3" strokeLinecap="round"/><path d="M7 2h6" stroke="var(--c)" strokeWidth="1.3" strokeLinecap="round"/></svg> },
-                { label: "Stealth Usage", value: `${stealthPct}%`, icon: <svg viewBox="0 0 20 20" fill="none" width="20" height="20"><rect x="4" y="9" width="12" height="9" rx="2" stroke="var(--c)" strokeWidth="1.3"/><path d="M7 9V7a3 3 0 016 0v2" stroke="var(--c)" strokeWidth="1.3" strokeLinecap="round"/></svg> },
-              ].map((s) => (
-                <div key={s.label} style={{ background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: "var(--r-lg)", padding: "16px 20px", display: "flex", alignItems: "center", gap: 14, boxShadow: "var(--elev-1)" }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: "var(--c-dim)", border: "1px solid var(--c-border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{s.icon}</div>
-                  <div>
-                    <p style={{ fontSize: 16, fontWeight: 800, color: "var(--ink-1)", fontFamily: "IBM Plex Mono, monospace" }}>{s.value}</p>
-                    <p style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 600, marginTop: 2 }}>{s.label}</p>
+                  <div className="stat-value" style={{ color: s.color }}>
+                    {s.value}{s.unit && <span style={{ fontSize: 13, marginLeft: 4 }}>{s.unit}</span>}
                   </div>
+                  <div className="stat-label">{s.label}</div>
+                  <div className="stat-sub" style={{ color: s.color }}>{s.sub}</div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
 
-            {/* Volume chart */}
-            <div className="card" style={{ marginBottom: 18 }}>
-              <div className="card-head" style={{ justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 14 }}>
+            {/* Row 2 — volume chart (2) + payment-type donut (1) */}
+            <div className="bento-cell bento-8 bento-tall">
+              <div className="card" style={{ height: "100%" }}>
+                <div className="card-head">
                   <div className="card-head-icon">
                     <svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M2 14l4-4 4 2 4-6 4 2" stroke="var(--c)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </div>
                   <div>
-                    <div className="card-title">Volume Chart</div>
-                    <div className="card-subtitle">{rangeCompleted.length} payments · {fmt(rangeEarned)} USDC {range !== "all" ? `in last ${chartDays} days` : "all time"}</div>
+                    <div className="card-title">Volume Over Time</div>
+                    <div className="card-subtitle">{fmt(periodVolume)} USDC · {range === "all" ? "all time, by week" : `last ${chartDays} days`}</div>
                   </div>
                 </div>
-                <div style={{ display: "flex", gap: 4, background: "var(--bg)", borderRadius: "var(--r-sm)", padding: 3 }}>
-                  {(["7d", "30d", "all"] as Range[]).map(r => (
-                    <button key={r} onClick={() => setRange(r)} style={{ padding: "5px 12px", borderRadius: 6, border: "none", background: range === r ? "var(--surface)" : "transparent", color: range === r ? "var(--ink-1)" : "var(--ink-3)", fontSize: 11, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, cursor: "pointer", boxShadow: range === r ? "var(--elev-1)" : "none", transition: "all .15s" }}>{r}</button>
-                  ))}
-                </div>
-              </div>
-              <div className="card-body">
-                {allCompleted.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "40px 0", color: "var(--ink-3)", fontSize: 13 }}>No completed payments yet</div>
-                ) : (
-                  <>
-                    <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 140, marginBottom: 8 }}>
-                      {chartData.map((day, i) => (
-                        <div key={day.date} title={`${day.label}: ${fmt(day.amount)} USDC (${day.count} payments)`} style={{ flex: 1, height: `${Math.max((day.amount / maxAmount) * 100, day.amount > 0 ? 3 : 1.5)}%`, background: day.amount > 0 ? (i === chartData.length - 1 ? "var(--c)" : "rgba(0,229,160,.4)") : "var(--raised)", borderRadius: "3px 3px 0 0", transition: "height .4s ease", cursor: day.amount > 0 ? "pointer" : "default", minHeight: 2 }}/>
-                      ))}
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-                      {chartData.filter((_, i) => i % (chartDays <= 7 ? 1 : chartDays <= 30 ? 5 : 10) === 0 || i === chartData.length - 1).map(day => (
-                        <span key={day.date} style={{ fontSize: 9, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>{day.label}</span>
-                      ))}
-                    </div>
-                    <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid var(--stroke)", display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <div style={{ width: 12, height: 3, borderRadius: 2, background: "var(--c)" }}/>
-                        <span style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>Daily volume (incl. escrow)</span>
+                <div className="card-body" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                  {periodVolume === 0 ? (
+                    <div className="chart-empty"><p>No completed transactions in this period</p></div>
+                  ) : (
+                    <>
+                      <div style={{ flex: 1, minHeight: 0 }}>
+                        <svg viewBox={`0 0 ${CHART_W} ${CHART_H}`} preserveAspectRatio="none" style={{ width: "100%", height: "100%", display: "block" }}>
+                          <defs>
+                            <linearGradient id="analyticsVolumeGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="var(--c)" stopOpacity="0.35"/>
+                              <stop offset="100%" stopColor="var(--c)" stopOpacity="0"/>
+                            </linearGradient>
+                          </defs>
+                          {volumeAreaPath && <path d={volumeAreaPath} fill="url(#analyticsVolumeGradient)" stroke="none"/>}
+                          <path d={volumeLinePath} fill="none" stroke="var(--c)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
+                          {chartPoints.map(p => p.amount > 0 && (
+                            <circle key={p.date} cx={p.x} cy={p.y} r="3.5" fill="var(--surface)" stroke="var(--c)" strokeWidth="1.8" vectorEffect="non-scaling-stroke">
+                              <title>{`${p.label}: ${fmt(p.amount)} USDC (${p.count} tx)`}</title>
+                            </circle>
+                          ))}
+                        </svg>
                       </div>
-                      <div style={{ fontSize: 12, color: "var(--ink-3)" }}>Peak: <span style={{ color: "var(--c)", fontWeight: 700, fontFamily: "IBM Plex Mono, monospace" }}>{fmt(maxAmount)} USDC</span></div>
-                      <div style={{ fontSize: 12, color: "var(--ink-3)" }}>Period total: <span style={{ color: "var(--ink-1)", fontWeight: 700, fontFamily: "IBM Plex Mono, monospace" }}>{fmt(rangeEarned)} USDC</span></div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Milestones */}
-            <div className="card" style={{ marginBottom: 18 }}>
-              <div className="card-head">
-                <div className="card-head-icon">
-                  <svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M10 2l2.4 4.8 5.6.8-4 3.9.9 5.5L10 14.5l-4.9 2.5.9-5.5L2 7.6l5.6-.8L10 2z" stroke="var(--c)" strokeWidth="1.3" strokeLinejoin="round"/></svg>
-                </div>
-                <div><div className="card-title">Milestones</div><div className="card-subtitle">{earnedMilestones.length} of {MILESTONES.length} unlocked</div></div>
-              </div>
-              <div className="card-body">
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
-                  {earnedMilestones.map(m => (
-                    <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "rgba(0,229,160,.07)", border: "1px solid var(--c-border)", borderRadius: "var(--r-md)" }}>
-                      <div style={{ flexShrink: 0 }}>{MilestoneIcons[m.id]}</div>
-                      <div><p style={{ fontSize: 12, fontWeight: 800, color: "var(--c)" }}>{m.label}</p><p style={{ fontSize: 11, color: "var(--ink-3)" }}>{m.desc}</p></div>
-                    </div>
-                  ))}
-                  {lockedMilestones.map(m => (
-                    <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: "var(--r-md)", opacity: 0.4 }}>
-                      <div style={{ flexShrink: 0, filter: "grayscale(1)" }}>{MilestoneIcons[m.id]}</div>
-                      <div><p style={{ fontSize: 12, fontWeight: 800, color: "var(--ink-2)" }}>{m.label}</p><p style={{ fontSize: 11, color: "var(--ink-3)" }}>{m.desc}</p></div>
-                    </div>
-                  ))}
+                      <div className="chart-axis-row">
+                        {chartData.filter((_, i) => i % axisStep === 0 || i === chartData.length - 1).map(d => (
+                          <span key={d.date} className="chart-axis-label">{d.label}</span>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Bottom grid */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
-              <div className="card">
+            <div className="bento-cell bento-4 bento-tall">
+              <div style={{ display: "flex", flexDirection: "column", gap: 18, height: "100%" }}>
+                <div className="card" style={{ flex: 1 }}>
+                  <div className="card-head">
+                    <div className="card-head-icon"><svg viewBox="0 0 20 20" fill="none" width="16" height="16"><circle cx="10" cy="10" r="7" stroke="var(--c)" strokeWidth="1.4"/></svg></div>
+                    <div>
+                      <div className="card-title">Payment Types</div>
+                      <div className="card-subtitle">Payments vs escrow vs splits</div>
+                    </div>
+                  </div>
+                  <div className="card-body" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                    {donutTotal === 0 ? (
+                      <div className="chart-empty"><p>No completed transactions in this period</p></div>
+                    ) : (
+                      <div className="donut-wrap">
+                        <svg viewBox="0 0 130 130" width="130" height="130">
+                          <circle cx="65" cy="65" r={R} fill="none" stroke="var(--raised)" strokeWidth="15"/>
+                          {donutSegments.filter(s => s.value > 0).map(s => {
+                            const dash = (s.value / donutTotal) * CIRC;
+                            const el = (
+                              <circle key={s.label} cx="65" cy="65" r={R} fill="none" stroke={s.color} strokeWidth="15"
+                                strokeDasharray={`${dash} ${CIRC - dash}`} strokeDashoffset={-donutCumulative} transform="rotate(-90 65 65)">
+                                <title>{`${s.label}: ${fmt(s.value)} USDC`}</title>
+                              </circle>
+                            );
+                            donutCumulative += dash;
+                            return el;
+                          })}
+                          <text x="65" y="61" textAnchor="middle" fontSize="20" fontWeight="800" fill="var(--ink-1)" fontFamily="'IBM Plex Mono', monospace">{fmt(donutTotal)}</text>
+                          <text x="65" y="78" textAnchor="middle" fontSize="9" fill="var(--ink-3)" letterSpacing="1" fontFamily="'IBM Plex Mono', monospace">USDC</text>
+                        </svg>
+                        <div className="donut-legend">
+                          {donutSegments.map(s => (
+                            <div key={s.label} className="donut-legend-row">
+                              <span className="donut-legend-left">
+                                <span className="donut-legend-dot" style={{ background: s.color }}/>
+                                {s.label}
+                              </span>
+                              <span className="donut-legend-count">{fmt(s.value)} <span style={{ color: "var(--ink-3)", fontWeight: 500 }}>({donutTotal > 0 ? Math.round((s.value / donutTotal) * 100) : 0}%)</span></span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Link status mix — compact, orthogonal to the type donut above */}
+                <div className="card">
+                  <div className="card-head">
+                    <div className="card-head-icon"><svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M10 3v14M3 10h14" stroke="var(--ink-2)" strokeWidth="1.3" strokeLinecap="round"/></svg></div>
+                    <div><div className="card-title">Link Status</div><div className="card-subtitle">{linkStatusTotal} total</div></div>
+                  </div>
+                  <div style={{ padding: "12px 20px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+                    {LINK_STATUS.map(s => (
+                      <div key={s.label}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                          <span style={{ fontSize: 11, color: "var(--ink-2)", fontWeight: 600 }}>{s.label}</span>
+                          <span style={{ fontSize: 11, fontFamily: "IBM Plex Mono, monospace", color: s.color, fontWeight: 700 }}>{s.count}</span>
+                        </div>
+                        <div style={{ height: 3, borderRadius: 3, background: "var(--raised)", overflow: "hidden" }}>
+                          <div style={{ height: "100%", width: linkStatusTotal > 0 ? `${(s.count / linkStatusTotal) * 100}%` : "0%", background: s.color, borderRadius: 3, transition: "width .5s ease" }}/>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Escrow health — funds currently held + disputes, not covered elsewhere */}
+            <div className="bento-cell bento-12">
+              <div style={{ background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: "var(--r-lg)", padding: "14px 24px", boxShadow: "var(--elev-1)", display: "flex", alignItems: "center", gap: 32 }}>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 18, fontWeight: 800, color: "var(--info)", fontFamily: "IBM Plex Mono, monospace", marginBottom: 2 }}>
+                    {fmt(totalHeld)}<span style={{ fontSize: 11, marginLeft: 4 }}>USDC</span>
+                  </p>
+                  <p style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 600 }}>Currently Held ({holdingEscrows.length} escrow{holdingEscrows.length === 1 ? "" : "s"})</p>
+                </div>
+                <div style={{ width: 1, height: 32, background: "var(--stroke)" }}/>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 18, fontWeight: 800, color: disputedEscrows.length > 0 ? "var(--danger)" : "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace", marginBottom: 2 }}>
+                    {disputedEscrows.length}
+                  </p>
+                  <p style={{ fontSize: 11, color: "var(--ink-3)", fontWeight: 600 }}>Disputed {disputedEscrows.length > 0 ? "— needs attention" : "— all clear"}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Row 3 — transactions chart (5) + top links leaderboard (7) */}
+            <div className="bento-cell bento-5">
+              <div className="card" style={{ height: "100%" }}>
+                <div className="card-head">
+                  <div className="card-head-icon"><svg viewBox="0 0 20 20" fill="none" width="16" height="16"><rect x="3" y="4" width="14" height="13" rx="2" stroke="var(--info)" strokeWidth="1.3"/><path d="M7 2v4M13 2v4M3 9h14" stroke="var(--info)" strokeWidth="1.3" strokeLinecap="round"/></svg></div>
+                  <div>
+                    <div className="card-title">Transactions Over Time</div>
+                    <div className="card-subtitle">{periodTxCount} in this period</div>
+                  </div>
+                </div>
+                <div className="card-body">
+                  {periodTxCount === 0 ? (
+                    <div style={{ textAlign: "center", padding: "40px 0", color: "var(--ink-3)", fontSize: 13 }}>No transactions in this period</div>
+                  ) : (
+                    <>
+                      <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 140, marginBottom: 8 }}>
+                        {chartData.map((d, i) => (
+                          <div key={d.date} title={`${d.label}: ${d.count} tx`} style={{ flex: 1, height: `${Math.max((d.count / maxCount) * 100, d.count > 0 ? 3 : 1.5)}%`, background: d.count > 0 ? (i === chartData.length - 1 ? "var(--info)" : "rgba(91,143,249,.4)") : "var(--raised)", borderRadius: "3px 3px 0 0", transition: "height .4s ease", minHeight: 2 }}/>
+                        ))}
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
+                        {chartData.filter((_, i) => i % axisStep === 0 || i === chartData.length - 1).map(d => (
+                          <span key={d.date} style={{ fontSize: 9, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>{d.label}</span>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="bento-cell bento-7">
+              <div className="card" style={{ height: "100%" }}>
                 <div className="card-head">
                   <div className="card-head-icon"><svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M10 2l2.4 4.8 5.6.8-4 3.9.9 5.5L10 14.5l-4.9 2.5.9-5.5L2 7.6l5.6-.8L10 2z" stroke="var(--c)" strokeWidth="1.3" strokeLinejoin="round"/></svg></div>
                   <div><div className="card-title">Top Links</div><div className="card-subtitle">By amount received</div></div>
@@ -355,82 +523,65 @@ export default function AnalyticsPage() {
                   {topLinks.length === 0 ? (
                     <div style={{ padding: 24, textAlign: "center", color: "var(--ink-3)", fontSize: 12 }}>No completed payments yet</div>
                   ) : topLinks.map((l, i) => (
-                    <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", borderBottom: i < topLinks.length - 1 ? "1px solid var(--stroke)" : "none" }}>
-                      <span style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace", width: 16, flexShrink: 0 }}>#{i + 1}</span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                          <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.title}</p>
-                          {l.isEscrow && <span style={{ fontSize: 8, color: "#5b8ff9", background: "rgba(91,143,249,.12)", border: "1px solid rgba(91,143,249,.25)", borderRadius: 3, padding: "1px 4px", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, flexShrink: 0 }}>ESCROW</span>}
+                    <div key={l.id} style={{ padding: "12px 20px", borderBottom: i < topLinks.length - 1 ? "1px solid var(--stroke)" : "none" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
+                        <span style={{ fontSize: 11, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace", width: 16, flexShrink: 0 }}>#{i + 1}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                            <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.title}</p>
+                            {l.isEscrow && <span style={{ fontSize: 8, color: "var(--info)", background: "var(--info-dim)", border: "1px solid var(--info-border)", borderRadius: 3, padding: "1px 4px", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, flexShrink: 0 }}>ESCROW</span>}
+                          </div>
+                          <p style={{ fontSize: 11, color: "var(--ink-3)" }}>{fmtDate(l.paidAt ?? l.createdAt)}</p>
                         </div>
-                        <p style={{ fontSize: 11, color: "var(--ink-3)" }}>{fmtDate(l.paidAt ?? l.createdAt)}</p>
+                        <span style={{ fontSize: 13, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: l.isEscrow ? "var(--info)" : "var(--c)", flexShrink: 0 }}>{fmt(parseFloat(l.amount))} <span style={{ fontSize: 10, color: "var(--ink-3)" }}>USDC</span></span>
                       </div>
-                      <span style={{ fontSize: 13, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: l.isEscrow ? "#5b8ff9" : "var(--c)", flexShrink: 0 }}>{fmt(parseFloat(l.amount))} <span style={{ fontSize: 10, color: "var(--ink-3)" }}>USDC</span></span>
+                      <div style={{ height: 4, borderRadius: 4, background: "var(--raised)", overflow: "hidden", marginLeft: 28 }}>
+                        <div style={{ height: "100%", width: `${(parseFloat(l.amount) / topTxAmount) * 100}%`, background: l.isEscrow ? "var(--info)" : "var(--c)", borderRadius: 4, transition: "width .5s ease" }}/>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
+            </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-                <div className="card">
-                  <div className="card-head">
-                    <div className="card-head-icon"><svg viewBox="0 0 20 20" fill="none" width="16" height="16"><circle cx="10" cy="10" r="8" stroke="var(--c)" strokeWidth="1.3"/></svg></div>
-                    <div><div className="card-title">Link Breakdown</div><div className="card-subtitle">Status overview</div></div>
+            {/* Milestones — compact badge strip */}
+            <div className="bento-cell bento-12">
+              <div className="card">
+                <div className="card-head">
+                  <div className="card-head-icon">
+                    <svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M10 2l2.4 4.8 5.6.8-4 3.9.9 5.5L10 14.5l-4.9 2.5.9-5.5L2 7.6l5.6-.8L10 2z" stroke="var(--c)" strokeWidth="1.3" strokeLinejoin="round"/></svg>
                   </div>
-                  <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 10 }}>
-                    {[
-                      { label: "Completed", count: allCompleted.length, color: "var(--c)" },
-                      { label: "Active", count: active.length, color: "var(--warning)" },
-                      { label: "Expired", count: expired.length, color: "var(--danger)" },
-                      { label: "Escrow Released", count: releasedEscrows.length, color: "#5b8ff9" },
-                    ].map(s => (
-                      <div key={s.label}>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                          <span style={{ fontSize: 12, color: "var(--ink-2)", fontWeight: 600 }}>{s.label}</span>
-                          <span style={{ fontSize: 12, fontFamily: "IBM Plex Mono, monospace", color: s.color, fontWeight: 700 }}>{s.count}</span>
-                        </div>
-                        <div style={{ height: 4, borderRadius: 4, background: "var(--raised)", overflow: "hidden" }}>
-                          <div style={{ height: "100%", width: (links.length + escrows.length) > 0 ? `${(s.count / (links.length + escrows.length)) * 100}%` : "0%", background: s.color, borderRadius: 4, transition: "width .5s ease" }}/>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <div><div className="card-title">Milestones</div><div className="card-subtitle">{earnedMilestones.length} of {MILESTONES.length} unlocked</div></div>
                 </div>
-
-                <div className="card" style={{ flex: 1 }}>
-                  <div className="card-head">
-                    <div className="card-head-icon"><svg viewBox="0 0 20 20" fill="none" width="16" height="16"><circle cx="10" cy="10" r="8" stroke="var(--c)" strokeWidth="1.3"/><path d="M10 6v4l2.5 2.5" stroke="var(--c)" strokeWidth="1.3" strokeLinecap="round"/></svg></div>
-                    <div><div className="card-title">Recent Payments</div><div className="card-subtitle">Latest completed</div></div>
-                  </div>
-                  <div style={{ padding: "0 0 8px", maxHeight: 220, overflowY: "auto" }}>
-                    {recent.length === 0 ? (
-                      <div style={{ padding: 24, textAlign: "center", color: "var(--ink-3)", fontSize: 12 }}>No payments yet</div>
-                    ) : recent.map((l, i) => (
-                      <div key={l.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 20px", borderBottom: i < recent.length - 1 ? "1px solid var(--stroke)" : "none" }}>
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                            <p style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.title}</p>
-                            {l.isEscrow && <span style={{ fontSize: 8, color: "#5b8ff9", background: "rgba(91,143,249,.12)", border: "1px solid rgba(91,143,249,.25)", borderRadius: 3, padding: "1px 4px", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, flexShrink: 0 }}>ESCROW</span>}
-                          </div>
-                          <p style={{ fontSize: 10, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>{fmtDate(l.paidAt ?? l.createdAt)}</p>
-                        </div>
-                        <span style={{ fontSize: 12, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: l.isEscrow ? "#5b8ff9" : "var(--c)", flexShrink: 0, marginLeft: 12 }}>+{fmt(parseFloat(l.amount))}</span>
-                      </div>
-                    ))}
-                  </div>
+                <div className="card-body" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {earnedMilestones.map(m => (
+                    <div key={m.id} title={m.desc} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "rgba(0,229,160,.07)", border: "1px solid var(--c-border)", borderRadius: "var(--r-full)" }}>
+                      <div style={{ flexShrink: 0, display: "flex" }}>{MilestoneIcons[m.id]}</div>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--c)" }}>{m.label}</span>
+                    </div>
+                  ))}
+                  {lockedMilestones.length > 0 && (
+                    <div style={{ display: "flex", alignItems: "center", padding: "8px 14px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: "var(--r-full)" }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--ink-3)" }}>+{lockedMilestones.length} locked</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* PnL Card */}
-            <PnlCard
-              address={address!}
-              totalEarned={totalEarned}
-              completedCount={allCompleted.length}
-              completionRate={completionRate}
-              avgPayment={avgPayment}
-              biggestPayment={biggestPayment}
-            />
-          </>
+            {/* PnL share card */}
+            <div className="bento-cell bento-12">
+              <PnlCard
+                address={address!}
+                totalEarned={totalEarned}
+                completedCount={allCompleted.length}
+                completionRate={completionRate}
+                avgPayment={avgPayment}
+                biggestPayment={biggestPayment}
+                series={chartData.map(d => d.amount)}
+              />
+            </div>
+          </div>
         )}
       </div>
 
