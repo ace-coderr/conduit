@@ -3,8 +3,18 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAccount } from "wagmi";
 import Link from "next/link";
+import { NavBar } from "@/components/NavBar";
 
 const ADMIN_WALLET = "0x8557fabdc62f59a1ba7d6a74aaf0942cdcb68f69";
+
+const CATEGORY_COLORS: Record<string, string> = {
+    data: "#5b8ff9",
+    ai: "#a78bfa",
+    analytics: "#00E5A0",
+    finance: "#f5a623",
+    dev: "#f03e5f",
+    other: "#888",
+};
 
 interface Listing {
     id: string; name: string; description: string; price: string;
@@ -13,11 +23,24 @@ interface Listing {
     docsUrl?: string; createdAt: string;
 }
 
+function StatCard({ label, value, color, icon }: { label: string; value: string; color: string; icon: JSX.Element }) {
+    return (
+        <div className="stat-card" style={{ padding: "16px 18px" }}>
+            <div className="stat-card-line" style={{ background: color }} />
+            <div className="stat-icon-wrap" style={{ width: 30, height: 30, marginBottom: 10 }}>{icon}</div>
+            <div className="stat-value" style={{ fontSize: 24, color }}>{value}</div>
+            <div className="stat-label">{label}</div>
+        </div>
+    );
+}
+
+const statusColor = (s: string) => ({ PENDING: "var(--warning)", APPROVED: "var(--c)", REJECTED: "var(--danger)" }[s] ?? "var(--ink-3)");
+
 export default function AdminMarketplacePage() {
     const { address, isConnected } = useAccount();
     const [listings, setListings] = useState<Listing[]>([]);
     const [loading, setLoading] = useState(true);
-    const [tab, setTab] = useState<"PENDING" | "APPROVED" | "REJECTED">("PENDING");
+    const [tab, setTab] = useState<"PENDING" | "APPROVED" | "REJECTED" | "ALL">("PENDING");
     const [actioning, setActioning] = useState<string | null>(null);
 
     const isAdmin = address?.toLowerCase() === ADMIN_WALLET;
@@ -25,8 +48,9 @@ export default function AdminMarketplacePage() {
     const fetchListings = useCallback(async () => {
         if (!address) return;
         setLoading(true);
-        const res = await fetch(`/api/marketplace?status=all`, {
-            headers: { "x-wallet-address": address.toLowerCase() },
+        const wallet = address.toLowerCase();
+        const res = await fetch(`/api/marketplace?status=all&wallet=${wallet}`, {
+            headers: { "x-wallet-address": wallet },
         });
         const data = await res.json();
         setListings(data.listings ?? []);
@@ -39,11 +63,12 @@ export default function AdminMarketplacePage() {
 
     const updateListing = async (id: string, updates: { status?: string; featured?: boolean }) => {
         setActioning(id);
-        await fetch(`/api/marketplace`, {
+        const wallet = address?.toLowerCase() ?? "";
+        await fetch(`/api/marketplace?wallet=${wallet}`, {
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
-                "x-wallet-address": address?.toLowerCase() ?? "",
+                "x-wallet-address": wallet,
             },
             body: JSON.stringify({ id, ...updates }),
         });
@@ -54,16 +79,19 @@ export default function AdminMarketplacePage() {
     const deleteListing = async (id: string) => {
         if (!confirm("Delete this listing?")) return;
         setActioning(id);
-        await fetch(`/api/marketplace?id=${id}`, {
+        const wallet = address?.toLowerCase() ?? "";
+        await fetch(`/api/marketplace?id=${id}&wallet=${wallet}`, {
             method: "DELETE",
-            headers: { "x-wallet-address": address?.toLowerCase() ?? "" },
+            headers: { "x-wallet-address": wallet },
         });
         await fetchListings();
         setActioning(null);
     };
 
-    const filtered = listings.filter(l => l.status === tab);
-    const pending = listings.filter(l => l.status === "PENDING").length;
+    const pending = listings.filter(l => l.status === "PENDING");
+    const approved = listings.filter(l => l.status === "APPROVED");
+    const rejected = listings.filter(l => l.status === "REJECTED");
+    const filtered = tab === "ALL" ? listings : tab === "PENDING" ? pending : tab === "APPROVED" ? approved : rejected;
     const fmtDate = (d: string) => new Date(d).toLocaleDateString("en", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 
     if (!isConnected || !isAdmin) return (
@@ -73,87 +101,109 @@ export default function AdminMarketplacePage() {
     );
 
     return (
-        <div style={{ minHeight: "100vh", background: "var(--bg)", fontFamily: "Sora, sans-serif" }}>
-            <div style={{ height: 56, background: "var(--surface)", borderBottom: "1px solid var(--stroke)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px", position: "sticky", top: 0, zIndex: 100 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                    <Link href="/admin" style={{ fontSize: 12, color: "var(--ink-3)", textDecoration: "none", fontWeight: 600 }}>← Admin</Link>
-                    <div style={{ width: 1, height: 20, background: "var(--stroke)" }} />
-                    <span style={{ fontSize: 14, fontWeight: 800, color: "var(--ink-1)" }}>Marketplace</span>
-                    {pending > 0 && <span style={{ fontSize: 9, background: "var(--warning)", color: "#000", borderRadius: 20, padding: "2px 8px", fontWeight: 700, fontFamily: "IBM Plex Mono, monospace" }}>{pending} PENDING</span>}
-                </div>
-                <div style={{ display: "flex", gap: 10 }}>
-                    <Link href="/marketplace" target="_blank" style={{ fontSize: 12, color: "var(--c)", textDecoration: "none", padding: "6px 14px", border: "1px solid var(--c-border)", borderRadius: "var(--r-sm)", fontWeight: 600 }}>View Marketplace ↗</Link>
-                    <button onClick={fetchListings} style={{ fontSize: 12, color: "var(--c)", background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: "var(--r-sm)", padding: "6px 14px", cursor: "pointer", fontWeight: 700, fontFamily: "Sora, sans-serif" }}>Refresh</button>
-                </div>
-            </div>
-
-            <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 40px" }}>
-                <div style={{ marginBottom: 24 }}>
-                    <h1 style={{ fontSize: 24, fontWeight: 900, color: "var(--ink-1)", letterSpacing: "-.04em", marginBottom: 4 }}>Marketplace Listings</h1>
-                    <p style={{ fontSize: 13, color: "var(--ink-3)" }}>Review and manage API listings submitted by developers</p>
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 24 }}>
-                    {[{ label: "Pending Review", value: listings.filter(l => l.status === "PENDING").length, color: "var(--warning)" }, { label: "Approved", value: listings.filter(l => l.status === "APPROVED").length, color: "var(--c)" }, { label: "Rejected", value: listings.filter(l => l.status === "REJECTED").length, color: "var(--danger)" }].map(s => (
-                        <div key={s.label} style={{ background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: "var(--r-lg)", padding: "16px 20px" }}>
-                            <p style={{ fontSize: 24, fontWeight: 800, color: s.color, fontFamily: "IBM Plex Mono, monospace", marginBottom: 4 }}>{s.value}</p>
-                            <p style={{ fontSize: 12, color: "var(--ink-3)", fontWeight: 600 }}>{s.label}</p>
+        <div className="app">
+            <NavBar />
+            <div className="page-wrap" style={{ maxWidth: 1400 }}>
+                <div className="page-header" style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+                    <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                            <Link href="/admin" style={{ fontSize: 12, color: "var(--ink-3)", textDecoration: "none", fontWeight: 600 }}>← Admin</Link>
+                            <h1 className="page-title" style={{ marginBottom: 0 }}>Marketplace Moderation</h1>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(240,62,95,.1)", border: "1px solid rgba(240,62,95,.2)", borderRadius: 20, padding: "3px 12px" }}>
+                                <div style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--danger)" }} />
+                                <span style={{ fontSize: 10, color: "var(--danger)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, letterSpacing: ".08em" }}>ADMIN</span>
+                            </div>
+                            {pending.length > 0 && (
+                                <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(245,166,35,.1)", border: "1px solid rgba(245,166,35,.3)", borderRadius: 20, padding: "3px 10px" }}>
+                                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--warning)" }} />
+                                    <span style={{ fontSize: 10, color: "var(--warning)", fontFamily: "IBM Plex Mono, monospace", fontWeight: 700 }}>{pending.length} PENDING</span>
+                                </div>
+                            )}
                         </div>
-                    ))}
+                        <p className="page-subtitle">Review and manage API listings submitted by all users</p>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                        <Link href="/marketplace" target="_blank" style={{ fontSize: 12, color: "var(--c)", textDecoration: "none", padding: "6px 14px", border: "1px solid var(--c-border)", borderRadius: "var(--r-sm)", fontWeight: 600 }}>View Marketplace ↗</Link>
+                        <button onClick={fetchListings} style={{ fontSize: 12, color: "var(--c)", background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: "var(--r-sm)", padding: "6px 14px", cursor: "pointer", fontWeight: 700, fontFamily: "Sora, sans-serif" }}>Refresh</button>
+                    </div>
                 </div>
 
-                <div style={{ display: "flex", gap: 4, background: "var(--bg)", borderRadius: "var(--r-sm)", padding: 3, width: "fit-content", marginBottom: 20 }}>
-                    {(["PENDING", "APPROVED", "REJECTED"] as const).map(t => (
-                        <button key={t} onClick={() => setTab(t)} style={{ padding: "6px 16px", borderRadius: 6, border: "none", background: tab === t ? "var(--surface)" : "transparent", color: tab === t ? (t === "PENDING" ? "var(--warning)" : t === "APPROVED" ? "var(--c)" : "var(--danger)") : "var(--ink-3)", fontSize: 11, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, cursor: "pointer" }}>
-                            {t}
-                            {t === "PENDING" && pending > 0 && <span style={{ marginLeft: 6, background: "var(--warning)", color: "#000", borderRadius: "50%", width: 14, height: 14, fontSize: 8, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{pending}</span>}
-                        </button>
-                    ))}
+                <div className="bento-grid" style={{ gridTemplateColumns: "repeat(4, 1fr)", marginBottom: 28 }}>
+                    <div className="bento-cell"><StatCard label="Total Listings" value={listings.length.toString()} color="var(--ink-1)" icon={<svg viewBox="0 0 20 20" fill="none" width="14" height="14"><path d="M3 6h14l-1.2 10h-11.6L3 6z" stroke="var(--ink-1)" strokeWidth="1.3" strokeLinejoin="round" /><path d="M7 6V4.5a3 3 0 016 0V6" stroke="var(--ink-1)" strokeWidth="1.3" strokeLinecap="round" /></svg>} /></div>
+                    <div className="bento-cell"><StatCard label="Pending Review" value={pending.length.toString()} color="var(--warning)" icon={<svg viewBox="0 0 20 20" fill="none" width="14" height="14"><circle cx="10" cy="10" r="8" stroke="var(--warning)" strokeWidth="1.3" /><path d="M10 6v4l2.5 2.5" stroke="var(--warning)" strokeWidth="1.3" strokeLinecap="round" /></svg>} /></div>
+                    <div className="bento-cell"><StatCard label="Approved (Live)" value={approved.length.toString()} color="var(--c)" icon={<svg viewBox="0 0 20 20" fill="none" width="14" height="14"><path d="M3 10l4.5 4.5L17 5" stroke="var(--c)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>} /></div>
+                    <div className="bento-cell"><StatCard label="Rejected" value={rejected.length.toString()} color="var(--danger)" icon={<svg viewBox="0 0 20 20" fill="none" width="14" height="14"><path d="M6 6l8 8M14 6l-8 8" stroke="var(--danger)" strokeWidth="1.5" strokeLinecap="round" /></svg>} /></div>
                 </div>
 
-                {loading ? (
-                    <div style={{ display: "flex", justifyContent: "center", padding: 60 }}><div className="page-spinner" /></div>
-                ) : filtered.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: 60, color: "var(--ink-3)", fontSize: 13 }}>No {tab.toLowerCase()} listings</div>
-                ) : (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                        {filtered.map(l => (
-                            <div key={l.id} style={{ background: "var(--surface)", border: "1px solid var(--stroke)", borderRadius: "var(--r-xl)", padding: "20px 24px" }}>
-                                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 12 }}>
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                                            <span style={{ fontSize: 9, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: "var(--ink-3)", background: "var(--raised)", borderRadius: 4, padding: "1px 6px", textTransform: "uppercase" }}>{l.category}</span>
-                                            {l.featured && <span style={{ fontSize: 9, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: "var(--c)", background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: 4, padding: "1px 6px" }}>FEATURED</span>}
+                <div className="card">
+                    <div className="card-head" style={{ justifyContent: "space-between" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                            <div className="card-head-icon"><svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M3 6h14l-1.2 10h-11.6L3 6z" stroke="var(--c)" strokeWidth="1.3" strokeLinejoin="round" /><path d="M7 6V4.5a3 3 0 016 0V6" stroke="var(--c)" strokeWidth="1.3" strokeLinecap="round" /></svg></div>
+                            <div><div className="card-title">Listings</div><div className="card-subtitle">{listings.length} total · {pending.length} awaiting review</div></div>
+                        </div>
+                        <div style={{ display: "flex", gap: 4, background: "var(--bg)", borderRadius: "var(--r-sm)", padding: 3 }}>
+                            {(["PENDING", "APPROVED", "REJECTED", "ALL"] as const).map(t => (
+                                <button key={t} onClick={() => setTab(t)} style={{ padding: "5px 12px", borderRadius: 6, border: "none", background: tab === t ? "var(--surface)" : "transparent", color: tab === t ? (t === "PENDING" ? "var(--warning)" : t === "APPROVED" ? "var(--c)" : t === "REJECTED" ? "var(--danger)" : "var(--ink-1)") : "var(--ink-3)", fontSize: 11, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, cursor: "pointer", transition: "all .15s" }}>
+                                    {t}
+                                    {t === "PENDING" && pending.length > 0 && <span style={{ marginLeft: 4, background: "var(--warning)", color: "#000", borderRadius: "50%", width: 14, height: 14, fontSize: 8, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{pending.length}</span>}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "2.4fr 1.1fr 0.8fr 1.4fr 0.9fr 0.9fr 1.6fr", gap: 12, padding: "11px 20px", background: "var(--raised)", borderBottom: "1px solid var(--stroke)" }}>
+                        {["LISTING", "SUBMITTER", "PRICE", "ENDPOINT", "STATUS", "DATE", "ACTIONS"].map(c => <span key={c} style={{ fontSize: 9, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink-3)", letterSpacing: ".12em", fontWeight: 600 }}>{c}</span>)}
+                    </div>
+
+                    <div style={{ maxHeight: 640, overflowY: "auto", padding: "4px 0" }}>
+                        {loading ? (
+                            <div style={{ display: "flex", justifyContent: "center", padding: 60 }}><div className="page-spinner" /></div>
+                        ) : filtered.length === 0 ? (
+                            <div style={{ padding: 40, textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>No {tab === "ALL" ? "" : tab.toLowerCase() + " "}listings</div>
+                        ) : filtered.map((l, i) => {
+                            const color = CATEGORY_COLORS[l.category] ?? "#888";
+                            return (
+                                <div key={l.id} style={{ display: "grid", gridTemplateColumns: "2.4fr 1.1fr 0.8fr 1.4fr 0.9fr 0.9fr 1.6fr", gap: 12, padding: "16px 20px", alignItems: "center", borderBottom: i < filtered.length - 1 ? "1px solid var(--stroke)" : "none", transition: "background .12s" }}
+                                    onMouseEnter={ev => (ev.currentTarget.style.background = "var(--raised)")}
+                                    onMouseLeave={ev => (ev.currentTarget.style.background = "transparent")}
+                                >
+                                    <div style={{ minWidth: 0 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                                            <span className="listing-chip" style={{ color, background: `${color}15`, borderColor: `${color}30` }}>{l.category}</span>
+                                            {l.featured && <span className="listing-chip listing-chip-featured">Featured</span>}
                                         </div>
-                                        <h3 style={{ fontSize: 16, fontWeight: 800, color: "var(--ink-1)", marginBottom: 4 }}>{l.name}</h3>
-                                        <p style={{ fontSize: 12, color: "var(--ink-3)", lineHeight: 1.5, marginBottom: 8 }}>{l.description}</p>
-                                        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-                                            <span style={{ fontSize: 11, fontFamily: "IBM Plex Mono, monospace", color: "var(--c)", fontWeight: 700 }}>{l.price} USDC/req</span>
-                                            <a href={l.endpoint} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontFamily: "IBM Plex Mono, monospace", color: "var(--info)", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 300 }}>{l.endpoint} ↗</a>
-                                            <span style={{ fontSize: 11, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink-3)" }}>{l.creatorUsername ? `@${l.creatorUsername}` : `${l.creatorAddress.slice(0, 8)}...${l.creatorAddress.slice(-4)}`}</span>
-                                            <span style={{ fontSize: 11, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink-3)" }}>{fmtDate(l.createdAt)}</span>
-                                        </div>
+                                        <p style={{ fontSize: 13, fontWeight: 700, color: "var(--ink-1)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.name}</p>
+                                        <p style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.description}</p>
                                     </div>
-                                    <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
-                                        {tab === "PENDING" && (
+                                    <span style={{ fontSize: 11, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink-2)" }}>{l.creatorUsername ? `@${l.creatorUsername}` : `${l.creatorAddress.slice(0, 6)}...${l.creatorAddress.slice(-4)}`}</span>
+                                    <div>
+                                        <p style={{ fontSize: 14, fontWeight: 800, color: "var(--c)", fontFamily: "IBM Plex Mono, monospace", letterSpacing: "-.02em" }}>{l.price}</p>
+                                        <p style={{ fontSize: 9, color: "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>USDC/req</p>
+                                    </div>
+                                    <a href={l.endpoint} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontFamily: "IBM Plex Mono, monospace", color: "var(--info)", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.endpoint} ↗</a>
+                                    <div><span style={{ fontSize: 11, fontFamily: "IBM Plex Mono, monospace", fontWeight: 700, color: statusColor(l.status), background: `${statusColor(l.status)}15`, border: `1px solid ${statusColor(l.status)}30`, borderRadius: 20, padding: "2px 8px" }}>{l.status}</span></div>
+                                    <span style={{ fontSize: 10, fontFamily: "IBM Plex Mono, monospace", color: "var(--ink-3)" }}>{fmtDate(l.createdAt)}</span>
+                                    <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                                        {l.status === "PENDING" && (
                                             <>
-                                                <button onClick={() => updateListing(l.id, { status: "APPROVED" })} disabled={actioning === l.id} style={{ padding: "7px 14px", background: "var(--c)", border: "none", borderRadius: "var(--r-sm)", color: "#000", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif", opacity: actioning === l.id ? .5 : 1 }}>✓ Approve</button>
-                                                <button onClick={() => updateListing(l.id, { status: "REJECTED" })} disabled={actioning === l.id} style={{ padding: "7px 14px", background: "transparent", border: "1px solid var(--danger)", borderRadius: "var(--r-sm)", color: "var(--danger)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif", opacity: actioning === l.id ? .5 : 1 }}>✕ Reject</button>
+                                                <button onClick={() => updateListing(l.id, { status: "APPROVED" })} disabled={actioning === l.id} style={{ padding: "6px 12px", background: "var(--c)", border: "none", borderRadius: "var(--r-sm)", color: "#000", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif", opacity: actioning === l.id ? .5 : 1 }}>✓ Approve</button>
+                                                <button onClick={() => updateListing(l.id, { status: "REJECTED" })} disabled={actioning === l.id} style={{ padding: "6px 12px", background: "transparent", border: "1px solid var(--danger)", borderRadius: "var(--r-sm)", color: "var(--danger)", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif", opacity: actioning === l.id ? .5 : 1 }}>✕ Reject</button>
                                             </>
                                         )}
-                                        {tab === "APPROVED" && (
-                                            <button onClick={() => updateListing(l.id, { featured: !l.featured })} disabled={actioning === l.id} style={{ padding: "7px 14px", background: l.featured ? "var(--c-dim)" : "var(--raised)", border: `1px solid ${l.featured ? "var(--c-border)" : "var(--stroke)"}`, borderRadius: "var(--r-sm)", color: l.featured ? "var(--c)" : "var(--ink-2)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>{l.featured ? "★ Unfeature" : "☆ Feature"}</button>
+                                        {l.status === "APPROVED" && (
+                                            <button onClick={() => updateListing(l.id, { featured: !l.featured })} disabled={actioning === l.id} style={{ padding: "6px 12px", background: l.featured ? "var(--c-dim)" : "var(--raised)", border: `1px solid ${l.featured ? "var(--c-border)" : "var(--stroke)"}`, borderRadius: "var(--r-sm)", color: l.featured ? "var(--c)" : "var(--ink-2)", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>{l.featured ? "★ Unfeature" : "☆ Feature"}</button>
                                         )}
-                                        {tab === "REJECTED" && (
-                                            <button onClick={() => updateListing(l.id, { status: "APPROVED" })} disabled={actioning === l.id} style={{ padding: "7px 14px", background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: "var(--r-sm)", color: "var(--c)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Re-approve</button>
+                                        {l.status === "REJECTED" && (
+                                            <button onClick={() => updateListing(l.id, { status: "APPROVED" })} disabled={actioning === l.id} style={{ padding: "6px 12px", background: "var(--c-dim)", border: "1px solid var(--c-border)", borderRadius: "var(--r-sm)", color: "var(--c)", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Re-approve</button>
                                         )}
-                                        <button onClick={() => deleteListing(l.id)} disabled={actioning === l.id} style={{ padding: "7px 14px", background: "transparent", border: "1px solid var(--stroke)", borderRadius: "var(--r-sm)", color: "var(--ink-3)", fontSize: 11, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Delete</button>
+                                        <Link href={`/marketplace/${l.id}`} target="_blank" style={{ padding: "6px 12px", background: "var(--raised)", border: "1px solid var(--stroke)", borderRadius: "var(--r-sm)", color: "var(--ink-2)", fontSize: 11, fontWeight: 700, textDecoration: "none" }}>View</Link>
+                                        <button onClick={() => deleteListing(l.id)} disabled={actioning === l.id} style={{ padding: "6px 12px", background: "transparent", border: "1px solid var(--stroke)", borderRadius: "var(--r-sm)", color: "var(--ink-3)", fontSize: 11, cursor: "pointer", fontFamily: "Sora, sans-serif" }}>Delete</button>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );
