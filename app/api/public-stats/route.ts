@@ -5,9 +5,13 @@ import { db } from "@/lib/db";
 // Same aggregation as /api/arc-stats, without the x402 payment gate — safe to
 // call on every page load.
 export async function GET() {
-  const [links, escrows] = await Promise.all([
+  const [links, escrows, splits, agents, marketplaceListings, x402Payments] = await Promise.all([
     db.paymentLink.findMany({ select: { amount: true, status: true } }),
     db.escrowLink.findMany({ select: { amount: true, status: true } }),
+    db.splitLink.count(),
+    db.agentWallet.count(),
+    db.marketplaceListing.count({ where: { status: "APPROVED" } }),
+    db.x402Payment.count(),
   ]);
 
   const completedLinks = links.filter(l => l.status === "COMPLETED" || l.status === "PAID");
@@ -20,5 +24,9 @@ export async function GET() {
     transactions: completedLinks.length + releasedEscrows.length,
     paymentLinks: links.length,
     escrows: escrows.length,
+    splits,
+    agents,
+    marketplaceListings,
+    x402Payments,
   });
 }

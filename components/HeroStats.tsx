@@ -40,8 +40,14 @@ function StatPill({
   return (
     <div className={`hero-stat-pill ${className}`}>
       <div className="hero-stat-pill-value">
-        {formatted}
-        {suffix && <span className="hero-stat-pill-suffix">{suffix}</span>}
+        {active ? (
+          <>
+            {formatted}
+            {suffix && <span className="hero-stat-pill-suffix">{suffix}</span>}
+          </>
+        ) : (
+          <span className="stat-skeleton" />
+        )}
       </div>
       <div className="hero-stat-pill-label">{label}</div>
     </div>
@@ -53,10 +59,21 @@ export function HeroStats() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/public-stats")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => { if (!cancelled && data) setStats(data); })
-      .catch(() => {});
+
+    const load = (retriesLeft: number) => {
+      fetch("/api/public-stats")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (cancelled) return;
+          if (data) setStats(data);
+          else if (retriesLeft > 0) setTimeout(() => load(retriesLeft - 1), 1500);
+        })
+        .catch(() => {
+          if (!cancelled && retriesLeft > 0) setTimeout(() => load(retriesLeft - 1), 1500);
+        });
+    };
+    load(1);
+
     return () => { cancelled = true; };
   }, []);
 

@@ -386,6 +386,14 @@
   display: inline-block;
   width: 90px;
   height: 30px;
+  border-radius: var(--r-sm);
+  background: var(--raised);
+  animation: statSkeletonPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes statSkeletonPulse {
+  0%, 100% { opacity: .5; }
+  50% { opacity: 1; }
 }
 
 /* ── Dashboard grid ───────────────────────────────────────────── */
@@ -1533,6 +1541,526 @@
   height: 5px;
   border-radius: 50%;
   background: var(--c);
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   MARKETING LANDING PAGE — section system (app/page.tsx, logged-out)
+   ══════════════════════════════════════════════════════════════ */
+.landing-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 40px;
+  width: 100%;
+}
+
+.landing-section {
+  padding: 68px 0;
+}
+
+.landing-section-tight {
+  padding: 46px 0;
+}
+
+.landing-section-alt {
+  background: var(--bg-2);
+  border-top: 1px solid var(--stroke);
+  border-bottom: 1px solid var(--stroke);
+}
+
+.landing-section-head {
+  max-width: 640px;
+  margin-bottom: 32px;
+}
+
+.landing-section-head-center {
+  max-width: 640px;
+  margin: 0 auto 32px;
+  text-align: center;
+}
+
+.landing-eyebrow {
+  font-size: 11px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+  color: var(--c);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.landing-h2 {
+  font-size: 34px;
+  font-weight: 800;
+  color: var(--ink-1);
+  letter-spacing: -.03em;
+  line-height: 1.15;
+  margin-bottom: 14px;
+}
+
+.landing-p {
+  font-size: 15px;
+  color: var(--ink-2);
+  line-height: 1.7;
+}
+
+/* ── Stats strip ──────────────────────────────────────────────── */
+.landing-stats-section {
+  padding: 36px 0 40px;
+  background: var(--bg-2);
+  border-top: 1px solid var(--stroke);
+  border-bottom: 1px solid var(--stroke);
+}
+
+.landing-badge-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.landing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--c-dim);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-full);
+  padding: 8px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c);
+  font-family: 'Sora', sans-serif;
+}
+
+.landing-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c);
+  flex-shrink: 0;
+}
+
+.landing-stats-grid {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
+}
+
+.landing-stat-card {
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-lg);
+  padding: 20px 16px;
+  text-align: center;
+  box-shadow: var(--elev-1);
+}
+
+.landing-stat-card-accent {
+  border-color: var(--c-border);
+  box-shadow: var(--elev-glow);
+}
+
+.landing-stat-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--c);
+  letter-spacing: -.02em;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.landing-stat-suffix {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-2);
+  margin-left: 3px;
+}
+
+.landing-stat-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  margin-top: 8px;
+}
+
+/* ── Flagship: x402 + agent economy ──────────────────────────── */
+.flagship-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 56px;
+  align-items: center;
+}
+
+.pillar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.pillar-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-md);
+  box-shadow: var(--elev-1);
+  text-decoration: none;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.pillar-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--elev-glow);
+  border-color: var(--c-border);
+}
+
+.pillar-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  background: var(--raised);
+  border: 1px solid var(--stroke);
+  color: var(--c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pillar-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.pillar-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-1);
+  margin-bottom: 2px;
+}
+
+.pillar-desc {
+  font-size: 12px;
+  color: var(--ink-3);
+  line-height: 1.5;
+}
+
+.pillar-arrow {
+  color: var(--ink-3);
+  flex-shrink: 0;
+}
+
+.code-panel-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.code-panel-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.code-kw { color: var(--c); }
+.code-str { color: var(--info); }
+.code-imp { color: var(--purple); }
+.code-cm { color: #6b7280; }
+.code-fn { color: #e5e9f0; }
+.code-plain { color: #a9b0bd; }
+
+/* ── Escrow + AI mediation ────────────────────────────────────── */
+.mediation-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  align-items: center;
+}
+
+.gemini-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(167, 139, 250, .1);
+  border: 1px solid rgba(167, 139, 250, .28);
+  border-radius: var(--r-full);
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--purple);
+  font-family: 'IBM Plex Mono', monospace;
+  margin-bottom: 20px;
+}
+
+.escrow-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.mediation-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+/* ── Core payments (compact — table stakes) ──────────────────── */
+.core-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.core-card {
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-md);
+  padding: 18px;
+  box-shadow: var(--elev-1);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.core-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--stroke2);
+}
+
+.core-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-sm);
+  background: var(--raised);
+  border: 1px solid var(--stroke);
+  color: var(--c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.core-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-1);
+  margin-bottom: 4px;
+}
+
+.core-desc {
+  font-size: 11.5px;
+  color: var(--ink-3);
+  line-height: 1.55;
+}
+
+/* ── Compact showcase bands (multi-chain, seedless wallets) ──── */
+.showcase-band {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.chain-chip-row,
+.method-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.chain-arrow {
+  color: var(--ink-3);
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* Destination marker — deliberately NOT button-styled (no border pill, no hover,
+   no Sora sentence case). Mono uppercase tag reads as a data label, matching
+   .badge / .stat-label, so it can't be mistaken for a clickable chain option. */
+.chain-endpoint {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 13px;
+  background: var(--c);
+  color: #04140d;
+  border-radius: var(--r-sm);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+
+/* ── For developers / agents ──────────────────────────────────── */
+.dev-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+}
+
+.dev-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dev-col-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink-1);
+  letter-spacing: -.01em;
+}
+
+.dev-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.dev-link-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--raised);
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-2);
+  text-decoration: none;
+  transition: all .15s;
+}
+
+.dev-link-chip:hover {
+  color: var(--ink-1);
+  border-color: var(--stroke2);
+  background: var(--hover);
+}
+
+/* ── Final CTA ────────────────────────────────────────────────── */
+.final-cta-section {
+  padding: 68px 0 84px;
+  text-align: center;
+}
+
+.final-cta-card {
+  max-width: 680px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-xl);
+  padding: 56px 48px;
+  box-shadow: var(--elev-glow);
+  position: relative;
+  overflow: hidden;
+}
+
+.final-cta-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--c-grad);
+}
+
+.final-cta-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--ink-1);
+  letter-spacing: -.03em;
+  margin-bottom: 14px;
+  line-height: 1.15;
+}
+
+.final-cta-desc {
+  font-size: 15px;
+  color: var(--ink-2);
+  line-height: 1.6;
+  max-width: 460px;
+  margin: 0 auto 32px;
+}
+
+.final-cta-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .landing-stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .flagship-grid,
+  .mediation-grid,
+  .showcase-band,
+  .dev-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .core-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .mediation-steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .landing-h2 {
+    font-size: 28px;
+  }
+
+  .landing-section {
+    padding: 48px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-container,
+  .landing-stats-grid {
+    padding: 0 20px;
+  }
+
+  .landing-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .core-grid,
+  .mediation-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .final-cta-card {
+    padding: 40px 24px;
+  }
+
+  .final-cta-title {
+    font-size: 26px;
+  }
 }
 
 /* ── Pay Page ─────────────────────────────────────────────────── */
@@ -2736,6 +3264,14 @@
   display: inline-block;
   width: 90px;
   height: 30px;
+  border-radius: var(--r-sm);
+  background: var(--raised);
+  animation: statSkeletonPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes statSkeletonPulse {
+  0%, 100% { opacity: .5; }
+  50% { opacity: 1; }
 }
 
 .stat-icon-wrap {

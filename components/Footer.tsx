@@ -46,6 +46,10 @@ export function Footer() {
   useEffect(() => {
     setMounted(true);
     setIsDark(localStorage.getItem("conduit-theme") !== "light");
+
+    const syncTheme = () => setIsDark(localStorage.getItem("conduit-theme") !== "light");
+    window.addEventListener("conduit-theme-change", syncTheme);
+    return () => window.removeEventListener("conduit-theme-change", syncTheme);
   }, []);
 
   // Standalone payment-collection pages have their own minimal "Powered by" footer
@@ -60,7 +64,7 @@ export function Footer() {
         <div className="site-footer-top">
           <div className="site-footer-brand">
             <Link href="/" className="site-footer-logo">
-              <Image src={mounted ? logoSrc : "/conduit-logo-white.png"} alt="Conduit" width={140} height={52} style={{ height: 34, width: "auto", objectFit: "contain" }} />
+              <Image src={mounted ? logoSrc : "/conduit-logo-white.png"} alt="Conduit" width={140} height={52} style={{ height: 52, width: "auto", objectFit: "contain" }} />
             </Link>
             <p className="site-footer-tagline">
               The USDC payment rail for humans and AI agents on Arc Network.

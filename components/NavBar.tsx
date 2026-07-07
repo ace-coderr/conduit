@@ -187,6 +187,7 @@ export function NavBar() {
       document.documentElement.setAttribute("data-theme", "light");
       localStorage.setItem("conduit-theme", "light");
     }
+    window.dispatchEvent(new Event("conduit-theme-change"));
   };
 
   const handleLogout = async () => {
