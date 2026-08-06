@@ -376,7 +376,7 @@ export default function AgentsPage() {
                                         const withdrawOpen = spendOpen === a.id;
                                         return (
                                             <div key={a.id}>
-                                                <div className="table-row" style={{ gridTemplateColumns: "2.2fr 1fr 1fr 1fr 1.3fr 1.6fr", borderLeft: `3px solid ${status.color}` }}>
+                                                <div className="table-data-row" style={{ gridTemplateColumns: "2.2fr 1fr 1fr 1fr 1.3fr 1.6fr", borderLeft: `3px solid ${status.color}` }}>
                                                     <div className="table-cell-title">
                                                         <div className="table-cell-title-name">
                                                             <span className="table-cell-status-dot" style={{ background: status.color }} />

@@ -420,7 +420,7 @@ export default function SplitsPage() {
                                         const isExpanded = expandedId === s.id;
                                         return (
                                             <div key={s.id}>
-                                                <div className="table-row" style={{ borderLeft: `3px solid ${statusColor(s.status)}` }}>
+                                                <div className="table-data-row" style={{ borderLeft: `3px solid ${statusColor(s.status)}` }}>
                                                     <div className="table-cell-title">
                                                         <div className="table-cell-title-name">
                                                             <span className="table-cell-status-dot" style={{ background: statusColor(s.status) }} />

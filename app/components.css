@@ -1204,7 +1204,7 @@
   font-weight: 600;
 }
 
-.table-row {
+.table-data-row {
   display: grid;
   grid-template-columns: 3fr 110px 120px 90px 120px;
   gap: 10px;
@@ -1214,11 +1214,11 @@
   transition: background .12s;
 }
 
-.table-row:last-child {
+.table-data-row:last-child {
   border-bottom: none;
 }
 
-.table-row:hover {
+.table-data-row:hover {
   background: var(--hover);
   box-shadow: inset 2px 0 0 var(--c);
 }
@@ -4063,7 +4063,10 @@
   font-weight: 600;
 }
 
-.table-row {
+/* NOTE: named .table-data-row, not .table-row — Tailwind ships a
+   `.table-row { display: table-row }` display utility, and that collision
+   silently turns these grid rows into real table rows (all cells stack). */
+.table-data-row {
   display: grid;
   grid-template-columns: 3fr 110px 120px 90px 156px;
   gap: 10px;
@@ -4073,11 +4076,11 @@
   transition: background .12s;
 }
 
-.table-row:last-child {
+.table-data-row:last-child {
   border-bottom: none;
 }
 
-.table-row:hover {
+.table-data-row:hover {
   background: var(--hover);
   box-shadow: inset 2px 0 0 var(--c);
 }
@@ -4817,7 +4820,7 @@
     grid-template-columns: 2fr 100px 95px !important;
   }
 
-  .table-row {
+  .table-data-row {
     grid-template-columns: 2fr 100px 95px !important;
   }
 

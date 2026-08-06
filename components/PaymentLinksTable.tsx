@@ -202,7 +202,7 @@ export function PaymentLinksTable({ refreshTrigger }: Props) {
         )}
 
         {mounted && !isLoading && filtered.map((link) => (
-          <div key={link.id} className="table-row" style={{ borderLeft: `3px solid ${statusColor(link.status)}` }}>
+          <div key={link.id} className="table-data-row" style={{ borderLeft: `3px solid ${statusColor(link.status)}` }}>
             <div className="table-cell-title">
               <div className="table-cell-title-name">
                 <span className="table-cell-status-dot" style={{ background: statusColor(link.status) }} />

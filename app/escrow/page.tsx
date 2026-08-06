@@ -489,7 +489,7 @@ export default function EscrowPage() {
                     const released = isEffectivelyReleased(e);
                     const effStatus = released ? "RELEASED" : e.status;
                     return (
-                      <div key={e.id} className="table-row" style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr", borderLeft: `3px solid ${statusColor(effStatus)}` }}>
+                      <div key={e.id} className="table-data-row" style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr", borderLeft: `3px solid ${statusColor(effStatus)}` }}>
                         <div className="table-cell-title">
                           <div className="table-cell-title-name">
                             <span className="table-cell-status-dot" style={{ background: statusColor(effStatus) }} />

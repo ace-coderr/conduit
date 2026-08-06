@@ -361,7 +361,7 @@ export default function WebhooksPage() {
                                         const logOpen = expandedLog === w.id;
                                         return (
                                             <div key={w.id}>
-                                                <div className="table-row" style={{ gridTemplateColumns: "2.4fr 1.6fr 1fr 1fr 1.4fr", borderLeft: `3px solid ${status.color}` }}>
+                                                <div className="table-data-row" style={{ gridTemplateColumns: "2.4fr 1.6fr 1fr 1fr 1.4fr", borderLeft: `3px solid ${status.color}` }}>
                                                     <div className="table-cell-title">
                                                         <div className="table-cell-title-name">
                                                             <span className="table-cell-status-dot" style={{ background: status.color }} />
