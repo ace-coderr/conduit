@@ -80,6 +80,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       forwardTxHash: result.txHash,
+      feeTxHash: result.feeTxHash ?? null,
       message: "Funds forwarded successfully.",
     });
   }

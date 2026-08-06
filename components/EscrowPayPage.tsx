@@ -9,16 +9,8 @@ import {
 import { injected } from "wagmi/connectors";
 import { parseEther, formatEther } from "viem";
 import { arcTestnet } from "@/lib/arcChain";
+import { calculateFeeOnTop } from "@/lib/fees";
 import { TrustBadge } from "@/components/TrustBadge";
-
-const FEE_COLLECTOR = "0x2d2eba8c0da5879ab25b5bd37e211d230aabbb5c";
-const FEE_PERCENT = 0.5;
-
-function calcFee(amount: string) {
-  const total = parseFloat(amount);
-  const fee = Math.max((total * FEE_PERCENT) / 100, 0.001);
-  return { fee: fee.toFixed(4), totalPays: (total + fee).toFixed(4) };
-}
 
 interface EscrowData {
   id: string;
@@ -94,14 +86,13 @@ function Countdown({ deadline, label }: { deadline: string; label?: string }) {
   return <span style={{ color, fontFamily: "IBM Plex Mono, monospace", fontSize: 11, fontWeight: 700 }}>{label ? `${label}: ` : ""}{text}</span>;
 }
 
-type PayStep = "idle" | "sending_payment" | "sending_fee" | "recording" | "done" | "failed";
+type PayStep = "idle" | "sending_payment" | "recording" | "done" | "failed";
 
 export function EscrowPayPage({ escrow: initialEscrow }: { escrow: EscrowData }) {
   const [escrow, setEscrow] = useState(initialEscrow);
   const [mounted, setMounted] = useState(false);
   const [payStep, setPayStep] = useState<PayStep>("idle");
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
-  const [feeTxHash, setFeeTxHash] = useState<`0x${string}` | undefined>();
   const [error, setError] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [showDisputeForm, setShowDisputeForm] = useState(false);
@@ -123,15 +114,16 @@ export function EscrowPayPage({ escrow: initialEscrow }: { escrow: EscrowData })
   const { switchChain } = useSwitchChain();
   const isOnArc = chainId === arcTestnet.id;
 
-  const { fee: feeAmount, totalPays } = calcFee(escrow.amount);
+  // Fee rides on top of the escrow amount in a single transaction — the buyer
+  // signs `totalPays`, the seller is still owed the full `escrow.amount`, and
+  // the server moves the fee out of the escrow wallet afterwards.
+  const { fee: feeAmount, total: totalPays, feePercent } = calculateFeeOnTop(escrow.amount);
   const { data: balance } = useBalance({ address, chainId: arcTestnet.id });
   const bal = balance ? parseFloat(formatEther(balance.value)) : 0;
   const hasEnough = bal >= parseFloat(totalPays);
 
   const { sendTransaction: sendPayment, isPending: isPaymentPending } = useSendTransaction();
   const { isLoading: isPaymentWaiting, isSuccess: paymentConfirmed } = useWaitForTransactionReceipt({ hash: txHash, chainId: arcTestnet.id });
-  const { sendTransaction: sendFee, isPending: isFeePending } = useSendTransaction();
-  const { isLoading: isFeeWaiting, isSuccess: feeConfirmed } = useWaitForTransactionReceipt({ hash: feeTxHash, chainId: arcTestnet.id });
 
   const deliveryPassed = !localDeliveryDeadline || new Date(localDeliveryDeadline) <= new Date();
   const isBuyer = address?.toLowerCase() === escrow.buyerAddress?.toLowerCase();
@@ -150,23 +142,10 @@ export function EscrowPayPage({ escrow: initialEscrow }: { escrow: EscrowData })
 
   useEffect(() => {
     if (paymentConfirmed && txHash && payStep === "sending_payment") {
-      setPayStep("sending_fee");
-      sendFee(
-        { to: FEE_COLLECTOR as `0x${string}`, value: parseEther(feeAmount), chainId: arcTestnet.id },
-        {
-          onSuccess: (h) => { setFeeTxHash(h); },
-          onError: () => { setPayStep("idle"); setError("Fee transaction failed. Please try again."); },
-        }
-      );
-    }
-  }, [paymentConfirmed]);
-
-  useEffect(() => {
-    if (feeConfirmed && feeTxHash && payStep === "sending_fee") {
       setPayStep("recording");
       recordPayment();
     }
-  }, [feeConfirmed]);
+  }, [paymentConfirmed]);
 
   const fetchMessages = async () => {
     try {
@@ -203,7 +182,8 @@ export function EscrowPayPage({ escrow: initialEscrow }: { escrow: EscrowData })
     setError("");
     setPayStep("sending_payment");
     sendPayment(
-      { to: escrow.stealthAddress as `0x${string}`, value: parseEther(escrow.amount), chainId: arcTestnet.id },
+      // amount + fee in one signature — the escrow wallet holds both
+      { to: escrow.stealthAddress as `0x${string}`, value: parseEther(totalPays), chainId: arcTestnet.id },
       {
         onSuccess: (h) => { setTxHash(h); },
         onError: (err: Error) => {
@@ -283,13 +263,11 @@ export function EscrowPayPage({ escrow: initialEscrow }: { escrow: EscrowData })
   const statusMsg = () => {
     if (isPaymentPending) return "Confirm payment in MetaMask...";
     if (isPaymentWaiting) return "Confirming payment...";
-    if (payStep === "sending_fee" && isFeePending) return "Confirm fee in MetaMask...";
-    if (payStep === "sending_fee" && isFeeWaiting) return "Confirming fee...";
     if (payStep === "recording") return "Recording payment...";
     return "Processing...";
   };
 
-  const isBusy = ["sending_payment", "sending_fee", "recording"].includes(payStep) || isPaymentPending || isPaymentWaiting || isFeePending || isFeeWaiting;
+  const isBusy = ["sending_payment", "recording"].includes(payStep) || isPaymentPending || isPaymentWaiting;
   const fmt = (n: number) => n % 1 === 0 ? n.toString() : n.toFixed(2);
 
   const bubbleClass = (sender: string) => {
@@ -597,7 +575,7 @@ export function EscrowPayPage({ escrow: initialEscrow }: { escrow: EscrowData })
               <span className="pay-detail-v" style={{ color: "var(--info)" }}>{escrow.amount} USDC</span>
             </div>
             <div className="pay-detail" style={{ marginTop: 6 }}>
-              <span className="pay-detail-k" style={{ color: "var(--ink-3)" }}>Service fee ({FEE_PERCENT}%)</span>
+              <span className="pay-detail-k" style={{ color: "var(--ink-3)" }}>Service fee ({feePercent})</span>
               <span className="pay-detail-v" style={{ color: "var(--ink-3)", fontSize: 11 }}>+{feeAmount} USDC</span>
             </div>
             <div className="pay-detail" style={{ marginTop: 6, paddingTop: 6, borderTop: "1px solid var(--stroke)" }}>
@@ -636,8 +614,8 @@ export function EscrowPayPage({ escrow: initialEscrow }: { escrow: EscrowData })
                 </div>
                 <div style={{ width: 20, height: 1, background: "var(--stroke2)" }} />
                 <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: feeTxHash ? "var(--c)" : "var(--stroke2)" }} />
-                  <span style={{ fontSize: 10, color: feeTxHash ? "var(--c)" : "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>Fee</span>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: payStep === "recording" ? "var(--c)" : "var(--stroke2)" }} />
+                  <span style={{ fontSize: 10, color: payStep === "recording" ? "var(--c)" : "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>Secured</span>
                 </div>
               </div>
             </div>
@@ -647,7 +625,7 @@ export function EscrowPayPage({ escrow: initialEscrow }: { escrow: EscrowData })
                 Pay {totalPays} USDC into Escrow
               </button>
               <p style={{ fontSize: 10, color: "var(--ink-3)", textAlign: "center", marginTop: 8, fontFamily: "IBM Plex Mono, monospace" }}>
-                2 confirmations — {escrow.amount} USDC escrow + {feeAmount} USDC fee
+                1 confirmation — {totalPays} USDC total, incl. {feeAmount} USDC fee
               </p>
               {balance && (
                 <p className={`pay-bal${!hasEnough ? " low" : ""}`}>

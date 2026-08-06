@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   useAccount, useConnect, useDisconnect,
   useSendTransaction, useWaitForTransactionReceipt,
@@ -10,20 +10,10 @@ import { injected } from "wagmi/connectors";
 import { parseEther, formatEther } from "viem";
 import { arcTestnet } from "@/lib/arcChain";
 import { formatUSDC } from "@/lib/utils";
+import { FEE_CONFIG, calculateFeeOnTop } from "@/lib/fees";
 import { SOURCE_CHAINS, type SourceChainId, getAppKit, createBrowserAdapter, ensureWalletOnChain } from "@/lib/appKit";
 
-const FEE_COLLECTOR = "0x2d2eba8c0da5879ab25b5bd37e211d230aabbb5c";
-const FEE_PERCENT = 0.5;
-
-function calcFee(amount: string) {
-  const total = parseFloat(amount);
-  const fee = Math.max((total * FEE_PERCENT) / 100, 0.001);
-  return {
-    fee: fee.toFixed(4),
-    recipientAmount: amount,
-    totalPays: (total + fee).toFixed(4),
-  };
-}
+const FEE_COLLECTOR = FEE_CONFIG.collectorAddress;
 
 interface PaymentLink {
   id: string;
@@ -40,6 +30,7 @@ interface PaymentLink {
 interface FeeInfo {
   fee: string;
   recipientAmount: string;
+  total: string;
   feePercent: string;
 }
 
@@ -122,43 +113,55 @@ export function PayPage({ link, fee }: { link: PaymentLink; fee?: FeeInfo }) {
     ? maskAddress(link.stealthAddress)
     : link.recipientAddress ? maskAddress(link.recipientAddress) : "••••••••••••••••••";
 
-  const { fee: feeAmount, totalPays } = calcFee(effectiveAmount || "0");
+  // Stealth links carry the fee inside the same transaction: the payer signs
+  // amount + fee to the one-time stealth address, and the forwarder pays the
+  // recipient the full amount and the collector the fee. Direct links have no
+  // such hop, so they still need a second (fee) signature.
+  const { fee: feeAmount, total: totalPays, feePercent } = calculateFeeOnTop(effectiveAmount || "0");
+  const singleSignature = isStealthLink;
   const { data: balance } = useBalance({ address, chainId: arcTestnet.id });
 
   const { sendTransaction: sendPayment, isPending: isPaymentPending } = useSendTransaction();
   const { isLoading: isPaymentWaiting, isSuccess: paymentConfirmed } = useWaitForTransactionReceipt({ hash: txHash, chainId: arcTestnet.id });
   const { sendTransaction: sendFee, isPending: isFeePending } = useSendTransaction();
-  const { isLoading: isFeeWaiting, isSuccess: feeConfirmed } = useWaitForTransactionReceipt({ hash: feeTxHash, chainId: arcTestnet.id });
+
+  // The payment is recorded off the payment receipt, never off the fee tx —
+  // a rejected fee prompt must not leave a paid link sitting un-recorded.
+  const arcRecorded = useRef(false);
 
   useEffect(() => { setMounted(true); }, []);
 
-  // Arc: after payment confirms → send fee
+  const finishArcPay = (hash: `0x${string}`, payer: string) => {
+    if (arcRecorded.current) return;
+    arcRecorded.current = true;
+    setArcStep("recording");
+    recordPayment(hash, payer);
+  };
+
+  // Arc: payment confirmed → record (stealth), or collect the fee then record (direct)
   useEffect(() => {
-    if (paymentConfirmed && txHash && arcStep === "sending_payment") {
-      setArcStep("sending_fee");
-      sendFee(
-        { to: FEE_COLLECTOR as `0x${string}`, value: parseEther(feeAmount), chainId: arcTestnet.id },
-        {
-          onSuccess: (hash) => { setFeeTxHash(hash); },
-          onError: (err: Error) => {
-            console.warn("[fee] Fee tx failed:", err.message);
-            setArcStep("idle");
-            setError("Fee transaction failed. Please try again.");
-          },
-        }
-      );
+    if (!paymentConfirmed || !txHash || arcStep !== "sending_payment" || !address) return;
+
+    if (singleSignature) {
+      finishArcPay(txHash, address);
+      return;
     }
+
+    setArcStep("sending_fee");
+    sendFee(
+      { to: FEE_COLLECTOR as `0x${string}`, value: parseEther(feeAmount), chainId: arcTestnet.id },
+      {
+        onSuccess: (hash) => { setFeeTxHash(hash); finishArcPay(txHash, address); },
+        onError: (err: Error) => {
+          // Payment already landed — record it regardless of the fee leg.
+          console.warn("[fee] Fee tx failed:", err.message);
+          finishArcPay(txHash, address);
+        },
+      }
+    );
   }, [paymentConfirmed]);
 
-  // Arc: after fee confirms → record
-  useEffect(() => {
-    if (feeConfirmed && feeTxHash && arcStep === "sending_fee") {
-      setArcStep("recording");
-      if (address && txHash) recordPayment(txHash, address);
-    }
-  }, [feeConfirmed]);
-
-  // Unified: after switching to Arc → send fee
+  // Unified (direct links only): after switching back to Arc → send fee
   useEffect(() => {
     if (unifiedStep === "switching" && isOnArc && address) {
       setUnifiedStep("sending_fee");
@@ -167,9 +170,10 @@ export function PayPage({ link, fee }: { link: PaymentLink; fee?: FeeInfo }) {
         {
           onSuccess: (hash) => { setFeeTxHash(hash); setUnifiedStep("done"); setPaySuccess(true); },
           onError: (err: Error) => {
+            // Payment is already routed and recorded — don't fail the payer for it.
             console.warn("[unified fee] Fee tx failed:", err.message);
-            setUnifiedStep("failed");
-            setUnifiedError("Fee transaction failed. Please try again.");
+            setUnifiedStep("done");
+            setPaySuccess(true);
           },
         }
       );
@@ -198,7 +202,7 @@ export function PayPage({ link, fee }: { link: PaymentLink; fee?: FeeInfo }) {
       }
     } catch {
       if (showSuccess && paymentConfirmed) { setPaySuccess(true); setArcStep("done"); }
-      else if (!showSuccess) { /* unified — fee will show success */ }
+      else if (!showSuccess) { /* unified direct link — the fee step shows success */ }
       else setError("Network error. Transaction was sent — save tx hash: " + hash);
     } finally { setIsMarkingPaid(false); }
   };
@@ -208,7 +212,9 @@ export function PayPage({ link, fee }: { link: PaymentLink; fee?: FeeInfo }) {
     setError("");
     setArcStep("sending_payment");
     sendPayment(
-      { to: paymentTarget, value: parseEther(effectiveAmount), chainId: arcTestnet.id },
+      // Stealth: amount + fee in one signature. Direct: amount only, the fee
+      // follows as its own transaction because there is no hop to split at.
+      { to: paymentTarget, value: parseEther(singleSignature ? totalPays : effectiveAmount), chainId: arcTestnet.id },
       {
         onSuccess: (hash) => { setTxHash(hash); },
         onError: (err: Error) => {
@@ -237,18 +243,29 @@ export function PayPage({ link, fee }: { link: PaymentLink; fee?: FeeInfo }) {
 
       const kit = getAppKit();
       const adapter = await createBrowserAdapter();
-      const recipientAddr = link.recipientAddress || link.stealthAddress;
+      // Route through the stealth address when the link has one: the fee comes
+      // out of the forward server-side, so there's no switch back to Arc and no
+      // second wallet prompt at the end.
+      const recipientAddr = link.stealthAddress || link.recipientAddress;
       if (!recipientAddr) throw new Error("Recipient address not available.");
 
-      const depositResult = await kit.unifiedBalance.deposit({ from: { adapter, chain: selectedChain as any }, amount: effectiveAmount, token: "USDC" });
+      const routedAmount = singleSignature ? totalPays : effectiveAmount;
+
+      const depositResult = await kit.unifiedBalance.deposit({ from: { adapter, chain: selectedChain as any }, amount: routedAmount, token: "USDC" });
       setUnifiedTxHash(extractHash(depositResult));
       setUnifiedStep("spending");
 
-      const spendResult = await kit.unifiedBalance.spend({ from: { adapter }, amount: effectiveAmount, to: { adapter, chain: "Arc_Testnet", recipientAddress: recipientAddr } });
+      const spendResult = await kit.unifiedBalance.spend({ from: { adapter }, amount: routedAmount, to: { adapter, chain: "Arc_Testnet", recipientAddress: recipientAddr } });
       setUnifiedStep("recording");
 
       const finalHash = extractHash(spendResult) || extractHash(depositResult) || `0x_unified_${Date.now()}`;
-      if (address) await recordPayment(finalHash, address, "unified", false);
+      if (address) await recordPayment(finalHash, address, "unified", singleSignature);
+
+      if (singleSignature) {
+        setUnifiedStep("done");
+        setPaySuccess(true);
+        return;
+      }
 
       setUnifiedStep("switching");
       switchChain({ chainId: arcTestnet.id });
@@ -261,23 +278,23 @@ export function PayPage({ link, fee }: { link: PaymentLink; fee?: FeeInfo }) {
   const bal = balance ? parseFloat(formatEther(balance.value)) : 0;
   const hasEnough = bal >= parseFloat(totalPays);
   const chainInfo = SOURCE_CHAINS.find(c => c.id === selectedChain);
-  const isArcBusy = ["sending_payment", "sending_fee", "recording"].includes(arcStep) || isPaymentPending || isPaymentWaiting || isFeePending || isFeeWaiting || isMarkingPaid;
+  const isArcBusy = ["sending_payment", "sending_fee", "recording"].includes(arcStep) || isPaymentPending || isPaymentWaiting || isFeePending || isMarkingPaid;
+  const unifiedSteps = singleSignature ? 2 : 3;
 
   const arcStatusText = () => {
     if (isPaymentPending) return "Confirm payment in MetaMask...";
     if (isPaymentWaiting) return "Confirming payment...";
     if (arcStep === "sending_fee" && isFeePending) return "Confirm fee in MetaMask...";
-    if (arcStep === "sending_fee" && isFeeWaiting) return "Confirming fee...";
     if (isMarkingPaid) return "Recording payment...";
     return "Processing...";
   };
 
   const unifiedStatusText = () => {
-    if (unifiedStep === "depositing") return "Step 1/3 — Depositing from " + (chainInfo?.name ?? "source chain") + "...";
-    if (unifiedStep === "spending") return "Step 2/3 — Routing to Arc Network...";
+    if (unifiedStep === "depositing") return `Step 1/${unifiedSteps} — Depositing from ` + (chainInfo?.name ?? "source chain") + "...";
+    if (unifiedStep === "spending") return `Step 2/${unifiedSteps} — Routing to Arc Network...`;
     if (unifiedStep === "recording") return "Recording payment...";
     if (unifiedStep === "switching") return "Switching to Arc for fee...";
-    if (unifiedStep === "sending_fee") return "Step 3/3 — Confirm fee in MetaMask...";
+    if (unifiedStep === "sending_fee") return `Step 3/${unifiedSteps} — Confirm fee in MetaMask...`;
     return "Processing...";
   };
 
@@ -407,7 +424,7 @@ export function PayPage({ link, fee }: { link: PaymentLink; fee?: FeeInfo }) {
                 <span className="pay-detail-v" style={{ color: "var(--c)" }}>{effectiveAmount} USDC</span>
               </div>
               <div className="pay-detail" style={{ marginTop: 6 }}>
-                <span className="pay-detail-k" style={{ color: "var(--ink-3)" }}>Service fee ({FEE_PERCENT}%)</span>
+                <span className="pay-detail-k" style={{ color: "var(--ink-3)" }}>Service fee ({feePercent})</span>
                 <span className="pay-detail-v" style={{ color: "var(--ink-3)", fontSize: 11 }}>+{feeAmount} USDC</span>
               </div>
               <div className="pay-detail" style={{ marginTop: 6, paddingTop: 6, borderTop: "1px solid var(--stroke)" }}>
@@ -435,7 +452,9 @@ export function PayPage({ link, fee }: { link: PaymentLink; fee?: FeeInfo }) {
           <div className="pay-actions">
             <div style={{ background: "rgba(0,229,160,.05)", border: "1px solid var(--c-border)", borderRadius: "var(--r-sm)", padding: "9px 13px", marginBottom: 16, display: "flex", alignItems: "center", gap: 7 }}>
               <IconBolt size={12} color="var(--c)"/>
-              <p style={{ fontSize: 11, color: "var(--ink-3)" }}>Direct payment on Arc Network — 2 quick confirmations</p>
+              <p style={{ fontSize: 11, color: "var(--ink-3)" }}>
+                Direct payment on Arc Network — {singleSignature ? "one quick confirmation" : "2 quick confirmations"}
+              </p>
             </div>
             {!mounted ? null : !isConnected ? (
               <button className="pay-connect-btn" onClick={() => connect({ connector: injected() })}>Connect Wallet to Pay</button>
@@ -456,10 +475,17 @@ export function PayPage({ link, fee }: { link: PaymentLink; fee?: FeeInfo }) {
                     <span style={{ fontSize: 10, color: txHash ? "var(--c)" : "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>Payment</span>
                   </div>
                   <div style={{ width: 20, height: 1, background: "var(--stroke2)" }}/>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: feeTxHash ? "var(--c)" : "var(--stroke2)" }}/>
-                    <span style={{ fontSize: 10, color: feeTxHash ? "var(--c)" : "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>Fee</span>
-                  </div>
+                  {(() => {
+                    const done = singleSignature ? arcStep === "recording" : !!feeTxHash;
+                    return (
+                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: done ? "var(--c)" : "var(--stroke2)" }}/>
+                        <span style={{ fontSize: 10, color: done ? "var(--c)" : "var(--ink-3)", fontFamily: "IBM Plex Mono, monospace" }}>
+                          {singleSignature ? "Delivered" : "Fee"}
+                        </span>
+                      </div>
+                    );
+                  })()}
                 </div>
                 {txHash && <a href={`https://testnet.arcscan.app/tx/${txHash}`} target="_blank" rel="noopener noreferrer" className="pay-tx-link" style={{ marginTop: 8 }}>Track payment ↗</a>}
               </div>
@@ -475,7 +501,9 @@ export function PayPage({ link, fee }: { link: PaymentLink; fee?: FeeInfo }) {
                 </button>
                 {effectiveAmount && parseFloat(effectiveAmount) > 0 && (
                   <p style={{ fontSize: 10, color: "var(--ink-3)", textAlign: "center", marginTop: 8, fontFamily: "IBM Plex Mono, monospace" }}>
-                    2 confirmations — {effectiveAmount} USDC payment + {feeAmount} USDC fee
+                    {singleSignature
+                      ? `1 confirmation — ${totalPays} USDC total, incl. ${feeAmount} USDC fee`
+                      : `2 confirmations — ${effectiveAmount} USDC payment + ${feeAmount} USDC fee`}
                   </p>
                 )}
                 {balance && effectiveAmount && parseFloat(effectiveAmount) > 0 && (
@@ -519,7 +547,7 @@ export function PayPage({ link, fee }: { link: PaymentLink; fee?: FeeInfo }) {
                 <div className="pay-spinner"/>
                 <p className="pay-spin-text">{unifiedStatusText()}</p>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center", marginTop: 12 }}>
-                  {["depositing", "spending", "sending_fee"].map((step, i) => {
+                  {(singleSignature ? ["depositing", "spending"] : ["depositing", "spending", "sending_fee"]).map((step, i, shown) => {
                     const stepOrder = ["depositing", "spending", "recording", "switching", "sending_fee"];
                     const currentIdx = stepOrder.indexOf(unifiedStep);
                     const stepIdx = stepOrder.indexOf(step);
@@ -533,7 +561,7 @@ export function PayPage({ link, fee }: { link: PaymentLink; fee?: FeeInfo }) {
                             {step === "depositing" ? "Deposit" : step === "spending" ? "Route" : "Fee"}
                           </span>
                         </div>
-                        {i < 2 && <div style={{ width: 16, height: 1, background: "var(--stroke2)" }}/>}
+                        {i < shown.length - 1 && <div style={{ width: 16, height: 1, background: "var(--stroke2)" }}/>}
                       </div>
                     );
                   })}
@@ -546,9 +574,13 @@ export function PayPage({ link, fee }: { link: PaymentLink; fee?: FeeInfo }) {
                   onClick={handleUnifiedPay}
                   style={{ background: "linear-gradient(135deg, #7c3aed, #2563eb)" }}
                 >
-                  Pay {formatUSDC(link.amount)} USDC from {chainInfo?.name}
+                  Pay {totalPays} USDC from {chainInfo?.name}
                 </button>
-                <p style={{ fontSize: 11, color: "var(--ink-3)", textAlign: "center", marginTop: 8 }}>3 steps — deposit · route · fee</p>
+                <p style={{ fontSize: 11, color: "var(--ink-3)", textAlign: "center", marginTop: 8 }}>
+                  {singleSignature
+                    ? `2 steps — deposit · route · ${totalPays} USDC total, incl. ${feeAmount} USDC fee`
+                    : "3 steps — deposit · route · fee"}
+                </p>
               </>
             )}
             {unifiedStep === "failed" && unifiedError && <div className="pay-err-box" style={{ marginTop: 12 }}>{unifiedError}</div>}

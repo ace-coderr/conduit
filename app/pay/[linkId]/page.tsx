@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { PayPage } from "@/components/PayPage";
-import { calculateFee } from "@/lib/fees";
+import { calculateFeeOnTop } from "@/lib/fees";
 import type { Metadata } from "next";
 
 interface PageProps { params: { linkId: string } }
@@ -25,7 +25,9 @@ export default async function PayPageRoute({ params }: PageProps) {
     link.status = "EXPIRED";
   }
 
-  const feeInfo = calculateFee(link.amount);
+  // Payment links quote the fee on top — the recipient gets the full amount.
+  // Not calculateFee, which deducts and is for split links only.
+  const feeInfo = calculateFeeOnTop(link.amount);
 
   return (
     <PayPage

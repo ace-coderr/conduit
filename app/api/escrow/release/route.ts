@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { transferFromWallet } from "@/lib/circle";
+import { collectEscrowFee } from "@/lib/escrowFee";
 import { sendEscrowReleasedEmail } from "@/lib/email";
 import { recordReputationEvent } from "@/lib/reputation";
 
@@ -32,6 +33,9 @@ export async function POST(req: NextRequest) {
 
     // Record reputation: a successful release = a completed escrow for the seller
     await recordReputationEvent(escrow.sellerAddress, "COMPLETED", escrow.amount);
+
+    // Fallback sweep — no-op if the fee was already taken when the buyer paid.
+    collectEscrowFee(escrowId).catch(() => { });
 
     // Email buyer if they have a profile with email
     try {

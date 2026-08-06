@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { transferFromWallet } from "@/lib/circle";
+import { collectEscrowFee } from "@/lib/escrowFee";
 import { verifyAdminQuery } from "@/lib/adminAuth";
 import { recordReputationEvent } from "@/lib/reputation";
 
@@ -62,7 +63,9 @@ export async function POST(req: NextRequest) {
                     data: { status: "RELEASED", releaseTxHash: result.txHash },
                 });
                 await recordReputationEvent(escrow.sellerAddress, "COMPLETED", escrow.amount);
-                results.push({ id: escrow.id, released: true, txHash: result.txHash });
+                // Fallback sweep — no-op if the fee was already taken at pay time.
+                const fee = await collectEscrowFee(escrow.id).catch(() => null);
+                results.push({ id: escrow.id, released: true, txHash: result.txHash, feeTxHash: fee?.txHash ?? null });
             } else {
                 results.push({ id: escrow.id, error: result.error ?? "transfer failed" });
             }

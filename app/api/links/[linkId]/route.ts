@@ -65,6 +65,9 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
         if (txTo !== expectedPaymentAddress) {
           return NextResponse.json({ error: `Transaction sent to wrong address. Expected ${expectedPaymentAddress}, got ${txTo}.` }, { status: 400 });
         }
+        // Floor stays at the headline amount, not amount + fee: a payer who
+        // funded the recipient in full has paid, and the fee leg decides for
+        // itself whether it can be taken (see forwardFunds).
         const requiredWei = parseEther(link.amount);
         if (tx.value < requiredWei) {
           const sentUsdc = parseFloat(formatEther(tx.value)).toFixed(4);

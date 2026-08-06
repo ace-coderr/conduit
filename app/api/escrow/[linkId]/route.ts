@@ -5,6 +5,8 @@ import { parseEther } from "viem";
 import { sendEscrowPaidEmail, sendDisputeRaisedEmail } from "@/lib/email";
 import { recordReputationEvent } from "@/lib/reputation";
 import { transferFromWallet } from "@/lib/circle";
+import { collectEscrowFee } from "@/lib/escrowFee";
+import { calculateFeeOnTop } from "@/lib/fees";
 import { fireWebhook } from "@/lib/webhooks";
 import { notifyTelegram } from "@/lib/telegram";
 
@@ -50,6 +52,8 @@ async function releaseEscrowFunds(escrowId: string): Promise<{ success: boolean;
       data: { status: "RELEASED", releaseTxHash: result.txHash },
     });
     await recordReputationEvent(escrow.sellerAddress, "COMPLETED", escrow.amount);
+    // Fallback sweep — no-op if the fee was already taken when the buyer paid.
+    collectEscrowFee(escrowId).catch(() => { });
     fireWebhook(escrow.sellerAddress, "escrow.released", {
       id: escrow.id, title: escrow.title, amount: escrow.amount,
       txHash: result.txHash, sellerAddress: escrow.sellerAddress, buyerAddress: escrow.buyerAddress ?? null,
@@ -99,6 +103,8 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
         if (tx.to?.toLowerCase() !== escrow.stealthAddress.toLowerCase()) {
           return NextResponse.json({ error: "Transaction sent to wrong address." }, { status: 400 });
         }
+        // Floor stays at the headline amount — a buyer who funded the escrow in
+        // full has paid. collectEscrowFee re-checks this tx before taking a fee.
         if (tx.value < parseEther(escrow.amount)) {
           return NextResponse.json({ error: `Insufficient payment. Required ${escrow.amount} USDC.` }, { status: 400 });
         }
@@ -114,6 +120,11 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       where: { id: params.linkId },
       data: { status: "HOLDING", txHash, buyerAddress: paidBy ? paidBy.toLowerCase() : null, paidAt, deliveryDeadline, releaseDeadline },
     });
+
+    // Take the platform fee out of the escrow wallet the buyer just funded.
+    // Fire-and-forget so the buyer isn't held on Circle's confirmation poll —
+    // release sweeps it as a fallback if this doesn't land.
+    collectEscrowFee(params.linkId).catch(err => console.error("[escrow pay] fee collection failed:", err?.message));
 
     fireWebhook(escrow.sellerAddress, "escrow.funded", {
       id: escrow.id, title: escrow.title, amount: escrow.amount,

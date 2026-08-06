@@ -1,6 +1,7 @@
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { createWalletClient, createPublicClient, http, formatEther, parseEther } from "viem";
 import { arcTestnet } from "./arcChain";
+import { FEE_CONFIG, calculateFeeOnTop } from "./fees";
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypto";
 
 const ALGORITHM = "aes-256-gcm";
@@ -52,11 +53,20 @@ export function generateStealthWallet(): {
   };
 }
 
+/**
+ * Moves a stealth-link payment out of the one-time stealth wallet: the full
+ * `paymentAmount` to the recipient, then the platform fee to the collector.
+ *
+ * The payer signs a single transaction for amount + fee, so both legs are
+ * funded from that one balance and the recipient still receives the full
+ * headline amount. Links paid before that change hold only `paymentAmount` —
+ * there the fee leg is skipped rather than taken out of the recipient's share.
+ */
 export async function forwardFunds(
   encryptedPrivateKey: string,
   recipientAddress: string,
   paymentAmount: string
-): Promise<{ success: boolean; txHash?: string; error?: string }> {
+): Promise<{ success: boolean; txHash?: string; feeTxHash?: string; error?: string }> {
   try {
     const forwarderKey = process.env.FORWARDER_PRIVATE_KEY;
     if (!forwarderKey) return { success: false, error: "FORWARDER_PRIVATE_KEY not configured." };
@@ -89,18 +99,37 @@ export async function forwardFunds(
       transport: http("https://rpc.testnet.arc.network"),
     });
 
-    // Check stealth balance
-    const stealthBalance = await publicClient.getBalance({ address: stealthAccount.address });
+    // Check stealth balance. Cross-chain payments land here a little after the
+    // client reports success, so give a zero balance a few seconds to settle
+    // before giving up — /api/recover re-runs anything that still misses.
+    let stealthBalance = await publicClient.getBalance({ address: stealthAccount.address });
+    for (let attempt = 0; attempt < 3 && stealthBalance === BigInt(0); attempt++) {
+      await new Promise(r => setTimeout(r, 4000));
+      stealthBalance = await publicClient.getBalance({ address: stealthAccount.address });
+    }
     console.log(`[forward] Stealth balance: ${formatEther(stealthBalance)} USDC`);
 
     if (stealthBalance === BigInt(0)) {
       return { success: false, error: "Stealth wallet balance is 0 — payment not yet confirmed." };
     }
 
-    // Fund stealth wallet with gas from forwarder
+    // The payer covers the fee on top, so the stealth wallet should be holding
+    // amount + fee. Only take the fee leg when that is actually true — on a
+    // legacy balance the recipient's amount is never touched.
+    const recipientWei = parseEther(paymentAmount);
+    const { fee } = calculateFeeOnTop(paymentAmount);
+    const feeWei = parseEther(fee);
+    const collectFee = stealthBalance >= recipientWei + feeWei;
+
+    if (!collectFee) {
+      console.warn(`[forward] Balance covers the payment but not the ${fee} USDC fee — forwarding without the fee leg`);
+    }
+
+    // Fund stealth wallet with gas from forwarder — enough for every leg we send
     const gasPrice = await publicClient.getGasPrice();
     const gasLimit = BigInt(21000);
-    const gasFunding = gasPrice * gasLimit * BigInt(5);
+    const legs = collectFee ? BigInt(2) : BigInt(1);
+    const gasFunding = gasPrice * gasLimit * BigInt(5) * legs;
 
     const fundTxHash = await forwarderClient.sendTransaction({
       to: stealthAccount.address,
@@ -109,10 +138,7 @@ export async function forwardFunds(
     await publicClient.waitForTransactionReceipt({ hash: fundTxHash, timeout: 20_000 });
     console.log(`[forward] Gas funded: ${fundTxHash}`);
 
-    // Forward FULL amount to recipient
-    // Fee is already collected client-side separately — do NOT deduct here
-    const recipientWei = parseEther(paymentAmount);
-
+    // Leg 1 — FULL amount to the recipient. The fee never comes out of this.
     const forwardTxHash = await stealthClient.sendTransaction({
       to: recipientAddress as `0x${string}`,
       value: recipientWei,
@@ -123,7 +149,26 @@ export async function forwardFunds(
     await publicClient.waitForTransactionReceipt({ hash: forwardTxHash, timeout: 20_000 });
     console.log(`[forward] Forwarded full amount to recipient: ${forwardTxHash}`);
 
-    return { success: true, txHash: forwardTxHash };
+    // Leg 2 — platform fee. Best-effort: the recipient has already been paid,
+    // so a failure here must not fail the forward.
+    let feeTxHash: string | undefined;
+    if (collectFee) {
+      try {
+        const hash = await stealthClient.sendTransaction({
+          to: FEE_CONFIG.collectorAddress as `0x${string}`,
+          value: feeWei,
+          gas: gasLimit,
+          gasPrice,
+        });
+        await publicClient.waitForTransactionReceipt({ hash, timeout: 20_000 });
+        feeTxHash = hash;
+        console.log(`[forward] Fee of ${fee} USDC collected: ${hash}`);
+      } catch (feeErr: any) {
+        console.error(`[forward] Fee leg failed (payment already forwarded): ${feeErr.message}`);
+      }
+    }
+
+    return { success: true, txHash: forwardTxHash, feeTxHash };
   } catch (err: any) {
     console.error("[forwardFunds] Error:", err.message);
     return { success: false, error: err.message ?? "Forwarding failed" };
