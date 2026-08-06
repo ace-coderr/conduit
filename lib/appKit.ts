@@ -1,4 +1,9 @@
 import { AppKit } from "@circle-fin/app-kit";
+import { toHex, type Chain } from "viem";
+import {
+  arbitrumSepolia, avalancheFuji, baseSepolia,
+  optimismSepolia, polygonAmoy, sepolia,
+} from "viem/chains";
 
 // Supported source chains for Unified Balance (testnet)
 export const SOURCE_CHAINS = [
@@ -11,6 +16,89 @@ export const SOURCE_CHAINS = [
 ] as const;
 
 export type SourceChainId = typeof SOURCE_CHAINS[number]["id"];
+
+// Canonical chain definitions for every source chain we offer. This is the one
+// source for both the chain id and the EIP-3085 params we hand to
+// wallet_addEthereumChain — a wallet that has never seen e.g. Arbitrum Sepolia
+// can't switch to it, so we have to be able to describe it. Typed as a total
+// Record so adding a SOURCE_CHAINS entry without a definition fails the build.
+export const SOURCE_CHAIN_DEFS: Record<SourceChainId, Chain> = {
+  Base_Sepolia: baseSepolia,
+  Ethereum_Sepolia: sepolia,
+  Arbitrum_Sepolia: arbitrumSepolia,
+  Polygon_Amoy: polygonAmoy,
+  Avalanche_Fuji: avalancheFuji,
+  OP_Sepolia: optimismSepolia,
+};
+
+function addChainParams(chain: Chain) {
+  const explorer = chain.blockExplorers?.default.url;
+  return {
+    chainId: toHex(chain.id),
+    chainName: chain.name,
+    nativeCurrency: {
+      name: chain.nativeCurrency.name,
+      symbol: chain.nativeCurrency.symbol,
+      decimals: chain.nativeCurrency.decimals,
+    },
+    rpcUrls: [...chain.rpcUrls.default.http],
+    ...(explorer ? { blockExplorerUrls: [explorer] } : {}),
+  };
+}
+
+function isUserRejection(err: any): boolean {
+  const code = err?.code ?? err?.cause?.code ?? err?.data?.originalError?.code;
+  if (code === 4001) return true;
+  const msg = String(err?.message ?? "").toLowerCase();
+  return msg.includes("user rejected") || msg.includes("user denied");
+}
+
+/**
+ * Put the wallet on `sourceChainId`, adding the network first if the wallet
+ * doesn't already know it.
+ *
+ * wallet_switchEthereumChain on its own only works for chains the wallet has;
+ * for anything else it fails with "Unrecognized chain ID". MetaMask reports
+ * that as 4902 but other wallets wrap it as -32603 or bury it in `cause`, so
+ * rather than sniff codes we treat any non-rejection switch failure as
+ * "wallet doesn't have this chain", add it, then switch again — adding does
+ * not reliably leave the wallet on the new chain by itself.
+ */
+export async function ensureWalletOnChain(sourceChainId: SourceChainId): Promise<void> {
+  if (typeof window === "undefined" || !window.ethereum) {
+    throw new Error("No wallet found. Please install MetaMask.");
+  }
+  const provider = window.ethereum as any;
+  const chain = SOURCE_CHAIN_DEFS[sourceChainId];
+  const chainIdHex = toHex(chain.id);
+
+  // Already on it — don't prompt at all.
+  try {
+    const current = await provider.request({ method: "eth_chainId" });
+    if (typeof current === "string" && current.toLowerCase() === chainIdHex.toLowerCase()) return;
+  } catch { /* couldn't read it — fall through and switch */ }
+
+  try {
+    await provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: chainIdHex }] });
+    return;
+  } catch (switchErr: any) {
+    if (isUserRejection(switchErr)) throw new Error(`Network switch to ${chain.name} was rejected.`);
+
+    try {
+      await provider.request({ method: "wallet_addEthereumChain", params: [addChainParams(chain)] });
+    } catch (addErr: any) {
+      if (isUserRejection(addErr)) throw new Error(`Adding ${chain.name} to your wallet was rejected.`);
+      throw new Error(`Could not add ${chain.name} to your wallet. ${addErr?.message ?? ""}`.trim());
+    }
+
+    try {
+      await provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId: chainIdHex }] });
+    } catch (finalErr: any) {
+      if (isUserRejection(finalErr)) throw new Error(`Network switch to ${chain.name} was rejected.`);
+      throw finalErr;
+    }
+  }
+}
 
 // Singleton App Kit instance
 let _kit: AppKit | null = null;

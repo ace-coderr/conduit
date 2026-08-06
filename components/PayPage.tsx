@@ -10,7 +10,7 @@ import { injected } from "wagmi/connectors";
 import { parseEther, formatEther } from "viem";
 import { arcTestnet } from "@/lib/arcChain";
 import { formatUSDC } from "@/lib/utils";
-import { SOURCE_CHAINS, type SourceChainId, getAppKit, createBrowserAdapter } from "@/lib/appKit";
+import { SOURCE_CHAINS, type SourceChainId, getAppKit, createBrowserAdapter, ensureWalletOnChain } from "@/lib/appKit";
 
 const FEE_COLLECTOR = "0x2d2eba8c0da5879ab25b5bd37e211d230aabbb5c";
 const FEE_PERCENT = 0.5;
@@ -226,25 +226,15 @@ export function PayPage({ link, fee }: { link: PaymentLink; fee?: FeeInfo }) {
     return result.txHash ?? result.transactionHash ?? result.hash ?? result.receipt?.transactionHash ?? result.receipt?.txHash ?? "";
   };
 
-  const CHAIN_IDS: Record<string, number> = {
-    "Base_Sepolia": 84532, "Ethereum_Sepolia": 11155111,
-    "Arbitrum_Sepolia": 421614, "Polygon_Amoy": 80002,
-    "Avalanche_Fuji": 43113, "OP_Sepolia": 11155420,
-  };
-
   const handleUnifiedPay = async () => {
     setUnifiedError("");
     setUnifiedStep("depositing");
     try {
-      const targetChainId = CHAIN_IDS[selectedChain];
-      if (targetChainId && window.ethereum) {
-        try {
-          await (window.ethereum as any).request({ method: "wallet_switchEthereumChain", params: [{ chainId: `0x${targetChainId.toString(16)}` }] });
-        } catch (switchErr: any) {
-          if (switchErr.code === 4902) throw new Error(`Please add ${chainInfo?.name} to MetaMask first.`);
-          throw switchErr;
-        }
-      }
+      // Adds the network to the wallet first if it isn't there yet — switching
+      // alone fails with "Unrecognized chain ID" on any chain the wallet
+      // doesn't already have.
+      await ensureWalletOnChain(selectedChain);
+
       const kit = getAppKit();
       const adapter = await createBrowserAdapter();
       const recipientAddr = link.recipientAddress || link.stealthAddress;
