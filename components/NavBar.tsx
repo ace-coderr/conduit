@@ -9,6 +9,10 @@ import { useEffect, useState, useRef } from "react";
 
 const DOCS_URL = "https://conduitpay.mintlify.app";
 
+// Reuses the drawer's single-open-group state, so the wallet menu and the
+// nav groups can't be expanded at the same time.
+const WALLET_GROUP = "__wallet";
+
 const DocsIcon = () => (
   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="13" height="13"><path d="M4 2h8a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" strokeLinecap="round" /><path d="M5 6h6M5 9h6M5 12h4" strokeLinecap="round" /></svg>
 );
@@ -19,6 +23,18 @@ const ClockIcon = () => (
 
 const ChevronIcon = () => (
   <svg className="nav-item-chevron" viewBox="0 0 10 6" fill="none" width="8" height="8"><path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+);
+
+const CopyIcon = () => (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="11" height="11"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5" /><path d="M10.5 5.5V4a1.5 1.5 0 00-1.5-1.5H4A1.5 1.5 0 002.5 4v5A1.5 1.5 0 004 10.5h1.5" strokeLinecap="round" /></svg>
+);
+
+const CheckIcon = () => (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" width="11" height="11"><path d="M3 8.5l3.5 3.5L13 5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+);
+
+const DisconnectIcon = () => (
+  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" width="11" height="11"><path d="M8 2.5v5" strokeLinecap="round" /><path d="M4.6 4.6a4.5 4.5 0 106.8 0" strokeLinecap="round" /></svg>
 );
 
 const STANDALONE = [
@@ -155,6 +171,104 @@ function NavDropdown({ group, pathname }: { group: typeof GROUPS[0]; pathname: s
   );
 }
 
+/**
+ * Copies the full address (never the truncated display text) and flips a
+ * `copied` flag for 1.5s so callers can swap in a confirmation.
+ */
+function useCopyAddress(address?: string) {
+  const [copied, setCopied] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+
+  const copy = async () => {
+    if (!address) return;
+    try {
+      await navigator.clipboard.writeText(address);
+    } catch {
+      // Clipboard API needs a secure context — fall back to a throwaway node.
+      const ta = document.createElement("textarea");
+      ta.value = address;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } finally { ta.remove(); }
+    }
+    setCopied(true);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setCopied(false), 1500);
+  };
+
+  return { copied, copy };
+}
+
+function WalletMenu({ label, address, onDisconnect }: { label: string; address?: string; onDisconnect: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const { copied, copy } = useCopyAddress(address);
+
+  // pointerdown rather than mousedown: this has to dismiss on touch too.
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="nav-dropdown">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={`nav-wallet${open ? " is-open" : ""}`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        <span className="nav-wallet-dot" />
+        {label}
+        <ChevronIcon />
+      </button>
+
+      {open && (
+        <div className="nav-dropdown-panel is-right" role="menu">
+          <div className="nav-dropdown-header">
+            <span>WALLET</span>
+          </div>
+          {address && (
+            <button type="button" role="menuitem" className="nav-dropdown-item is-button" onClick={copy}>
+              <span className="nav-icon-chip">{copied ? <CheckIcon /> : <CopyIcon />}</span>
+              <div className="nav-dropdown-item-text">
+                <p className="nav-dropdown-item-title">{copied ? "Copied!" : "Copy Address"}</p>
+                <p className="nav-dropdown-item-desc">Full address to clipboard</p>
+              </div>
+            </button>
+          )}
+          <button
+            type="button"
+            role="menuitem"
+            className="nav-dropdown-item is-button is-danger"
+            onClick={() => { setOpen(false); onDisconnect(); }}
+          >
+            <span className="nav-icon-chip"><DisconnectIcon /></span>
+            <div className="nav-dropdown-item-text">
+              <p className="nav-dropdown-item-title">Disconnect</p>
+              <p className="nav-dropdown-item-desc">End this wallet session</p>
+            </div>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function NavBar() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
@@ -166,6 +280,7 @@ export function NavBar() {
   const { ready, authenticated, login, logout, user } = usePrivy();
   const { address } = useAccount();
   const { disconnect } = useDisconnect();
+  const { copied: drawerCopied, copy: drawerCopy } = useCopyAddress(address);
 
   useEffect(() => {
     setMounted(true);
@@ -247,10 +362,11 @@ export function NavBar() {
             {mounted && ready && (
               <>
                 {isConnected ? (
-                  <div className="nav-wallet" onClick={handleLogout} title="Click to disconnect">
-                    <span className="nav-wallet-dot" />
-                    {short || user?.email?.address?.slice(0, 16) || "Connected"}
-                  </div>
+                  <WalletMenu
+                    label={short || user?.email?.address?.slice(0, 16) || "Connected"}
+                    address={address}
+                    onDisconnect={handleLogout}
+                  />
                 ) : (
                   <button className="nav-connect-btn" onClick={login}>Connect Wallet</button>
                 )}
@@ -318,6 +434,43 @@ export function NavBar() {
             </div>
           );
         })}
+
+        {/* The desktop pill is hidden under 768px, so the drawer carries its
+            own copy/disconnect menu — same rows, expanded inline the way the
+            drawer's other groups behave. */}
+        {mounted && ready && isConnected && (
+          <>
+            <div className="nav-drawer-divider" />
+            <button
+              onClick={() => setDrawerGroup(drawerGroup === WALLET_GROUP ? null : WALLET_GROUP)}
+              className={`nav-drawer-item${drawerGroup === WALLET_GROUP ? " is-open" : ""}`}
+              aria-expanded={drawerGroup === WALLET_GROUP}
+            >
+              <span className="nav-icon-chip"><span className="nav-wallet-dot" /></span>
+              <span className="nav-drawer-item-label">{short || user?.email?.address?.slice(0, 16) || "Connected"}</span>
+              <svg className="nav-drawer-item-chevron" viewBox="0 0 10 6" fill="none" width="8" height="8">
+                <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            {drawerGroup === WALLET_GROUP && (
+              <div className="nav-drawer-group-items">
+                {address && (
+                  <button className="nav-drawer-item" onClick={drawerCopy}>
+                    <span className="nav-icon-chip">{drawerCopied ? <CheckIcon /> : <CopyIcon />}</span>
+                    <span className="nav-drawer-item-label">{drawerCopied ? "Copied!" : "Copy Address"}</span>
+                  </button>
+                )}
+                <button
+                  className="nav-drawer-item is-danger"
+                  onClick={() => { setDrawerOpen(false); handleLogout(); }}
+                >
+                  <span className="nav-icon-chip"><DisconnectIcon /></span>
+                  <span className="nav-drawer-item-label">Disconnect</span>
+                </button>
+              </div>
+            )}
+          </>
+        )}
 
         <div className="nav-drawer-divider" />
 

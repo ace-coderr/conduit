@@ -182,6 +182,21 @@
   to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 }
 
+/* Right-anchored variant — the wallet pill sits at the end of the navbar, so a
+   centred panel would hang off the viewport edge. */
+.nav-dropdown-panel.is-right {
+  left: auto;
+  right: 0;
+  transform: none;
+  transform-origin: top right;
+  animation-name: navDropdownInRight;
+}
+
+@keyframes navDropdownInRight {
+  from { opacity: 0; transform: translateY(-4px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .nav-dropdown-header {
   padding: 5px 8px 3px;
 }
@@ -210,6 +225,29 @@
 
 .nav-dropdown-item.is-active {
   background: var(--c-dim);
+}
+
+/* Menu rows that act rather than navigate (Copy Address / Disconnect) —
+   same row as the Link version, minus the default button chrome. */
+.nav-dropdown-item.is-button {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: 'Sora', sans-serif;
+}
+
+.nav-dropdown-item.is-danger:hover .nav-icon-chip,
+.nav-drawer-item.is-danger:hover .nav-icon-chip {
+  background: var(--danger-dim);
+  border-color: rgba(255, 77, 106, .3);
+  color: var(--danger);
+}
+
+.nav-dropdown-item.is-danger:hover .nav-dropdown-item-title,
+.nav-drawer-item.is-danger:hover {
+  color: var(--danger);
 }
 
 .nav-icon-chip {
@@ -345,6 +383,17 @@
 .nav-wallet:hover {
   border-color: var(--stroke2);
   color: var(--ink-1);
+}
+
+/* Pill is the trigger for the wallet menu — matches the nav-item open state. */
+.nav-wallet.is-open {
+  border-color: var(--stroke2);
+  color: var(--ink-1);
+}
+
+.nav-wallet.is-open .nav-item-chevron {
+  opacity: .8;
+  transform: rotate(180deg);
 }
 
 .nav-wallet-dot {
